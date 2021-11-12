@@ -10,6 +10,8 @@ import UIKit
 import Tabman
 import Pageboy
 import SafariServices
+import FredKitStore
+import FredKitAnalytics
 
 class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSource {
     
@@ -20,6 +22,8 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         super.init(nibName: "EditorTabViewController", bundle: Bundle.main)
         self.automaticallyAdjustsChildScrollViewInsets = true
         self.dataSource = self
+        
+        
         
 //        ExternalScreenController.showSketch(project: project)
     }
@@ -203,7 +207,9 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         
         let homescreen = UIAlertAction(title: "Add App to Homescreen", style: .default) { (_) in
             
-            if ProBenefitsViewController.isCurrentlySubscribed {
+            
+            
+            if FredKitSubscriptionManager.shared.isCurrentlySubscribed {
                 if #available(iOS 11.0, *) {
                     let homeScreenShareVC = SelectAppIconViewController()
                     homeScreenShareVC.project = self.project
@@ -213,11 +219,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
                 }
                 
             } else {
-                let proBenefistVC = ProBenefitsViewController()
-                let navC = UINavigationController(rootViewController: proBenefistVC)
-                navC.modalPresentationStyle = .formSheet
-                
-                self.present(navC, animated: true)
+                FredKitUpgradeDetailTableViewController.show()
             }
             
             

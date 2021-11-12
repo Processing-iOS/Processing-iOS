@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import FredKitAnalytics
 
 class AddToHomeScreenViewController: UIViewController {
     
@@ -18,6 +19,8 @@ class AddToHomeScreenViewController: UIViewController {
         super.viewDidLoad()
         
         continueInSafariButton.layer.cornerRadius = 16
+        
+        FredKitAnalytics.trackViewController(viewControllerIds: ["Overview", "Editor", "RunSketch", "AddToHomeScreen"])
         
         
         if #available(iOS 14.0, *) {

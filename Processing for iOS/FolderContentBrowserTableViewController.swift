@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreServices
+import FredKitAnalytics
 
 class FolderContentBrowserTableViewController: UITableViewController, UIDocumentPickerDelegate {
 
@@ -47,6 +48,9 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        FredKitAnalytics.trackViewController(viewControllerIds: ["Overview", "Editor", "FolderContentBrowser"])
+        
         tableView.register(
             UINib.init(nibName: "FileContentTableViewCell", bundle: Bundle.main),
             forCellReuseIdentifier: "file-cell")

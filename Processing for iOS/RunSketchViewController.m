@@ -8,6 +8,8 @@
 
 #import "RunSketchViewController.h"
 #import "Processing_for_iOS-Swift.h"
+@import FredKitStore;
+@import FredKitAnalytics;
 
 @implementation RunSketchViewController
 
@@ -15,12 +17,19 @@
     self = [super initWithNibName:nil bundle:nil];
     
     if(self) {
+        
+        [FredKitAnalytics trackViewControllerWithViewControllerIds:@[
+          @"Overview", @"Editor", @"RunSketch"
+        ]];
+        
         self.project = project;
         self.title = self.project.name;
         
         WKWebViewConfiguration* configuration = [WKWebViewConfiguration new];
         WKUserContentController* contentController = [WKUserContentController new];
         configuration.userContentController = contentController;
+        configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+        configuration.allowsInlineMediaPlayback = YES;
         [configuration.userContentController addScriptMessageHandler:self name: @"iosbridge"];
         [configuration.userContentController addScriptMessageHandler:self name: @"error"];
         [[configuration preferences] setValue: [NSNumber numberWithBool:YES] forKey:@"allowFileAccessFromFileURLs"];
@@ -80,7 +89,8 @@
 
 -(void) addToHomeScreen {
     
-    if ([ProBenefitsViewController isCurrentlySubscribed]) {
+    
+    if ([FredKitSubscriptionManager.shared isCurrentlySubscribed]) {
         SelectAppIconViewController *addToHomeVC = [[SelectAppIconViewController alloc] init];
         addToHomeVC.project = self.project;
         UINavigationController * navC = [[UINavigationController alloc] initWithRootViewController:addToHomeVC];
@@ -90,13 +100,7 @@
         [self.navigationController presentViewController:navC animated:YES completion:nil];
     } else {
         
-        ProBenefitsViewController *proVC = [[ProBenefitsViewController alloc] init];
-        
-        UINavigationController *navC = [[UINavigationController alloc] initWithRootViewController:proVC];
-        navC.modalPresentationStyle = UIModalPresentationFormSheet;
-        
-        
-        [[self navigationController] presentViewController:navC animated:YES completion:nil];
+        [FredKitUpgradeDetailTableViewController show];
     }
 }
     
@@ -118,20 +122,14 @@
             
             UIAlertAction* subscribe = [UIAlertAction actionWithTitle:@"Show Bug in Code" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                 
-                if ([ProBenefitsViewController isCurrentlySubscribed]) {
+                if (FredKitSubscriptionManager.shared.isCurrentlySubscribed) {
                     
                     [self.delegate didDetectBug:bug];
                     [[self navigationController] popViewControllerAnimated:true];
                     
                 } else {
-                    ProBenefitsViewController* proBenefitsVC = [[ProBenefitsViewController alloc] init];
                     
-                    proBenefitsVC.shownBenefits = BenefitCodeFix;
-                    proBenefitsVC.modalPresentationStyle = UIModalPresentationFormSheet;
-                    
-                    UINavigationController* navCon = [[UINavigationController alloc] initWithRootViewController:proBenefitsVC];
-                    
-                    [[self navigationController] presentViewController:navCon animated:YES completion:nil];
+                    [FredKitUpgradeDetailTableViewController show];
                 }
                 
             }];

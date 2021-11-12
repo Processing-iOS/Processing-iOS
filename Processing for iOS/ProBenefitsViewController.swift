@@ -111,9 +111,9 @@ class ProBenefitsViewController: UIViewController {
         dismiss(animated: true)
     }
     
-    @objc static var isCurrentlySubscribed: Bool {
-        return currentMembershipStatus == .subscribed
-    }
+//    @objc static var isCurrentlySubscribed: Bool {
+//        return currentMembershipStatus == .subscribed
+//    }
     
     private static let productIds: Set = ["io.frogg.processing.pro"]
     
@@ -206,39 +206,39 @@ class ProBenefitsViewController: UIViewController {
         return nil
     }
     
-    enum MembershipStatus {
-        case notPurchased, subscribed, expired
-    }
-    
-    static var currentMembershipStatus: MembershipStatus {
-        
-        if CommandLine.arguments.contains("-subscribed") {
-            return .subscribed
-        }
-        
-        #if DEBUG
-        if CommandLine.arguments.contains("-expired") {
-            return .expired
-        }
-        if !CommandLine.arguments.contains("-real") {
-            return .subscribed
-        }
-        #endif
-        
-        if let expirationDate = membershipExpirationDate() {
-            // give one week of grace period
-            var gracePeriod = TimeInterval.week
-            #if DEBUG
-            gracePeriod = 0
-            #endif
-            if Date().timeIntervalSince(expirationDate) < gracePeriod {
-                return .subscribed
-            } else {
-                return .expired
-            }
-        }
-        return .notPurchased
-    }
+//    enum MembershipStatus {
+//        case notPurchased, subscribed, expired
+//    }
+//    
+//    static var currentMembershipStatus: MembershipStatus {
+//        
+//        if CommandLine.arguments.contains("-subscribed") {
+//            return .subscribed
+//        }
+//        
+//        #if DEBUG
+//        if CommandLine.arguments.contains("-expired") {
+//            return .expired
+//        }
+//        if !CommandLine.arguments.contains("-real") {
+//            return .subscribed
+//        }
+//        #endif
+//        
+//        if let expirationDate = membershipExpirationDate() {
+//            // give one week of grace period
+//            var gracePeriod = TimeInterval.week
+//            #if DEBUG
+//            gracePeriod = 0
+//            #endif
+//            if Date().timeIntervalSince(expirationDate) < gracePeriod {
+//                return .subscribed
+//            } else {
+//                return .expired
+//            }
+//        }
+//        return .notPurchased
+//    }
     
     @objc static func completePendingTransactions() {
         SwiftyStoreKit.shouldAddStorePaymentHandler = { (_ payment: SKPayment, _ product: SKProduct) in

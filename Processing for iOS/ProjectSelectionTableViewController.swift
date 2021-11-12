@@ -8,8 +8,9 @@
 
 import UIKit
 import CoreServices
-import FredKit
+import FredKitStore
 import SwiftyStoreKit
+import FredKitAnalytics
 
 class ProjectSelectionTableViewController: UITableViewController,
                                            UIViewControllerPreviewingDelegate,
@@ -26,9 +27,7 @@ class ProjectSelectionTableViewController: UITableViewController,
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        FredKitSubscriptionManager.setup(productIds: [
-            "io.frogg.processing.tier1", "io.frogg.processing.tier2"
-        ], sharedSecret: "8b73ae394efe4d4aa96306dc11d48c5a", delegate: self)
+        FredKitAnalytics.trackViewController(viewControllerIds: ["Overview"])
         
         self.title = NSLocalizedString("My Projects", comment: "")
         
@@ -46,6 +45,8 @@ class ProjectSelectionTableViewController: UITableViewController,
         searchController.searchBar.barStyle = .black
         
         tableView.rowHeight = UITableViewAutomaticDimension
+        
+        tableView.register(ProVersionTableViewCell.nib, forCellReuseIdentifier: "ProVersionTableViewCell")
         
         if #available(iOS 13.0, *) {
             let navBarAppearance = UINavigationBarAppearance()
@@ -147,10 +148,12 @@ class ProjectSelectionTableViewController: UITableViewController,
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         if section == 0 {
-            if ProBenefitsViewController.currentMembershipStatus == .subscribed {
-                return 0
+            
+            if FredKitSubscriptionManager.shared.shouldShowUpgradeAd {
+                return 1
             }
-            return 1
+
+            return 0
         }
         
         if isFiltering() {
@@ -169,16 +172,8 @@ class ProjectSelectionTableViewController: UITableViewController,
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         if indexPath.section == 0 {
-            if adType == .export {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "pro-ad-cell", for: indexPath)
-                cell.layoutSubviews()
-                cell.layoutIfNeeded()
-                return cell
-            }
+            let cell = tableView.dequeueReusableCell(withIdentifier: "ProVersionTableViewCell", for: indexPath)
             
-            let cell = tableView.dequeueReusableCell(withIdentifier: "pro-ad-cell-show-bugs", for: indexPath)
-            cell.layoutSubviews()
-            cell.layoutIfNeeded()
             return cell
         }
         
@@ -214,6 +209,10 @@ class ProjectSelectionTableViewController: UITableViewController,
         }
         
         return 66
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 20
     }
     
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
@@ -263,14 +262,14 @@ class ProjectSelectionTableViewController: UITableViewController,
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         if indexPath.section == 0 {
-            tableView.deselectRow(at: indexPath, animated: true)
-            
-            let proBenefistVC = ProBenefitsViewController()
-            proBenefistVC.shownBenefits = adType
-            let navC = UINavigationController(rootViewController: proBenefistVC)
-            navC.modalPresentationStyle = .formSheet
-            
-            self.present(navC, animated: true)
+//            tableView.deselectRow(at: indexPath, animated: true)
+//            
+//            let proBenefistVC = ProBenefitsViewController()
+//            proBenefistVC.shownBenefits = adType
+//            let navC = UINavigationController(rootViewController: proBenefistVC)
+//            navC.modalPresentationStyle = .formSheet
+//            
+//            self.present(navC, animated: true)
             
             return
         }
@@ -564,10 +563,6 @@ extension ProjectSelectionTableViewController: UIDocumentPickerDelegate {
     }
 }
 
-extension ProjectSelectionTableViewController: FredKitSubscriptionManagerDelegate {
-    func didFinishFetchingProducts(products: [SKProduct]) {
-        
-    }
-}
+
 
 
