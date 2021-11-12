@@ -14,10 +14,6 @@
 @import FredKitStore;
 @import FredKitAnalytics;
 
-#if !TARGET_OS_UIKITFORMAC
-@import Firebase;
-#endif
-
 
 @interface AppDelegate ()
 
@@ -27,10 +23,6 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    
-    #if !TARGET_OS_UIKITFORMAC
-    [FIRApp configure];
-    #endif
     
     [[UINavigationBar appearanceWhenContainedInInstancesOfClasses: @[ProcessingNavigationViewController.class]] setTintColor: [UIColor whiteColor]];
     
@@ -78,7 +70,7 @@
     ]];
     
     FredKitIncludedInProVersion* includedInPro = [[FredKitIncludedInProVersion alloc] initWithFreeVersionIncludes:@[
-        @"Code Execution",
+        @"Run Code",
         @"Code Highlighting + Formatting",
     ] proVersionAlsoIncludes:@[
         @"Export Apps to Homescreen",

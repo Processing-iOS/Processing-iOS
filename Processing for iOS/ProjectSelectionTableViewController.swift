@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreServices
+import MobileCoreServices
 import FredKitStore
 import SwiftyStoreKit
 import FredKitAnalytics
@@ -104,8 +105,9 @@ class ProjectSelectionTableViewController: UITableViewController,
         
         let projectFolder = UIAlertAction(title: "Import project folder…", style: .default) { _ in
             
+            
             let documentBrowser = UIDocumentPickerViewController(documentTypes: [kUTTypeFolder as String], in: .open)
-            documentBrowser.navigationController?.navigationBar.tintColor = .processing()
+            documentBrowser.navigationController?.navigationBar.tintColor = UIColor.processing()
             documentBrowser.delegate = self
             self.present(documentBrowser, animated: true)
         }

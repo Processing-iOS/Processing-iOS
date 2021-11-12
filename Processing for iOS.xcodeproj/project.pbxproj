@@ -90,7 +90,6 @@
 		51FD83B624A3B21A0008AB57 /* CodeErrorDetectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FD83B524A3B21A0008AB57 /* CodeErrorDetectionEngine.swift */; };
 		860DBA451E5736300022C90F /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 860DBA431E5736300022C90F /* AboutViewController.m */; };
 		860DBA461E5736300022C90F /* AboutViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 860DBA441E5736300022C90F /* AboutViewController.xib */; };
-		865964121E7CB6250035F0E3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 865964111E7CB6250035F0E3 /* GoogleService-Info.plist */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -198,6 +197,9 @@
 		51CEE4771B3EA6FC0031D1BE /* RunSketchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RunSketchViewController.h; sourceTree = "<group>"; };
 		51CEE4781B3EA6FC0031D1BE /* RunSketchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RunSketchViewController.m; sourceTree = "<group>"; };
 		51CEE47A1B3EAC1C0031D1BE /* container.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = container.html; sourceTree = "<group>"; };
+		51D12FCF273E92FF00E57D58 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
+		51D12FD0273E930400E57D58 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
+		51D12FD1273E930900E57D58 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		51D6F82424A521030007625B /* syntax-highlighting-p5js.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "syntax-highlighting-p5js.plist"; sourceTree = "<group>"; };
 		51D6F82624A5270E0007625B /* MultiFileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiFileViewController.swift; sourceTree = "<group>"; };
 		51D6F82724A5270E0007625B /* MultiFileViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MultiFileViewController.xib; sourceTree = "<group>"; };
@@ -211,7 +213,6 @@
 		860DBA421E5736300022C90F /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
 		860DBA431E5736300022C90F /* AboutViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AboutViewController.m; sourceTree = "<group>"; };
 		860DBA441E5736300022C90F /* AboutViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AboutViewController.xib; sourceTree = "<group>"; };
-		865964111E7CB6250035F0E3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -342,7 +343,6 @@
 			isa = PBXGroup;
 			children = (
 				51082AD9273966E10016FA6A /* Processing for iOS.entitlements */,
-				865964111E7CB6250035F0E3 /* GoogleService-Info.plist */,
 				5165FF942496E12E00A6B137 /* P5JS */,
 				5165FF932496E11B00A6B137 /* Processing Files */,
 				517758DE24917B6200C9B79B /* HomeScreenSharer.swift */,
@@ -518,6 +518,9 @@
 				Base,
 				English,
 				ja,
+				de,
+				es,
+				fr,
 			);
 			mainGroup = 51CEE43A1B3E9A1B0031D1BE;
 			packageReferences = (
@@ -580,7 +583,6 @@
 				511A4BF51B6D134100B03259 /* Example_Clock.pde in Resources */,
 				5199DD7A1B3F232C004437DB /* SourceCodePro-Regular.ttf in Resources */,
 				5106B9C61C933EFA00AE74CC /* Main.storyboard in Resources */,
-				865964121E7CB6250035F0E3 /* GoogleService-Info.plist in Resources */,
 				5199DD771B3F232C004437DB /* SourceCodePro-ExtraLight.ttf in Resources */,
 				5128B7531B3EEAA700572894 /* syntax-highlighting-pde.plist in Resources */,
 			);
@@ -622,28 +624,20 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Processing for iOS/Pods-Processing for iOS-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/AutoInsetter/AutoInsetter.framework",
-				"${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework",
-				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/NSString+LevenshteinDistance/NSString_LevenshteinDistance.framework",
 				"${BUILT_PRODUCTS_DIR}/Pageboy/Pageboy.framework",
-				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
 				"${BUILT_PRODUCTS_DIR}/Swifter/Swifter.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftyStoreKit/SwiftyStoreKit.framework",
 				"${BUILT_PRODUCTS_DIR}/Tabman/Tabman.framework",
-				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AutoInsetter.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMSessionFetcher.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NSString_LevenshteinDistance.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Pageboy.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Swifter.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftyStoreKit.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Tabman.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -750,6 +744,9 @@
 			children = (
 				51CEE4561B3E9A300031D1BE /* Base */,
 				517A804626FBDBDD008CD0F3 /* ja */,
+				51D12FCF273E92FF00E57D58 /* de */,
+				51D12FD0273E930400E57D58 /* es */,
+				51D12FD1273E930900E57D58 /* fr */,
 			);
 			name = LaunchScreen.xib;
 			sourceTree = "<group>";
@@ -870,7 +867,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = "Processing for iOS/Processing for iOS.entitlements";
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = 52U6XAJSSF;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
@@ -879,7 +876,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.6.6;
+				MARKETING_VERSION = 2.7;
 				PRODUCT_BUNDLE_IDENTIFIER = com.polarapps.processing;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -899,7 +896,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = "Processing for iOS/Processing for iOS.entitlements";
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 40;
 				DEVELOPMENT_TEAM = 52U6XAJSSF;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
@@ -908,7 +905,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.6.6;
+				MARKETING_VERSION = 2.7;
 				PRODUCT_BUNDLE_IDENTIFIER = com.polarapps.processing;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;

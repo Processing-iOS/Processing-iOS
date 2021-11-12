@@ -1,75 +1,7 @@
 PODS:
   - AutoInsetter (1.3.0)
-  - Firebase/Core (6.32.2):
-    - Firebase/CoreOnly
-    - FirebaseAnalytics (= 6.8.2)
-  - Firebase/CoreOnly (6.32.2):
-    - FirebaseCore (= 6.10.2)
-  - Firebase/Storage (6.32.2):
-    - Firebase/CoreOnly
-    - FirebaseStorage (~> 3.9.0)
-  - FirebaseAnalytics (6.8.2):
-    - FirebaseCore (~> 6.10)
-    - FirebaseInstallations (~> 1.6)
-    - GoogleAppMeasurement (= 6.8.2)
-    - GoogleUtilities/AppDelegateSwizzler (~> 6.7)
-    - GoogleUtilities/MethodSwizzler (~> 6.7)
-    - GoogleUtilities/Network (~> 6.7)
-    - "GoogleUtilities/NSData+zlib (~> 6.7)"
-    - nanopb (~> 1.30906.0)
-  - FirebaseCore (6.10.2):
-    - FirebaseCoreDiagnostics (~> 1.6)
-    - GoogleUtilities/Environment (~> 6.7)
-    - GoogleUtilities/Logger (~> 6.7)
-  - FirebaseCoreDiagnostics (1.6.0):
-    - GoogleDataTransport (~> 7.2)
-    - GoogleUtilities/Environment (~> 6.7)
-    - GoogleUtilities/Logger (~> 6.7)
-    - nanopb (~> 1.30906.0)
-  - FirebaseInstallations (1.7.0):
-    - FirebaseCore (~> 6.10)
-    - GoogleUtilities/Environment (~> 6.7)
-    - GoogleUtilities/UserDefaults (~> 6.7)
-    - PromisesObjC (~> 1.2)
-  - FirebaseStorage (3.9.0):
-    - FirebaseCore (~> 6.10)
-    - GTMSessionFetcher/Core (~> 1.1)
-  - GoogleAppMeasurement (6.8.2):
-    - GoogleUtilities/AppDelegateSwizzler (~> 6.7)
-    - GoogleUtilities/MethodSwizzler (~> 6.7)
-    - GoogleUtilities/Network (~> 6.7)
-    - "GoogleUtilities/NSData+zlib (~> 6.7)"
-    - nanopb (~> 1.30906.0)
-  - GoogleDataTransport (7.3.0):
-    - nanopb (~> 1.30906.0)
-  - GoogleUtilities/AppDelegateSwizzler (6.7.2):
-    - GoogleUtilities/Environment
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Network
-  - GoogleUtilities/Environment (6.7.2):
-    - PromisesObjC (~> 1.2)
-  - GoogleUtilities/Logger (6.7.2):
-    - GoogleUtilities/Environment
-  - GoogleUtilities/MethodSwizzler (6.7.2):
-    - GoogleUtilities/Logger
-  - GoogleUtilities/Network (6.7.2):
-    - GoogleUtilities/Logger
-    - "GoogleUtilities/NSData+zlib"
-    - GoogleUtilities/Reachability
-  - "GoogleUtilities/NSData+zlib (6.7.2)"
-  - GoogleUtilities/Reachability (6.7.2):
-    - GoogleUtilities/Logger
-  - GoogleUtilities/UserDefaults (6.7.2):
-    - GoogleUtilities/Logger
-  - GTMSessionFetcher/Core (1.4.0)
-  - nanopb (1.30906.0):
-    - nanopb/decode (= 1.30906.0)
-    - nanopb/encode (= 1.30906.0)
-  - nanopb/decode (1.30906.0)
-  - nanopb/encode (1.30906.0)
   - "NSString+LevenshteinDistance (0.0.1)"
   - Pageboy (2.6.1)
-  - PromisesObjC (1.2.10)
   - Swifter (1.5.0)
   - SwiftyStoreKit (0.16.1)
   - Tabman (1.10.2):
@@ -77,8 +9,6 @@ PODS:
     - Pageboy (~> 2.6.0)
 
 DEPENDENCIES:
-  - Firebase/Core
-  - Firebase/Storage
   - "NSString+LevenshteinDistance"
   - Swifter (~> 1.5.0)
   - SwiftyStoreKit
@@ -87,44 +17,20 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AutoInsetter
-    - Firebase
-    - FirebaseAnalytics
-    - FirebaseCore
-    - FirebaseCoreDiagnostics
-    - FirebaseInstallations
-    - FirebaseStorage
-    - GoogleAppMeasurement
-    - GoogleDataTransport
-    - GoogleUtilities
-    - GTMSessionFetcher
-    - nanopb
     - "NSString+LevenshteinDistance"
     - Pageboy
-    - PromisesObjC
     - Swifter
     - SwiftyStoreKit
     - Tabman
 
 SPEC CHECKSUMS:
   AutoInsetter: 0ea4dddc17042ab45114ec5d5980764efae98584
-  Firebase: 47176280bfba198e531f909cfb1612dad216cb96
-  FirebaseAnalytics: 3c2fee6a922023ccfda7af87e4e641bad1fc11ba
-  FirebaseCore: 1d697bb944bf2af5fc248f1a66e165c9dd88bf97
-  FirebaseCoreDiagnostics: 7415bfb3883b3500c5a95c42b6ba66baae78f600
-  FirebaseInstallations: 466c7b4d1f58fe16707693091da253726a731ed2
-  FirebaseStorage: 33b92875a9b556824886cc7a65120c7d2cb3a8d8
-  GoogleAppMeasurement: 1a66f478c68ecd6c16ee63ee60c7c3a648e6b337
-  GoogleDataTransport: e85fb700c9b027079ce182c3d08e12e0f9618bb4
-  GoogleUtilities: 7f2f5a07f888cdb145101d6042bc4422f57e70b3
-  GTMSessionFetcher: 6f5c8abbab8a9bce4bb3f057e317728ec6182b10
-  nanopb: 59317e09cf1f1a0af72f12af412d54edf52603fc
   "NSString+LevenshteinDistance": d8dd9edc346e8a6444c6bce79e4cd94577cae4ca
   Pageboy: c2a25d1c280e9b622014b692626f1ff9298e0ad2
-  PromisesObjC: b14b1c6b68e306650688599de8a45e49fae81151
   Swifter: e71dd674404923d7f03ebb03f3f222d1c570bc8e
   SwiftyStoreKit: 6b9c08810269f030586dac1fae8e75871a82e84a
   Tabman: 6cff148419c5d8812d0e9f08f93b6f1c6ba54502
 
-PODFILE CHECKSUM: 50e06b7fd3f21304bae5725be776a02acdf6a721
+PODFILE CHECKSUM: 6734fb7e78980f78dabf6ce13e1e8880e48f360c
 
 COCOAPODS: 1.11.2
