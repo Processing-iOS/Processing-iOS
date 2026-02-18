@@ -9,9 +9,6 @@
 import UIKit
 import CoreServices
 import MobileCoreServices
-import FredKitStore
-import SwiftyStoreKit
-import FredKitAnalytics
 
 class ProjectSelectionTableViewController: UITableViewController,
                                            UIViewControllerPreviewingDelegate,
@@ -23,18 +20,10 @@ class ProjectSelectionTableViewController: UITableViewController,
     var filteredProjects: [SimpleTextProject]?
     let searchController = UISearchController(searchResultsController: nil)
     
-    var adType: Benefit = .export
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        FredKitAnalytics.trackViewController(viewControllerIds: ["Overview"])
-        
         self.title = NSLocalizedString("My Projects", comment: "")
-        
-        if Int.random(in: (0...1)) == 1 {
-            adType = .codeFix
-        }
         
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = "Search Projects"
@@ -46,8 +35,6 @@ class ProjectSelectionTableViewController: UITableViewController,
         searchController.searchBar.barStyle = .black
         
         tableView.rowHeight = UITableViewAutomaticDimension
-        
-        tableView.register(ProVersionTableViewCell.nib, forCellReuseIdentifier: "ProVersionTableViewCell")
         
         if #available(iOS 13.0, *) {
             let navBarAppearance = UINavigationBarAppearance()
@@ -81,13 +68,6 @@ class ProjectSelectionTableViewController: UITableViewController,
             for: .disabled
         )
         registerForPreviewing(with: self, sourceView: tableView)
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didChangeSubscriptionStatus),
-            name: NSNotification.Name(rawValue: "upgradedToPro"),
-            object: nil
-        )
     }
     
     
@@ -124,10 +104,6 @@ class ProjectSelectionTableViewController: UITableViewController,
         
     }
     
-    @objc func didChangeSubscriptionStatus() {
-        tableView.reloadSections([0], with: .automatic)
-    }
-    
     func refreshProjectsCountLabel() {
         if let numberOfProjects = projects?.count {
             projectsCountLabel.title = "\(numberOfProjects) Projects"
@@ -144,20 +120,10 @@ class ProjectSelectionTableViewController: UITableViewController,
     // MARK: - Table view data source
     
     override func numberOfSections(in tableView: UITableView) -> Int {
-        return 2
+        return 1
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-        if section == 0 {
-            
-            if FredKitSubscriptionManager.shared.shouldShowUpgradeAd {
-                return 1
-            }
-
-            return 0
-        }
-        
         if isFiltering() {
             if let count = filteredProjects?.count {
                 return count
@@ -172,13 +138,6 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        if indexPath.section == 0 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "ProVersionTableViewCell", for: indexPath)
-            
-            return cell
-        }
-        
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "project-cell", for: indexPath)
                 as? ProjectTableViewCell else {
                     fatalError("Misconfigured cell type!")
@@ -205,11 +164,6 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if indexPath.section == 0 {
-            return UITableViewAutomaticDimension
-        }
-        
         return 66
     }
     
@@ -218,11 +172,6 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        
-        if indexPath.section == 0 {
-            return false
-        }
-        
         if isFiltering() {
             return false
         }
@@ -262,20 +211,6 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        if indexPath.section == 0 {
-//            tableView.deselectRow(at: indexPath, animated: true)
-//            
-//            let proBenefistVC = ProBenefitsViewController()
-//            proBenefistVC.shownBenefits = adType
-//            let navC = UINavigationController(rootViewController: proBenefistVC)
-//            navC.modalPresentationStyle = .formSheet
-//            
-//            self.present(navC, animated: true)
-            
-            return
-        }
-        
         var currentProjects = projects
         if isFiltering() {
             currentProjects = filteredProjects
@@ -290,24 +225,10 @@ class ProjectSelectionTableViewController: UITableViewController,
     
     
     @IBAction func about(_ sender: Any) {
-        let aboutVC = FredKitAboutViewController.defaultViewController
-        
-        
-        aboutVC.inAppPurchaseCells = [
-            InAppPurchaseCell(title: "Tip", subtitle: "Recommended for students and private use.", productID: "io.frogg.processing.tier1"),
-            InAppPurchaseCell(title: "Tip", subtitle: "Recommended for professionals and organisations.", productID: "io.frogg.processing.tier2")
-        ]
-        
-        if #available(iOS 13.0, *) {
-            aboutVC.additionalAppLinks = [
-                WebLinkCell(title: "Telegram Group", url: "https://t.me/processing_ios", icon: UIImage(systemName: "bubble.left.fill"))
-            ]
-        }
-        
-        aboutVC.modalTransitionStyle = .coverVertical
-        aboutVC.modalPresentationStyle = .formSheet
-        
-        self.navigationController?.present(aboutVC.wrappedInNavigationController, animated: true, completion: nil)
+        let aboutVC = AboutViewController(nibName: "AboutViewController", bundle: .main)
+        let navC = UINavigationController(rootViewController: aboutVC)
+        navC.modalPresentationStyle = .formSheet
+        self.navigationController?.present(navC, animated: true, completion: nil)
     }
     
     func showTipSuccessfulAlert() {
@@ -467,7 +388,7 @@ class ProjectSelectionTableViewController: UITableViewController,
             
             if let index = index {
                 self.tableView.selectRow(
-                    at: IndexPath(row: index, section: 1),
+                    at: IndexPath(row: index, section: 0),
                     animated: true,
                     scrollPosition: .middle
                 )
@@ -491,11 +412,6 @@ class ProjectSelectionTableViewController: UITableViewController,
         
         
         if let indexPath = tableView.indexPathForRow(at: location) {
-            
-            if indexPath.section == 0 {
-                return nil
-            }
-            
             let cell = tableView.cellForRow(at: indexPath)
             previewingContext.sourceRect = (cell?.frame)!
             
@@ -564,7 +480,5 @@ extension ProjectSelectionTableViewController: UIDocumentPickerDelegate {
         }
     }
 }
-
-
 
 

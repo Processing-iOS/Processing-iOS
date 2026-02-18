@@ -8,8 +8,6 @@
 
 #import "RunSketchViewController.h"
 #import "Processing_for_iOS-Swift.h"
-@import FredKitStore;
-@import FredKitAnalytics;
 
 @implementation RunSketchViewController
 
@@ -17,10 +15,6 @@
     self = [super initWithNibName:nil bundle:nil];
     
     if(self) {
-        
-        [FredKitAnalytics trackViewControllerWithViewControllerIds:@[
-          @"Overview", @"Editor", @"RunSketch"
-        ]];
         
         self.project = project;
         self.title = self.project.name;
@@ -72,8 +66,6 @@
 //        UIBarButtonItem* addToHomeScreen = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"add_to_home_screen"] style:UIBarButtonItemStylePlain target:self action:@selector(addToHomeScreen)];
         
         [[self navigationItem] setRightBarButtonItems: @[ addToHomeScreen ]];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(upgradedToPro) name:@"upgradedToPro" object:nil];
     }
 
     return self;
@@ -83,25 +75,12 @@
     
 }
 
--(void) upgradedToPro {
-    [self.sketchWebView reload];
-}
-
 -(void) addToHomeScreen {
-    
-    
-    if ([FredKitSubscriptionManager.shared isCurrentlySubscribed]) {
-        SelectAppIconViewController *addToHomeVC = [[SelectAppIconViewController alloc] init];
-        addToHomeVC.project = self.project;
-        UINavigationController * navC = [[UINavigationController alloc] initWithRootViewController:addToHomeVC];
-        
-        navC.modalPresentationStyle = UIModalPresentationFormSheet;
-        
-        [self.navigationController presentViewController:navC animated:YES completion:nil];
-    } else {
-        
-        [FredKitUpgradeDetailTableViewController show];
-    }
+    SelectAppIconViewController *addToHomeVC = [[SelectAppIconViewController alloc] init];
+    addToHomeVC.project = self.project;
+    UINavigationController * navC = [[UINavigationController alloc] initWithRootViewController:addToHomeVC];
+    navC.modalPresentationStyle = UIModalPresentationFormSheet;
+    [self.navigationController presentViewController:navC animated:YES completion:nil];
 }
     
     
@@ -121,17 +100,8 @@
             }];
             
             UIAlertAction* subscribe = [UIAlertAction actionWithTitle:@"Show Bug in Code" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                
-                if (FredKitSubscriptionManager.shared.isCurrentlySubscribed) {
-                    
-                    [self.delegate didDetectBug:bug];
-                    [[self navigationController] popViewControllerAnimated:true];
-                    
-                } else {
-                    
-                    [FredKitUpgradeDetailTableViewController show];
-                }
-                
+                [self.delegate didDetectBug:bug];
+                [[self navigationController] popViewControllerAnimated:true];
             }];
             
             [alert addAction:cancel];

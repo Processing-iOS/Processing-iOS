@@ -11,7 +11,6 @@
 #import "FRFileManager.h"
 #import "NSString+LevenshteinDistance.h"
 @import SafariServices;
-@import FredKitAnalytics;
 
 @implementation PDEEditorViewController
 
@@ -34,10 +33,6 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChange:) name:UIKeyboardWillChangeFrameNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(saveCode) name:@"saveCode" object:nil];
-    
-    [FredKitAnalytics trackViewControllerWithViewControllerIds:@[
-        @"Overview", @"Editor"
-    ]];
     
     
     self.editor.text = self.sourceCodeFile.content;

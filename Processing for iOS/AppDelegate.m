@@ -11,10 +11,6 @@
 #import "SketchController.h"
 #import "Processing_for_iOS-Swift.h"
 
-@import FredKitStore;
-@import FredKitAnalytics;
-
-
 @interface AppDelegate ()
 
 @end
@@ -44,9 +40,6 @@
 //    [ExternalScreenController start];
     
     
-    [FredKitAnalytics setupWithAppId:@"6"];
-    
-    
     if (@available(iOS 13.0, *)) {
         UINavigationBarAppearance* appearance = [[UINavigationBarAppearance alloc] init];
         
@@ -58,27 +51,6 @@
         [[UINavigationBar appearanceWhenContainedInInstancesOfClasses: @[UINavigationController.class] ] setStandardAppearance:appearance];
         [[UINavigationBar appearanceWhenContainedInInstancesOfClasses: @[UINavigationController.class] ] setScrollEdgeAppearance:appearance];
     }
-    
-    FredKitProductOptions* productOptions = [[FredKitProductOptions alloc] initWithTips:@[
-        @"io.frogg.processing.tier1",
-        @"io.frogg.processing.tier2"
-    ] subscriptionOptions:@[
-        @"io.frogg.processing.pro",
-        @"io.frogg.processing.monthly"
-    ] lifeTimeUnlockOptions:@[
-        @"wtf.riedel.processing.lifetime"
-    ]];
-    
-    FredKitIncludedInProVersion* includedInPro = [[FredKitIncludedInProVersion alloc] initWithFreeVersionIncludes:@[
-        @"Run Code",
-        @"Code Highlighting + Formatting",
-    ] proVersionAlsoIncludes:@[
-        @"Export Apps to Homescreen",
-        @"Show faulty code"
-    ]];
-    
-    [FredKitSubscriptionManager setupWithProductOptions:productOptions includedInProVersion:includedInPro proTitle: @"Processing Pro" sharedSecret:@"8b73ae394efe4d4aa96306dc11d48c5a"];
-    
     
     return YES;
 }

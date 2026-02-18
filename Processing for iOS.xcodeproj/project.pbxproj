@@ -10,9 +10,6 @@
 		0708F45A019FA07554E4C242 /* Pods_Processing_for_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 199569DDED991500E4F252CB /* Pods_Processing_for_iOS.framework */; };
 		5106B9C61C933EFA00AE74CC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5106B9C51C933EFA00AE74CC /* Main.storyboard */; };
 		5106B9C91C933F5600AE74CC /* UIColor+ProcessingColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 5106B9C81C933F5600AE74CC /* UIColor+ProcessingColor.m */; };
-		51082ADA273966E10016FA6A /* Processing for iOS.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 51082AD9273966E10016FA6A /* Processing for iOS.entitlements */; };
-		51082ADD273978AE0016FA6A /* FredKit in Frameworks */ = {isa = PBXBuildFile; productRef = 51082ADC273978AE0016FA6A /* FredKit */; };
-		51082B7B273BFB460016FA6A /* FredKitStore in Frameworks */ = {isa = PBXBuildFile; productRef = 51082B7A273BFB460016FA6A /* FredKitStore */; };
 		510926FC1FA0CE1E00C255D1 /* SketchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 510926FB1FA0CE1E00C255D1 /* SketchController.m */; };
 		510926FF1FA0D72A00C255D1 /* PDESketch.m in Sources */ = {isa = PBXBuildFile; fileRef = 510926FE1FA0D72A00C255D1 /* PDESketch.m */; };
 		510F51A220AB618E0082B979 /* ProjectSelectionTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510F51A120AB618E0082B979 /* ProjectSelectionTableViewController.swift */; };
@@ -36,7 +33,6 @@
 		5165FF9B2496E17400A6B137 /* p5js-sketch.js in Resources */ = {isa = PBXBuildFile; fileRef = 5165FF992496E17400A6B137 /* p5js-sketch.js */; };
 		5165FF9C2496E17400A6B137 /* p5js-container.html in Resources */ = {isa = PBXBuildFile; fileRef = 5165FF9A2496E17400A6B137 /* p5js-container.html */; };
 		5165FF9F2496E46400A6B137 /* FRFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5165FF9E2496E46400A6B137 /* FRFileManager.m */; };
-		516A422224154D7100D0181B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 516A422124154D7100D0181B /* StoreKit.framework */; };
 		517758DF24917B6200C9B79B /* HomeScreenSharer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517758DE24917B6200C9B79B /* HomeScreenSharer.swift */; };
 		517758E2249182C000C9B79B /* ProBenefitsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517758E0249182C000C9B79B /* ProBenefitsViewController.swift */; };
 		517758E3249182C000C9B79B /* ProBenefitsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517758E1249182C000C9B79B /* ProBenefitsViewController.xib */; };
@@ -143,7 +139,6 @@
 		5165FF9A2496E17400A6B137 /* p5js-container.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "p5js-container.html"; sourceTree = "<group>"; };
 		5165FF9D2496E46300A6B137 /* FRFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FRFileManager.h; sourceTree = "<group>"; };
 		5165FF9E2496E46400A6B137 /* FRFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FRFileManager.m; sourceTree = "<group>"; };
-		516A422124154D7100D0181B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		517758DE24917B6200C9B79B /* HomeScreenSharer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenSharer.swift; sourceTree = "<group>"; };
 		517758E0249182C000C9B79B /* ProBenefitsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProBenefitsViewController.swift; sourceTree = "<group>"; };
 		517758E1249182C000C9B79B /* ProBenefitsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ProBenefitsViewController.xib; sourceTree = "<group>"; };
@@ -226,10 +221,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				51082ADD273978AE0016FA6A /* FredKit in Frameworks */,
 				0708F45A019FA07554E4C242 /* Pods_Processing_for_iOS.framework in Frameworks */,
-				51082B7B273BFB460016FA6A /* FredKitStore in Frameworks */,
-				516A422224154D7100D0181B /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,7 +250,6 @@
 		47B535D0FA9E13A148AEF96F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				516A422124154D7100D0181B /* StoreKit.framework */,
 				199569DDED991500E4F252CB /* Pods_Processing_for_iOS.framework */,
 				57D0A912304A1FC223B9ABD8 /* Pods_Processing_for_iOSTests.framework */,
 			);
@@ -463,10 +454,6 @@
 			dependencies = (
 			);
 			name = "Processing for iOS";
-			packageProductDependencies = (
-				51082ADC273978AE0016FA6A /* FredKit */,
-				51082B7A273BFB460016FA6A /* FredKitStore */,
-			);
 			productName = "Processing for iOS";
 			productReference = 51CEE4431B3E9A1D0031D1BE /* Processing for iOS.app */;
 			productType = "com.apple.product-type.application";
@@ -523,10 +510,6 @@
 				fr,
 			);
 			mainGroup = 51CEE43A1B3E9A1B0031D1BE;
-			packageReferences = (
-				51082ADB273978AE0016FA6A /* XCRemoteSwiftPackageReference "FredKit" */,
-				51082B79273BFB460016FA6A /* XCRemoteSwiftPackageReference "FredKitStore" */,
-			);
 			productRefGroup = 51CEE4441B3E9A1D0031D1BE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -542,7 +525,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				51082ADA273966E10016FA6A /* Processing for iOS.entitlements in Resources */,
 				5165FF9C2496E17400A6B137 /* p5js-container.html in Resources */,
 				51CEE4571B3E9A300031D1BE /* LaunchScreen.xib in Resources */,
 				860DBA461E5736300022C90F /* AboutViewController.xib in Resources */,
@@ -627,7 +609,6 @@
 				"${BUILT_PRODUCTS_DIR}/NSString+LevenshteinDistance/NSString_LevenshteinDistance.framework",
 				"${BUILT_PRODUCTS_DIR}/Pageboy/Pageboy.framework",
 				"${BUILT_PRODUCTS_DIR}/Swifter/Swifter.framework",
-				"${BUILT_PRODUCTS_DIR}/SwiftyStoreKit/SwiftyStoreKit.framework",
 				"${BUILT_PRODUCTS_DIR}/Tabman/Tabman.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -636,7 +617,6 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NSString_LevenshteinDistance.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Pageboy.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Swifter.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftyStoreKit.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Tabman.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -802,7 +782,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -851,7 +831,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -871,7 +851,7 @@
 				DEVELOPMENT_TEAM = 52U6XAJSSF;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -900,7 +880,7 @@
 				DEVELOPMENT_TEAM = 52U6XAJSSF;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -995,38 +975,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		51082ADB273978AE0016FA6A /* XCRemoteSwiftPackageReference "FredKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/frogg/FredKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.0.23;
-			};
-		};
-		51082B79273BFB460016FA6A /* XCRemoteSwiftPackageReference "FredKitStore" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/frogg/FredKitStore.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.0.1;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		51082ADC273978AE0016FA6A /* FredKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 51082ADB273978AE0016FA6A /* XCRemoteSwiftPackageReference "FredKit" */;
-			productName = FredKit;
-		};
-		51082B7A273BFB460016FA6A /* FredKitStore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 51082B79273BFB460016FA6A /* XCRemoteSwiftPackageReference "FredKitStore" */;
-			productName = FredKitStore;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 51CEE43B1B3E9A1B0031D1BE /* Project object */;
 }

@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import FredKitAnalytics
 
 @objc protocol SelectableOptionsViewControllerDelegate {
     func replaceCharacters(inRange range: NSRange, withString string: String)
@@ -36,8 +35,6 @@ class SelectableOptionsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        FredKitAnalytics.trackViewController(viewControllerIds: ["Overview", "Editor", "CodeFixSuggestions"])
         
         tableView.register(UINib(nibName: "CodeFixSuggestionTableViewCell", bundle: Bundle.main), forCellReuseIdentifier: "replace-cell")
         

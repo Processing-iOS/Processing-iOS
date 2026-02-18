@@ -10,8 +10,6 @@ import UIKit
 import Tabman
 import Pageboy
 import SafariServices
-import FredKitStore
-import FredKitAnalytics
 
 class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSource {
     
@@ -206,23 +204,13 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         
         
         let homescreen = UIAlertAction(title: "Add App to Homescreen", style: .default) { (_) in
-            
-            
-            
-            if FredKitSubscriptionManager.shared.isCurrentlySubscribed {
-                if #available(iOS 11.0, *) {
-                    let homeScreenShareVC = SelectAppIconViewController()
-                    homeScreenShareVC.project = self.project
-                    let navC = UINavigationController(rootViewController: homeScreenShareVC)
-                    navC.modalPresentationStyle = .formSheet
-                    self.present(navC, animated: true)
-                }
-                
-            } else {
-                FredKitUpgradeDetailTableViewController.show()
+            if #available(iOS 11.0, *) {
+                let homeScreenShareVC = SelectAppIconViewController()
+                homeScreenShareVC.project = self.project
+                let navC = UINavigationController(rootViewController: homeScreenShareVC)
+                navC.modalPresentationStyle = .formSheet
+                self.present(navC, animated: true)
             }
-            
-            
         }
         
         let exportFolder = UIAlertAction(title: "Export Project", style: .default) { (_) in
