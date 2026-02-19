@@ -9,6 +9,10 @@
 #import "RunSketchViewController.h"
 #import "Processing_for_iOS-Swift.h"
 
+@interface RunSketchViewController () <WKNavigationDelegate>
+@property(nonatomic,strong) NSURL *runtimeHTMLURL;
+@end
+
 @implementation RunSketchViewController
 
 -(id)initWithSimpleTextProject:(SimpleTextProject*)project {
@@ -29,6 +33,7 @@
         [[configuration preferences] setValue: [NSNumber numberWithBool:YES] forKey:@"allowFileAccessFromFileURLs"];
         
         self.sketchWebView = [[WKWebView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) configuration:configuration];
+        self.sketchWebView.navigationDelegate = self;
 
         
         [self.view addSubview:self.sketchWebView];
@@ -44,10 +49,23 @@
         
         NSString* content = [[self project] htmlPage];
         
-        NSURL* baseURL = [self.project.folder URLByAppendingPathComponent:@"data"];
-        
-        [self.sketchWebView loadFileURL: baseURL allowingReadAccessToURL: baseURL];
-        [self.sketchWebView loadHTMLString:content baseURL: baseURL];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSURL *projectURL = self.project.folder;
+        NSURL *dataURL = [projectURL URLByAppendingPathComponent:@"data"];
+        if (![fileManager fileExistsAtPath:dataURL.path]) {
+            [fileManager createDirectoryAtURL:dataURL withIntermediateDirectories:YES attributes:nil error:nil];
+        }
+
+        self.runtimeHTMLURL = [projectURL URLByAppendingPathComponent:@"__runtime_preview__.html"];
+        NSError *writeError = nil;
+        BOOL didWriteFile = [content writeToURL:self.runtimeHTMLURL atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+
+        if (didWriteFile) {
+            [self.sketchWebView loadFileURL:self.runtimeHTMLURL allowingReadAccessToURL:projectURL];
+        } else {
+            NSLog(@"Failed to write runtime HTML: %@", writeError.localizedDescription);
+            [self.sketchWebView loadHTMLString:content baseURL:projectURL];
+        }
         
         self.motionManager = [CMMotionManager new];
 
@@ -183,10 +201,22 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated {
+    if (self.runtimeHTMLURL) {
+        [[NSFileManager defaultManager] removeItemAtURL:self.runtimeHTMLURL error:nil];
+        self.runtimeHTMLURL = nil;
+    }
     self.sketchWebView = nil;
     [self.motionManager stopGyroUpdates];
     [self.motionManager stopAccelerometerUpdates];
     self.motionManager = nil;
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    NSLog(@"WebView provisional navigation failed: %@", error.localizedDescription);
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    NSLog(@"WebView navigation failed: %@", error.localizedDescription);
 }
 
 -(void)viewWillAppear:(BOOL)animated {
