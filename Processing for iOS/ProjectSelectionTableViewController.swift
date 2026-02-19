@@ -63,10 +63,13 @@ class ProjectSelectionTableViewController: UITableViewController,
         
         refreshProjectsCountLabel()
         projectsCountLabel.isEnabled = false
-        projectsCountLabel.setTitleTextAttributes(
-            [NSAttributedStringKey.font: UIFont.systemFont(ofSize: 13)],
-            for: .disabled
-        )
+        let countLabelAttributes: [NSAttributedStringKey: Any] = [
+            NSAttributedStringKey.font: UIFont.systemFont(ofSize: 13, weight: .semibold),
+            NSAttributedStringKey.foregroundColor: UIColor.white
+        ]
+        projectsCountLabel.tintColor = UIColor.white
+        projectsCountLabel.setTitleTextAttributes(countLabelAttributes, for: .normal)
+        projectsCountLabel.setTitleTextAttributes(countLabelAttributes, for: .disabled)
         registerForPreviewing(with: self, sourceView: tableView)
     }
     
@@ -114,6 +117,18 @@ class ProjectSelectionTableViewController: UITableViewController,
     
     @IBAction func startSearch(_ sender: Any) {
         searchController.searchBar.becomeFirstResponder()
+    }
+
+    @IBAction func toggleEditMode(_ sender: UIBarButtonItem) {
+        if !tableView.isEditing {
+            searchController.isActive = false
+            searchController.searchBar.resignFirstResponder()
+        }
+
+        let shouldEdit = !tableView.isEditing
+        tableView.setEditing(shouldEdit, animated: true)
+        sender.title = shouldEdit ? "Done" : "Edit"
+        sender.style = shouldEdit ? .done : .plain
     }
     
     
@@ -211,6 +226,10 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if tableView.isEditing {
+            return
+        }
+
         var currentProjects = projects
         if isFiltering() {
             currentProjects = filteredProjects
@@ -480,5 +499,3 @@ extension ProjectSelectionTableViewController: UIDocumentPickerDelegate {
         }
     }
 }
-
-

@@ -37,6 +37,11 @@
     [self presentViewController:sfvc animated:YES completion:nil];
 }
 
+- (IBAction)openOneSec:(id)sender {
+    SFSafariViewController *sfvc = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:@"https://one-sec.app"]];
+    [self presentViewController:sfvc animated:YES completion:nil];
+}
+
 - (IBAction)showTerms:(id)sender {
     SFSafariViewController *sfvc = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:@"http://processing-app.org/terms"]];
     [self presentViewController:sfvc animated:YES completion:nil];

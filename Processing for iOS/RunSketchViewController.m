@@ -11,6 +11,7 @@
 
 @interface RunSketchViewController () <WKNavigationDelegate>
 @property(nonatomic,strong) NSURL *runtimeHTMLURL;
+@property(nonatomic,assign) BOOL previousInteractivePopGestureEnabled;
 @end
 
 @implementation RunSketchViewController
@@ -79,11 +80,19 @@
         
         
         
-        UIBarButtonItem* addToHomeScreen = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Add to Homescreen…", @"") style:UIBarButtonItemStylePlain target:self action: @selector(addToHomeScreen)];
-        
-//        UIBarButtonItem* addToHomeScreen = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"add_to_home_screen"] style:UIBarButtonItemStylePlain target:self action:@selector(addToHomeScreen)];
-        
-        [[self navigationItem] setRightBarButtonItems: @[ addToHomeScreen ]];
+        UIBarButtonItem *moreButton;
+        if (@available(iOS 13.0, *)) {
+            moreButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"ellipsis.circle"]
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:self
+                                                         action:@selector(showRunOptions:)];
+        } else {
+            moreButton = [[UIBarButtonItem alloc] initWithTitle:@"•••"
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:self
+                                                         action:@selector(showRunOptions:)];
+        }
+        [[self navigationItem] setRightBarButtonItems:@[moreButton]];
     }
 
     return self;
@@ -99,6 +108,32 @@
     UINavigationController * navC = [[UINavigationController alloc] initWithRootViewController:addToHomeVC];
     navC.modalPresentationStyle = UIModalPresentationFormSheet;
     [self.navigationController presentViewController:navC animated:YES completion:nil];
+}
+
+-(void)showRunOptions:(UIBarButtonItem *)sender {
+    UIAlertController *menu = [UIAlertController alertControllerWithTitle:nil
+                                                                  message:nil
+                                                           preferredStyle:UIAlertControllerStyleActionSheet];
+
+    UIAlertAction *addToHome = [UIAlertAction actionWithTitle:NSLocalizedString(@"Add to Homescreen…", @"")
+                                                         style:UIAlertActionStyleDefault
+                                                       handler:^(__unused UIAlertAction * _Nonnull action) {
+        [self addToHomeScreen];
+    }];
+
+    UIAlertAction *cancel = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"")
+                                                     style:UIAlertActionStyleCancel
+                                                   handler:nil];
+
+    [menu addAction:addToHome];
+    [menu addAction:cancel];
+
+    UIPopoverPresentationController *popover = menu.popoverPresentationController;
+    if (popover) {
+        popover.barButtonItem = sender;
+    }
+
+    [self presentViewController:menu animated:YES completion:nil];
 }
     
     
@@ -201,6 +236,10 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated {
+    if (self.navigationController.interactivePopGestureRecognizer) {
+        self.navigationController.interactivePopGestureRecognizer.enabled = self.previousInteractivePopGestureEnabled;
+    }
+
     if (self.runtimeHTMLURL) {
         [[NSFileManager defaultManager] removeItemAtURL:self.runtimeHTMLURL error:nil];
         self.runtimeHTMLURL = nil;
@@ -222,6 +261,11 @@
 -(void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.navigationController setToolbarHidden:YES animated:YES];
+
+    if (self.navigationController.interactivePopGestureRecognizer) {
+        self.previousInteractivePopGestureEnabled = self.navigationController.interactivePopGestureRecognizer.enabled;
+        self.navigationController.interactivePopGestureRecognizer.enabled = NO;
+    }
 }
 
 -(void) close {
