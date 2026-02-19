@@ -9,9 +9,11 @@
 #import "RunSketchViewController.h"
 #import "Processing_for_iOS-Swift.h"
 
-@interface RunSketchViewController () <WKNavigationDelegate>
+@interface RunSketchViewController () <WKNavigationDelegate, UIGestureRecognizerDelegate>
 @property(nonatomic,strong) NSURL *runtimeHTMLURL;
 @property(nonatomic,assign) BOOL previousInteractivePopGestureEnabled;
+@property(nonatomic,assign) BOOL previousInteractiveContentPopGestureEnabled;
+@property(nonatomic,weak) id<UIGestureRecognizerDelegate> previousInteractivePopGestureDelegate;
 @end
 
 @implementation RunSketchViewController
@@ -237,7 +239,13 @@
 
 -(void)viewWillDisappear:(BOOL)animated {
     if (self.navigationController.interactivePopGestureRecognizer) {
+        self.navigationController.interactivePopGestureRecognizer.delegate = self.previousInteractivePopGestureDelegate;
         self.navigationController.interactivePopGestureRecognizer.enabled = self.previousInteractivePopGestureEnabled;
+    }
+    if (@available(iOS 26.0, *)) {
+        if (self.navigationController.interactiveContentPopGestureRecognizer) {
+            self.navigationController.interactiveContentPopGestureRecognizer.enabled = self.previousInteractiveContentPopGestureEnabled;
+        }
     }
 
     if (self.runtimeHTMLURL) {
@@ -261,11 +269,29 @@
 -(void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self.navigationController setToolbarHidden:YES animated:YES];
+}
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
     if (self.navigationController.interactivePopGestureRecognizer) {
+        self.previousInteractivePopGestureDelegate = self.navigationController.interactivePopGestureRecognizer.delegate;
         self.previousInteractivePopGestureEnabled = self.navigationController.interactivePopGestureRecognizer.enabled;
+        self.navigationController.interactivePopGestureRecognizer.delegate = self;
         self.navigationController.interactivePopGestureRecognizer.enabled = NO;
     }
+    if (@available(iOS 26.0, *)) {
+        if (self.navigationController.interactiveContentPopGestureRecognizer) {
+            self.previousInteractiveContentPopGestureEnabled = self.navigationController.interactiveContentPopGestureRecognizer.enabled;
+            self.navigationController.interactiveContentPopGestureRecognizer.enabled = NO;
+        }
+    }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer) {
+        return NO;
+    }
+    return YES;
 }
 
 -(void) close {
