@@ -12,7 +12,6 @@ import Foundation
     
     @objc var name: String
     @objc var sourceCodeExtension: String
-    @objc var appIcon: UIImage?
     
     @objc init(with name: String, sourceCodeExtension: String, importingFiles: [URL] = []) {
         
@@ -56,38 +55,26 @@ import Foundation
         return sketchPath
     }
     
+    func sourceFileURLs() throws -> [URL] {
+        let files = try FileManager.default.contentsOfDirectory(
+            at: folder, includingPropertiesForKeys: [.isRegularFileKey]
+        ).filter { $0.pathExtension == sourceCodeExtension }
+        let mainName = "\(name).\(sourceCodeExtension)"
+        return files.sorted {
+            if $0.lastPathComponent == mainName && $1.lastPathComponent != mainName { return true }
+            if $1.lastPathComponent == mainName { return false }
+            return $0.lastPathComponent < $1.lastPathComponent
+        }
+    }
+
     @objc var sourceCodeFiles: [SourceCodeFile] {
-        if let filePaths = try? FileManager.default.contentsOfDirectory(atPath: folder.path) {
-            
-            return filePaths.compactMap { (filePath) -> SourceCodeFile? in
-                
-                if filePath.hasSuffix(".\(sourceCodeExtension)") {
-                    return SourceCodeFile(filePath: folder.appendingPathComponent(filePath).path)
-                }
-                
-                return nil
-            }
-        }
-        
-        return []
+        (try? sourceFileURLs())?.map { SourceCodeFile(filePath: $0.path) } ?? []
     }
-    
-    var cummulatedSourceCode: String {
-        return sourceCodeFiles.reduce("") { (result, jsFile) -> String in
-            if let code = jsFile.content {
-                return """
-                       \(result)
-                       \(code)
-                       """
-            }
-            return result
-        }
+
+    @objc func prepareRuntime() throws -> SketchProgram {
+        try SketchProgram(project: self)
     }
-    
-    @objc var htmlPage: String {
-        return cummulatedSourceCode
-    }
-    
+
     var emptyFile: String {
         return ""
     }

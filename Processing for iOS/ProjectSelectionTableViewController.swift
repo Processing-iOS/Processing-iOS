@@ -15,6 +15,7 @@ class ProjectSelectionTableViewController: UITableViewController,
                                            UIAlertViewDelegate {
     
     @IBOutlet weak var projectsCountLabel: UIBarButtonItem!
+    private let projectCountView = UILabel()
     
     var projects: [SimpleTextProject]?
     var filteredProjects: [SimpleTextProject]?
@@ -34,7 +35,7 @@ class ProjectSelectionTableViewController: UITableViewController,
         searchController.searchBar.tintColor = UIColor.white
         searchController.searchBar.barStyle = .black
         
-        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.rowHeight = UITableView.automaticDimension
         
         if #available(iOS 13.0, *) {
             let navBarAppearance = UINavigationBarAppearance()
@@ -61,15 +62,10 @@ class ProjectSelectionTableViewController: UITableViewController,
         //            self.tableView.reloadData()
         //        }
         
+        projectCountView.font = .systemFont(ofSize: 13, weight: .semibold)
+        projectCountView.textColor = .secondaryLabel
+        projectsCountLabel.customView = projectCountView
         refreshProjectsCountLabel()
-        projectsCountLabel.isEnabled = false
-        let countLabelAttributes: [NSAttributedStringKey: Any] = [
-            NSAttributedStringKey.font: UIFont.systemFont(ofSize: 13, weight: .semibold),
-            NSAttributedStringKey.foregroundColor: UIColor.white
-        ]
-        projectsCountLabel.tintColor = UIColor.white
-        projectsCountLabel.setTitleTextAttributes(countLabelAttributes, for: .normal)
-        projectsCountLabel.setTitleTextAttributes(countLabelAttributes, for: .disabled)
         registerForPreviewing(with: self, sourceView: tableView)
     }
     
@@ -108,11 +104,8 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     func refreshProjectsCountLabel() {
-        if let numberOfProjects = projects?.count {
-            projectsCountLabel.title = "\(numberOfProjects) Projects"
-        } else {
-            projectsCountLabel.title = "0 Projects"
-        }
+        projectCountView.text = "\(projects?.count ?? 0) Projects"
+        projectCountView.sizeToFit()
     }
     
     @IBAction func startSearch(_ sender: Any) {
@@ -193,7 +186,7 @@ class ProjectSelectionTableViewController: UITableViewController,
         return true
     }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle,
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle,
                             forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             if let project = projects?[indexPath.row] {
@@ -248,15 +241,6 @@ class ProjectSelectionTableViewController: UITableViewController,
         let navC = UINavigationController(rootViewController: aboutVC)
         navC.modalPresentationStyle = .formSheet
         self.navigationController?.present(navC, animated: true, completion: nil)
-    }
-    
-    func showTipSuccessfulAlert() {
-        let alert = UIAlertController(title: "Thank you ❤️", message: "Thanks a lot for your support, this is very much appreciated. Enjoy the app!\n\n– Frederik", preferredStyle: .alert)
-        let continueButton = UIAlertAction(title: "Continue", style: .default) { _ in
-            
-        }
-        alert.addAction(continueButton)
-        self.present(alert, animated: true)
     }
     
     @IBAction func createNewProject(_ sender: UIBarButtonItem) {
@@ -347,8 +331,8 @@ class ProjectSelectionTableViewController: UITableViewController,
     func createAlertAction(alertController: UIAlertController, type: String, importingFiles: [URL]) -> UIAlertAction {
         return UIAlertAction(title: "Create", style: .default, handler: { (_) in
             if let fileName = alertController.textFields?[0].text {
-                let letters = NSMutableCharacterSet.letters as? NSMutableCharacterSet
-                letters?.addCharacters(in: "-_1234567890")
+                var letters = CharacterSet.letters
+                letters.formUnion(CharacterSet(charactersIn: "-_1234567890"))
                 
                 var message = ""
                 var suggestedName = fileName
@@ -360,7 +344,7 @@ class ProjectSelectionTableViewController: UITableViewController,
                 } else if fileName.contains(" ") {
                     message = "File name should not contain spaces."
                     suggestedName = fileName.replacingOccurrences(of: " ", with: "_")
-                } else if !(letters?.isSuperset(of: CharacterSet.init(charactersIn: fileName)))! {
+                } else if !letters.isSuperset(of: CharacterSet(charactersIn: fileName)) {
                     message = "File name should contain no fancy symbols."
                 } else {
                     

@@ -6,7 +6,7 @@
 //  Copyright © 2020 Frederik Riedel. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 
 @objc class ExternalScreenController: NSObject {
@@ -14,7 +14,7 @@ import Foundation
     static var extWindow: UIWindow?
     
     @objc static func start() {
-        NotificationCenter.default.addObserver(forName: .UIScreenDidConnect, object: nil, queue: nil) { (connectNotice) in
+        NotificationCenter.default.addObserver(forName: UIScreen.didConnectNotification, object: nil, queue: nil) { (connectNotice) in
             let extScreen = connectNotice.object as! UIScreen
             let extScreenBounds = extScreen.bounds
             
@@ -27,7 +27,7 @@ import Foundation
         }
         
         
-        NotificationCenter.default.addObserver(forName: .UIScreenDidDisconnect, object: nil, queue: nil) { (disconnectNotice) in
+        NotificationCenter.default.addObserver(forName: UIScreen.didDisconnectNotification, object: nil, queue: nil) { (disconnectNotice) in
            let extScreen = disconnectNotice.object as! UIScreen
 
            if extScreen == extWindow?.screen

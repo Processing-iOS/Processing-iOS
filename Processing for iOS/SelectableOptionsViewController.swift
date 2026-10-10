@@ -21,7 +21,7 @@ class SelectableOptionsViewController: UIViewController {
     @IBOutlet weak var codeFixSubtitle: UILabel!
     
     
-    @objc var delegate: SelectableOptionsViewControllerDelegate?
+    @objc weak var delegate: SelectableOptionsViewControllerDelegate?
     var range: NSRange!
     var bugType: String!
     var bug: DetectedBug!
@@ -45,14 +45,8 @@ class SelectableOptionsViewController: UIViewController {
         
         tableView.layoutIfNeeded()
         
-        if bug.bugType == .referenceError {
-            codeFixSubtitle.text = "ReferenceError: Can't find variable or function “\(bug.wrongCode)”. Please replace the highlighted code with the correct suggestion from below."
-        } else if bug.bugType == .syntaxErrorVarUsage {
-            codeFixSubtitle.text = "SyntaxError: Cannot use the keyword 'var' as a variable name."
-        } else {
-            codeFixSubtitle.text = "Unknown bug type. Please get in touch with our customer support in order to figure out whats going on."
-        }
-        
+        codeFixSubtitle.text = bug.displayMessage
+
         // Do any additional setup after loading the view.
     }
 
@@ -82,23 +76,13 @@ extension SelectableOptionsViewController: UITableViewDelegate, UITableViewDataS
             return 1
         }
         
-        return selectableOptions.count + 1
+        return selectableOptions.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "replace-cell", for: indexPath) as! CodeFixSuggestionTableViewCell
         
         if indexPath.section == 0 {
-            return cell
-        }
-        
-        if indexPath.row == tableView.numberOfRows(inSection: indexPath.section) - 1 {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 10000, bottom: 0, right: 0)
-            
-            cell.codeFixIcon.image = UIImage(named: "comment_out_icon")
-            cell.codeFixTitleLabel.text = "Comment out."
-            cell.codeFixDetailLabel.text = "Comment out the faulty code to temporarily fix the issue on our path to find a solution."
-            
             return cell
         }
         
@@ -115,7 +99,7 @@ extension SelectableOptionsViewController: UITableViewDelegate, UITableViewDataS
             return .leastNonzeroMagnitude
         }
         
-        return UITableViewAutomaticDimension
+        return UITableView.automaticDimension
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -123,15 +107,6 @@ extension SelectableOptionsViewController: UITableViewDelegate, UITableViewDataS
         if indexPath.section == 0 {
             return
         }
-        
-        // comment out
-        if indexPath.row == tableView.numberOfRows(inSection: indexPath.section) - 1 {
-            
-            delegate?.replaceCharacters(inRange: range, withString: " /* \(bug.wrongCode) */ ")
-            dismiss(animated: true)
-            return
-        }
-        
         
         let suggestion = selectableOptions[indexPath.row]
         delegate?.replaceCharacters(inRange: range, withString: suggestion["suggestion"]!)

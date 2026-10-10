@@ -22,7 +22,7 @@
 @import CoreMotion;
 @import WebKit;
 
-@interface RunSketchViewController : UIViewController<UIWebViewDelegate, WKScriptMessageHandler>
+@interface RunSketchViewController : UIViewController<WKScriptMessageHandler>
     
     @property(nonatomic,strong) SimpleTextProject *project;
     @property(nonatomic,strong) WKWebView *sketchWebView;

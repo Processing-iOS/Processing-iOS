@@ -54,14 +54,13 @@
 }
 
 -(NSString*)htmlPage {
-    NSString *processingjs = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"processing.min" ofType:@"js"] encoding:NSUTF8StringEncoding error:nil];
-    
-    UIImage* appIconImage = [self.appIcon resizeWithNewWidth:192];
-    NSString* base64 = [appIconImage base64];
-    
-    NSString* content = [NSString stringWithFormat: [FRFileManager containerFile], base64, processingjs, _sketchName, self.cummulatedSourceCode];
-    
-    return content;
+    PDEProject *project = [[PDEProject alloc] initWithProjectName:self.sketchName importingFiles:@[]];
+    NSError *error = nil;
+    SketchProgram *program = [project prepareRuntimeAndReturnError:&error];
+    if (!program) {
+        NSLog(@"Cannot prepare sketch: %@", error.localizedDescription);
+    }
+    return program.htmlPage ?: @"";
 }
 
 -(NSDate *)creationDate {

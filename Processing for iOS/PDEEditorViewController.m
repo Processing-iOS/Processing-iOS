@@ -12,6 +12,12 @@
 #import "NSString+LevenshteinDistance.h"
 @import SafariServices;
 
+@interface PDEEditorViewController ()
+@property(nonatomic,copy) NSString *suggestionSource;
+@property(nonatomic,assign) NSRange suggestionRange;
+@property(nonatomic,strong) CodeCompletionController *completionController;
+@end
+
 @implementation PDEEditorViewController
 
 -(instancetype)initWithSourceCodeFile:(SourceCodeFile*)sourceCodeFile {
@@ -36,6 +42,9 @@
     
     
     self.editor.text = self.sourceCodeFile.content;
+    self.completionController = [[CodeCompletionController alloc] initWithTextView:self.editor file:self.sourceCodeFile projectFiles:self.completionFiles ?: @[]];
+    __weak typeof(self) weakSelf = self;
+    self.completionController.didComplete = ^{ [weakSelf textViewDidChange:weakSelf.editor]; };
     
     [self highlightCode];
     [self codeLineIndent];
@@ -51,12 +60,28 @@
     UIKeyCommand* close = [UIKeyCommand keyCommandWithInput:@"w" modifierFlags:UIKeyModifierCommand action:@selector(close) discoverabilityTitle:@"Close Project"];
     UIKeyCommand *esc = [UIKeyCommand keyCommandWithInput: UIKeyInputEscape modifierFlags: 0 action: @selector(close) discoverabilityTitle:@"Close Project"];
     
-    return @[format, run, close, esc];
+    UIKeyCommand *complete = [UIKeyCommand keyCommandWithInput:@" " modifierFlags:UIKeyModifierControl action:@selector(showCompletions)];
+    complete.discoverabilityTitle = @"Complete Code";
+    complete.wantsPriorityOverSystemBehavior = YES;
+    if (self.completionController.hasSuggestions) {
+        UIKeyCommand *accept = [UIKeyCommand keyCommandWithInput:@"\t" modifierFlags:0 action:@selector(acceptCompletion)];
+        accept.wantsPriorityOverSystemBehavior = YES;
+        UIKeyCommand *dismiss = [UIKeyCommand keyCommandWithInput:UIKeyInputEscape modifierFlags:0 action:@selector(dismissCompletions)];
+        dismiss.wantsPriorityOverSystemBehavior = YES;
+        return @[format, run, close, complete, accept, dismiss];
+    }
+    return @[format, run, close, complete, esc];
 }
 
+- (void)showCompletions { [self.completionController show]; }
+- (void)acceptCompletion { [self.completionController acceptFirst]; }
+- (void)dismissCompletions { [self.completionController dismiss]; }
 
 
 -(void)formatCode {
+    [self.completionController dismiss];
+    self.bugToHighlight = nil;
+    self.suggestionSource = nil;
     
     NSArray *codeLines = [self.editor.text componentsSeparatedByString:@"\n"];
     
@@ -205,21 +230,13 @@
             }
         }
         
-        if (self.bugToHighlight) {
-            NSRange range = [text rangeOfString: self.bugToHighlight];
-            
-            NSRange fullRange = [text rangeOfString:[NSString stringWithFormat:@"%@();", self.bugToHighlight]];
-            
-            if (fullRange.location != NSNotFound) {
-                range = fullRange;
-            }
-            
-            [string addAttribute: NSUnderlineStyleAttributeName value: [NSNumber numberWithInt:NSUnderlineStyleThick|NSUnderlineStyleSingle] range: range];
-            [string addAttribute: NSForegroundColorAttributeName value: [UIColor colorNamed:@"redAlertColor"] range: range];
-//            [string addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"SourceCodePro-Semibold" size:18] range:range];
-//            [string addAttribute:NSBackgroundColorAttributeName value: [UIColor colorNamed:@"lightRedAlertColor"] range: range];
+        NSRange errorRange = [self.bugToHighlight rangeInSource:text];
+        if (self.bugToHighlight && errorRange.location != NSNotFound &&
+            errorRange.location <= string.length && errorRange.length <= string.length - errorRange.location) {
+            [string addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleThick) range:errorRange];
+            [string addAttribute:NSForegroundColorAttributeName value:UIColor.systemRedColor range:errorRange];
         }
-        
+
         //Cursorposition speichern
         CGPoint contentOffset = self.editor.contentOffset;
         
@@ -235,27 +252,32 @@
 }
 
 - (void)highlightCompilerErrorOfCode: (DetectedBug*)detectedBug {
-    
-    self.bugToHighlight = detectedBug.wrongCode;
+    [self.completionController dismiss];
+
+    if (![self.sourceCodeFile.fileName isEqualToString:detectedBug.fileName]) return;
+    [self loadViewIfNeeded];
+    NSString *text = self.editor.text ?: @"";
+    NSRange range = [detectedBug rangeInSource:text];
+    if (range.location == NSNotFound || range.location > text.length || range.length > text.length - range.location) return;
+    self.bugToHighlight = detectedBug;
     [self highlightCode];
-    
-    NSString* text = [self.sourceCodeFile content];
-    NSRange range = [text rangeOfString: self.bugToHighlight];
-    
-    NSRange fullRange = [text rangeOfString:[NSString stringWithFormat:@"%@();", self.bugToHighlight]];
-    
-    if (fullRange.location != NSNotFound) {
-        range = fullRange;
-    }
-    [self.editor scrollRangeToVisible: range];
-    
-    
-    UITextPosition *beginning = self.editor.beginningOfDocument;
-    UITextPosition *start = [self.editor positionFromPosition:beginning offset:range.location];
+    self.editor.selectedRange = range;
+    [self.editor scrollRangeToVisible:range];
+    if (detectedBug.bugType != BugTypeReferenceError || detectedBug.wrongCode.length == 0 || range.length == 0) return;
+    if (![[text substringWithRange:range] isEqualToString:detectedBug.wrongCode]) return;
+
+    BOOL isProcessing = [self.sourceCodeFile.fileExtension isEqualToString:@"pde"];
+    BOOL isClearCall = isProcessing && [detectedBug.wrongCode isEqualToString:@"clear"] &&
+        text.length - range.location >= 8 && [[text substringWithRange:NSMakeRange(range.location, 8)] isEqualToString:@"clear();"];
+    if (isClearCall) range.length = 8;
+    self.suggestionSource = text;
+    self.suggestionRange = range;
+
+    UITextPosition *start = [self.editor positionFromPosition:self.editor.beginningOfDocument offset:range.location];
     UITextPosition *end = [self.editor positionFromPosition:start offset:range.length];
+    if (!start || !end) return;
     UITextRange *textRange = [self.editor textRangeFromPosition:start toPosition:end];
-    
-    
+
     NSDictionary* fixSuggestions = @{
         @"clear": @[
                 @{
@@ -269,14 +291,14 @@
                     @"explanation": @"Replace with “background(255);”"
                 }
         ],
-        @"displayWidth": @[
+        @"displaywidth": @[
                 @{
                     @"suggestion": @"screenWidth",
                     @"explanation_subtitle": @"“displayWidth” is not available on iOS. Use “screenWidth“ instead.",
                     @"explanation": @"Replace with “screenWidth”"
                 }
         ],
-        @"displayHeight": @[
+        @"displayheight": @[
                 @{
                     @"suggestion": @"screenHeight",
                     @"explanation_subtitle": @"“displayHeight” is not available on iOS. Use “screenHeight“ instead.",
@@ -309,13 +331,14 @@
         ]
     };
     
-    NSMutableArray<NSDictionary<NSString*, NSString*>*>* suggestionsForWrongCode = [NSMutableArray arrayWithArray:fixSuggestions[detectedBug.wrongCode.lowercaseString]];
+    NSArray *knownFixes = isProcessing ? fixSuggestions[detectedBug.wrongCode.lowercaseString] : nil;
+    if ([detectedBug.wrongCode isEqualToString:@"clear"] && !isClearCall) knownFixes = nil;
+    NSMutableArray<NSDictionary<NSString*, NSString*>*> *suggestionsForWrongCode = [NSMutableArray arrayWithArray:knownFixes ?: @[]];
     
-    NSArray<NSString*>* legitCommands = @[
+    NSMutableArray<NSString*>* legitCommands = [NSMutableArray arrayWithArray:@[
         @"cos",
         @"sin",
         @"float",
-        @"double",
         @"int",
         @"fill",
         @"stroke",
@@ -331,16 +354,21 @@
         @"endShape",
         @"beginShape",
         @"mousePressed",
-        @"screenWidth",
-        @"screenHeight",
-        @"background"
-    ];
+        @"background",
+        @"noLoop",
+        @"random",
+        @"translate",
+        @"rotate",
+        @"scale"
+    ]];
+    [legitCommands addObjectsFromArray:isProcessing ? @[@"double", @"screenWidth", @"screenHeight"] :
+        @[@"windowWidth", @"windowHeight", @"createCanvas", @"push", @"pop", @"clear"]];
     
     
     for (NSString* suggestion in legitCommands) {
         
         NSUInteger distance = [suggestion levenshteinDistanceTo: detectedBug.wrongCode];
-        if (distance < 3) {
+        if (!isClearCall && distance > 0 && distance < 3) {
             
             [suggestionsForWrongCode addObject:@{
                 @"suggestion": suggestion,
@@ -353,6 +381,8 @@
     
     
     
+
+    if (suggestionsForWrongCode.count == 0 || self.presentedViewController) return;
 
     SelectableOptionsViewController* selectOptionsVC = [[SelectableOptionsViewController alloc] initWithSelectableOptions:suggestionsForWrongCode forRange:range bug: detectedBug];
     
@@ -378,9 +408,12 @@
 }
 
 -(void)replaceCharactersInRange:(NSRange)range withString:(NSString *)string {
-    NSString* currentText = self.sourceCodeFile.content;
-    NSString* newText = [currentText stringByReplacingCharactersInRange:range withString:string];
-    self.editor.text = newText;
+    NSString *currentText = self.editor.text ?: @"";
+    if (![currentText isEqualToString:self.suggestionSource] || !NSEqualRanges(range, self.suggestionRange) ||
+        range.location == NSNotFound || range.location > currentText.length || range.length > currentText.length - range.location) return;
+    self.bugToHighlight = nil;
+    self.suggestionSource = nil;
+    self.editor.text = [currentText stringByReplacingCharactersInRange:range withString:string];
     [self highlightCode];
     [self saveCode];
 }
@@ -413,19 +446,40 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated {
+    [self.editor resignFirstResponder];
+    [self.completionController dismiss];
     //if ([self.navigationController.viewControllers indexOfObject:self]==NSNotFound) {
     [self saveCode];
     //}
     [super viewWillDisappear:animated];
 }
 
--(void)saveCode {
-    [self.sourceCodeFile saveWithNewContent: self.editor.text];
+-(BOOL)saveCode {
+    // A failed read must not replace the original file with an empty editor buffer.
+    if (!self.sourceCodeFile.content && self.sourceCodeFile.readError) return NO;
+    return [self.sourceCodeFile saveWithNewContent:self.editor.text];
 }
 
 -(void)textViewDidChange:(UITextView *) textView {
+    self.bugToHighlight = nil;
+    self.suggestionSource = nil;
     [self highlightCode];
     [self codeLineIndent];
+    [self.completionController scheduleUpdate];
+}
+
+- (void)textViewDidChangeSelection:(UITextView *)textView {
+    [self.completionController scheduleUpdate];
+}
+
+- (void)textViewDidBeginEditing:(UITextView *)textView {
+    [self.navigationController setToolbarHidden:YES animated:YES];
+    [self.completionController scheduleUpdate];
+}
+
+- (void)textViewDidEndEditing:(UITextView *)textView {
+    [self.completionController dismiss];
+    if (self.view.window) [self.navigationController setToolbarHidden:NO animated:YES];
 }
 
 -(BOOL)canBecomeFirstResponder {
@@ -438,7 +492,7 @@
 
 -(void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [self.navigationController setToolbarHidden:NO animated:YES];
+    [self.navigationController setToolbarHidden:self.editor.isFirstResponder animated:YES];
 }
 
 @end

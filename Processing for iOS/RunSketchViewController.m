@@ -9,8 +9,25 @@
 #import "RunSketchViewController.h"
 #import "Processing_for_iOS-Swift.h"
 
+// WKUserContentController retains its handlers; forwarding weakly avoids retaining
+// the runner, WebKit process, and motion callbacks after leaving the sketch.
+@interface SketchMessageHandler : NSObject <WKScriptMessageHandler>
+@property(nonatomic,weak) id<WKScriptMessageHandler> target;
+@end
+@implementation SketchMessageHandler
+- (void)userContentController:(WKUserContentController *)controller didReceiveScriptMessage:(WKScriptMessage *)message {
+    [self.target userContentController:controller didReceiveScriptMessage:message];
+}
+@end
+
 @interface RunSketchViewController () <WKNavigationDelegate, UIGestureRecognizerDelegate>
 @property(nonatomic,strong) NSURL *runtimeHTMLURL;
+@property(nonatomic,strong) SketchProgram *program;
+@property(nonatomic,strong) DetectedBug *pendingBug;
+@property(nonatomic,strong) NSTimer *watchdog;
+@property(nonatomic,assign) NSTimeInterval lastRuntimeActivity;
+@property(nonatomic,assign) BOOL started;
+@property(nonatomic,assign) BOOL failed;
 @property(nonatomic,assign) BOOL previousInteractivePopGestureEnabled;
 @property(nonatomic,assign) BOOL previousInteractiveContentPopGestureEnabled;
 @property(nonatomic,weak) id<UIGestureRecognizerDelegate> previousInteractivePopGestureDelegate;
@@ -20,218 +37,174 @@
 
 -(id)initWithSimpleTextProject:(SimpleTextProject*)project {
     self = [super initWithNibName:nil bundle:nil];
-    
-    if(self) {
-        
+    if (self) {
         self.project = project;
-        self.title = self.project.name;
-        
-        WKWebViewConfiguration* configuration = [WKWebViewConfiguration new];
-        WKUserContentController* contentController = [WKUserContentController new];
-        configuration.userContentController = contentController;
-        configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
-        configuration.allowsInlineMediaPlayback = YES;
-        [configuration.userContentController addScriptMessageHandler:self name: @"iosbridge"];
-        [configuration.userContentController addScriptMessageHandler:self name: @"error"];
-        [[configuration preferences] setValue: [NSNumber numberWithBool:YES] forKey:@"allowFileAccessFromFileURLs"];
-        
-        self.sketchWebView = [[WKWebView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) configuration:configuration];
-        self.sketchWebView.navigationDelegate = self;
-
-        
-        [self.view addSubview:self.sketchWebView];
-        
-        self.view.backgroundColor = [UIColor blackColor];
-        
-        self.sketchWebView.backgroundColor=[UIColor clearColor];
-        self.sketchWebView.opaque=NO;
-        
-        self.sketchWebView.scrollView.scrollEnabled = NO;
-        self.sketchWebView.scrollView.bounces = NO;
-        
-        
-        NSString* content = [[self project] htmlPage];
-        
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSURL *projectURL = self.project.folder;
-        NSURL *dataURL = [projectURL URLByAppendingPathComponent:@"data"];
-        if (![fileManager fileExistsAtPath:dataURL.path]) {
-            [fileManager createDirectoryAtURL:dataURL withIntermediateDirectories:YES attributes:nil error:nil];
-        }
-
-        self.runtimeHTMLURL = [projectURL URLByAppendingPathComponent:@"__runtime_preview__.html"];
-        NSError *writeError = nil;
-        BOOL didWriteFile = [content writeToURL:self.runtimeHTMLURL atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
-
-        if (didWriteFile) {
-            [self.sketchWebView loadFileURL:self.runtimeHTMLURL allowingReadAccessToURL:projectURL];
-        } else {
-            NSLog(@"Failed to write runtime HTML: %@", writeError.localizedDescription);
-            [self.sketchWebView loadHTMLString:content baseURL:projectURL];
-        }
-        
-        self.motionManager = [CMMotionManager new];
-
-        if ([project.sourceCodeExtension isEqualToString:@"pde"]) {
-            [self startAccelerometerListener];
-            [self startGyroscopeListener];
-        }
-        
-        
-//        UIBarButtonItem* startARSession = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"arkit"] style:UIBarButtonItemStylePlain target:self action:@selector(startARSession)];
-        
-        
-        
-        UIBarButtonItem *moreButton;
-        if (@available(iOS 13.0, *)) {
-            moreButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"ellipsis.circle"]
-                                                          style:UIBarButtonItemStylePlain
-                                                         target:self
-                                                         action:@selector(showRunOptions:)];
-        } else {
-            moreButton = [[UIBarButtonItem alloc] initWithTitle:@"•••"
-                                                          style:UIBarButtonItemStylePlain
-                                                         target:self
-                                                         action:@selector(showRunOptions:)];
-        }
-        [[self navigationItem] setRightBarButtonItems:@[moreButton]];
+        self.title = project.name;
     }
-
     return self;
 }
 
--(void)startARSession {
-    
-}
-
--(void) addToHomeScreen {
-    SelectAppIconViewController *addToHomeVC = [[SelectAppIconViewController alloc] init];
-    addToHomeVC.project = self.project;
-    UINavigationController * navC = [[UINavigationController alloc] initWithRootViewController:addToHomeVC];
-    navC.modalPresentationStyle = UIModalPresentationFormSheet;
-    [self.navigationController presentViewController:navC animated:YES completion:nil];
-}
-
--(void)showRunOptions:(UIBarButtonItem *)sender {
-    UIAlertController *menu = [UIAlertController alertControllerWithTitle:nil
-                                                                  message:nil
-                                                           preferredStyle:UIAlertControllerStyleActionSheet];
-
-    UIAlertAction *addToHome = [UIAlertAction actionWithTitle:NSLocalizedString(@"Add to Homescreen…", @"")
-                                                         style:UIAlertActionStyleDefault
-                                                       handler:^(__unused UIAlertAction * _Nonnull action) {
-        [self addToHomeScreen];
-    }];
-
-    UIAlertAction *cancel = [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"")
-                                                     style:UIAlertActionStyleCancel
-                                                   handler:nil];
-
-    [menu addAction:addToHome];
-    [menu addAction:cancel];
-
-    UIPopoverPresentationController *popover = menu.popoverPresentationController;
-    if (popover) {
-        popover.barButtonItem = sender;
+- (void)startSketch {
+    self.started = YES;
+    self.view.backgroundColor = UIColor.blackColor;
+    NSError *error = nil;
+    self.program = [self.project prepareRuntimeAndReturnError:&error];
+    if (!self.program) {
+        [self reportError:error.localizedDescription ?: @"Cannot read this project."];
+        return;
+    }
+    if (self.program.preflightBug) {
+        [self reportBug:self.program.preflightBug];
+        return;
     }
 
-    [self presentViewController:menu animated:YES completion:nil];
-}
-    
-    
--(void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    
-    if ([message.name isEqualToString:@"error"]) {
-        NSString* errorMessage = message.body[@"message"];
-        
-        DetectedBug* bug = [CodeErrorDetectionEngine bugFromString:errorMessage];
-        
-        if (bug) {
-            
-            UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Faulty Code Detected" message:@"Cannot run your project because there‘s a problem with your code. Processing can help you to figure out which part of your code is faulty." preferredStyle: UIAlertControllerStyleAlert];
-            
-            UIAlertAction* cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-                
-            }];
-            
-            UIAlertAction* subscribe = [UIAlertAction actionWithTitle:@"Show Bug in Code" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self.delegate didDetectBug:bug];
-                [[self navigationController] popViewControllerAnimated:true];
-            }];
-            
-            [alert addAction:cancel];
-            [alert addAction:subscribe];
-            
-            [[self navigationController] presentViewController:alert animated:YES completion:nil];
-        } else {
-            NSLog(@"unknown error: %@", message.body);
+    WKWebViewConfiguration *configuration = [WKWebViewConfiguration new];
+    configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+    configuration.allowsInlineMediaPlayback = YES;
+    // The bundled p5.sound runtime and local data loaders use file-origin requests.
+    [configuration.preferences setValue:@YES forKey:@"allowFileAccessFromFileURLs"];
+    SketchMessageHandler *handler = [SketchMessageHandler new];
+    handler.target = self;
+    [configuration.userContentController addScriptMessageHandler:handler name:@"iosbridge"];
+    [configuration.userContentController addScriptMessageHandler:handler name:@"error"];
+    self.sketchWebView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:configuration];
+    self.sketchWebView.navigationDelegate = self;
+    self.sketchWebView.backgroundColor = UIColor.clearColor;
+    self.sketchWebView.opaque = NO;
+    self.sketchWebView.scrollView.scrollEnabled = NO;
+    self.sketchWebView.scrollView.bounces = NO;
+    [self.view addSubview:self.sketchWebView];
+
+    NSURL *projectURL = self.project.folder;
+    NSURL *dataURL = [projectURL URLByAppendingPathComponent:@"data" isDirectory:YES];
+    NSFileManager *files = NSFileManager.defaultManager;
+    if (![files createDirectoryAtURL:dataURL withIntermediateDirectories:YES attributes:nil error:&error]) {
+        [self reportError:[NSString stringWithFormat:@"Cannot prepare the sketch data folder. %@", error.localizedDescription]];
+        return;
+    }
+    NSString *runtimeName = [NSString stringWithFormat:@"__runtime_%@.html", NSUUID.UUID.UUIDString];
+    self.runtimeHTMLURL = [projectURL URLByAppendingPathComponent:runtimeName];
+    if (![self.program.htmlPage writeToURL:self.runtimeHTMLURL atomically:YES encoding:NSUTF8StringEncoding error:&error]) {
+        [self reportError:[NSString stringWithFormat:@"Cannot prepare the sketch. %@", error.localizedDescription]];
+        return;
+    }
+    self.lastRuntimeActivity = NSProcessInfo.processInfo.systemUptime;
+    __weak typeof(self) weakSelf = self;
+    self.watchdog = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer *timer) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) { [timer invalidate]; return; }
+        NSTimeInterval now = NSProcessInfo.processInfo.systemUptime;
+        if (UIApplication.sharedApplication.applicationState != UIApplicationStateActive) {
+            self.lastRuntimeActivity = now;
+        } else if (now - self.lastRuntimeActivity > 10) {
+            [self reportError:@"The sketch stopped responding for 10 seconds. Check for an infinite loop or a long-running operation, then run it again."];
         }
-    } else {
-        NSLog(@"didReceiveScriptMessage: %@", message.body);
-    }
+    }];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetWatchdog) name:UIApplicationDidBecomeActiveNotification object:nil];
+    [self.sketchWebView loadFileURL:self.runtimeHTMLURL allowingReadAccessToURL:projectURL];
 }
-    
-    
--(void) startAccelerometerListener {
-    if([self.motionManager isAccelerometerAvailable]) {
-        [self.motionManager setAccelerometerUpdateInterval:0.02];
-        
-        [self.motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue mainQueue]
-                                                 withHandler:^(CMAccelerometerData * _Nullable accelerometerData, NSError * _Nullable error) {
-                                                     
-                                                     [self.sketchWebView evaluateJavaScript:[NSString stringWithFormat:@"var pjs = Processing.getInstanceById('Sketch');"
-                                                                                             "pjs.accelerometerUpdated(%f,%f,%f);", accelerometerData.acceleration.x, accelerometerData.acceleration.y, accelerometerData.acceleration.z] completionHandler:^(id _Nullable result, NSError * _Nullable error) {
 
-                                                         if ([error.description containsString:@"pjs.accelerometerUpdated"]) {
-                                                             [self.motionManager stopAccelerometerUpdates];
-                                                         }
-                                                         
-                                                         NSLog(@"%@, %@",result, error.description);
+- (void)resetWatchdog {
+    self.lastRuntimeActivity = NSProcessInfo.processInfo.systemUptime;
+}
 
-
-                                                     }];
-
-                                                     
-                                                 }];
-    } else {
-         NSLog(@"Accelerometer not Available!");
+- (void)userContentController:(WKUserContentController *)controller didReceiveScriptMessage:(WKScriptMessage *)message {
+    if (self.failed || !message.frameInfo.isMainFrame) return;
+    if ([message.name isEqualToString:@"error"]) {
+        DetectedBug *bug = [self.program bugFromMessage:message.body];
+        if (bug) [self reportBug:bug];
+    } else if ([message.name isEqualToString:@"iosbridge"] && [message.body isKindOfClass:NSDictionary.class]) {
+        id event = message.body[@"event"];
+        if ([event isEqual:@"heartbeat"] || [event isEqual:@"ready"]) {
+            [self resetWatchdog];
+            if ([event isEqual:@"ready"] && !self.motionManager && [self.project.sourceCodeExtension isEqualToString:@"pde"]) {
+                [self startMotionListeners];
+            }
+        }
     }
 }
 
--(void) startGyroscopeListener {
-    //Gyroscope
-    if([self.motionManager isGyroAvailable])
-    {
-        
-            
-            [self.motionManager setGyroUpdateInterval:0.02];
-            
-            /* Add on a handler block object */
-            
-            /* Receive the gyroscope data on this block */
-            [self.motionManager startGyroUpdatesToQueue:[NSOperationQueue mainQueue]
-                                            withHandler:^(CMGyroData *gyroData, NSError *error)
-             {
+- (void)reportError:(NSString *)message {
+    [self reportBug:[CodeErrorDetectionEngine bugFromString:message]];
+}
 
-                 [self.sketchWebView evaluateJavaScript:[NSString stringWithFormat:@"var pjs = Processing.getInstanceById('Sketch');"
-                                                         "pjs.gyroscopeUpdated(%f,%f,%f);", gyroData.rotationRate.x, gyroData.rotationRate.y, gyroData.rotationRate.z] completionHandler:^(id _Nullable result, NSError * _Nullable error) {
-                     
-                     
-                     if ([error.description containsString:@"pjs.gyroscopeUpdated"]) {
-                         [self.motionManager stopGyroUpdates];
-                     }
-                     NSLog(@"%@, %@",result, error.description);
-                     
-                 }];
-             }];
+- (void)reportBug:(DetectedBug *)bug {
+    if (self.failed || !bug) return;
+    self.failed = YES;
+    self.pendingBug = bug;
+    [self stopRuntime];
+    [self presentPendingBug];
+}
+
+- (void)presentPendingBug {
+    if (!self.pendingBug || !self.view.window || self.presentedViewController) return;
+    DetectedBug *bug = self.pendingBug;
+    self.pendingBug = nil;
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Sketch Error" message:bug.displayMessage preferredStyle:UIAlertControllerStyleAlert];
+    __weak typeof(self) weakSelf = self;
+    [alert addAction:[UIAlertAction actionWithTitle:@"Copy Error" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        UIPasteboard.generalPasteboard.string = bug.displayMessage;
+        [weakSelf.navigationController popViewControllerAnimated:YES];
+    }]];
+    NSString *actionTitle = bug.hasSourceLocation ? @"Show in Code" : @"Back to Code";
+    [alert addAction:[UIAlertAction actionWithTitle:actionTitle style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (bug.hasSourceLocation) [self.delegate didDetectBug:bug];
+        [self.navigationController popViewControllerAnimated:YES];
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)startMotionListeners {
+    self.motionManager = [CMMotionManager new];
+    __weak typeof(self) weakSelf = self;
+    if (self.motionManager.accelerometerAvailable) {
+        self.motionManager.accelerometerUpdateInterval = 0.02;
+        [self.motionManager startAccelerometerUpdatesToQueue:NSOperationQueue.mainQueue withHandler:^(CMAccelerometerData *data, NSError *error) {
+            if (data && !error) [weakSelf sendMotion:@"accelerometerUpdated" x:data.acceleration.x y:data.acceleration.y z:data.acceleration.z];
+        }];
     }
-    else
-    {
-        NSLog(@"Gyroscope not Available!");
+    if (self.motionManager.gyroAvailable) {
+        self.motionManager.gyroUpdateInterval = 0.02;
+        [self.motionManager startGyroUpdatesToQueue:NSOperationQueue.mainQueue withHandler:^(CMGyroData *data, NSError *error) {
+            if (data && !error) [weakSelf sendMotion:@"gyroscopeUpdated" x:data.rotationRate.x y:data.rotationRate.y z:data.rotationRate.z];
+        }];
     }
 }
 
+- (void)sendMotion:(NSString *)callback x:(double)x y:(double)y z:(double)z {
+    if (self.failed) return;
+    NSString *script = [NSString stringWithFormat:@"SketchRuntime.motion('%@', %f, %f, %f)", callback, x, y, z];
+    __weak typeof(self) weakSelf = self;
+    [self.sketchWebView evaluateJavaScript:script completionHandler:^(id result, NSError *error) {
+        if (error.code == WKErrorJavaScriptExceptionOccurred) {
+            [weakSelf reportError:error.userInfo[@"WKJavaScriptExceptionMessage"] ?: error.localizedDescription];
+        }
+    }];
+}
 
+- (void)stopRuntime {
+    [self.watchdog invalidate];
+    self.watchdog = nil;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
+    [self.motionManager stopGyroUpdates];
+    [self.motionManager stopAccelerometerUpdates];
+    self.motionManager = nil;
+    [self.sketchWebView.configuration.userContentController removeScriptMessageHandlerForName:@"error"];
+    [self.sketchWebView.configuration.userContentController removeScriptMessageHandlerForName:@"iosbridge"];
+    self.sketchWebView.navigationDelegate = nil;
+    [self.sketchWebView stopLoading];
+    [self.sketchWebView removeFromSuperview];
+    self.sketchWebView = nil;
+    if (self.runtimeHTMLURL) {
+        [NSFileManager.defaultManager removeItemAtURL:self.runtimeHTMLURL error:nil];
+        self.runtimeHTMLURL = nil;
+    }
+}
+
+- (void)dealloc {
+    [self stopRuntime];
+}
 
 -(void)viewWillLayoutSubviews {
     self.sketchWebView.frame=CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
@@ -248,22 +221,27 @@
         }
     }
 
-    if (self.runtimeHTMLURL) {
-        [[NSFileManager defaultManager] removeItemAtURL:self.runtimeHTMLURL error:nil];
-        self.runtimeHTMLURL = nil;
+    [super viewWillDisappear:animated];
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    if (self.isMovingFromParentViewController || self.isBeingDismissed ||
+        ![self.navigationController.viewControllers containsObject:self]) {
+        [self stopRuntime];
     }
-    self.sketchWebView = nil;
-    [self.motionManager stopGyroUpdates];
-    [self.motionManager stopAccelerometerUpdates];
-    self.motionManager = nil;
 }
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
-    NSLog(@"WebView provisional navigation failed: %@", error.localizedDescription);
+    if (error.code != NSURLErrorCancelled) [self reportError:error.localizedDescription];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
-    NSLog(@"WebView navigation failed: %@", error.localizedDescription);
+    if (error.code != NSURLErrorCancelled) [self reportError:error.localizedDescription];
+}
+
+- (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView {
+    [self reportError:@"The sketch runtime stopped unexpectedly. The sketch may have used too much memory. Return to the code and try again."];
 }
 
 -(void)viewWillAppear:(BOOL)animated {
@@ -273,6 +251,8 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+    if (!self.started) [self startSketch];
+    [self presentPendingBug];
     if (self.navigationController.interactivePopGestureRecognizer) {
         self.previousInteractivePopGestureDelegate = self.navigationController.interactivePopGestureRecognizer.delegate;
         self.previousInteractivePopGestureEnabled = self.navigationController.interactivePopGestureRecognizer.enabled;

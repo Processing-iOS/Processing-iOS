@@ -1,32 +1,24 @@
 PODS:
-  - AutoInsetter (1.3.0)
   - "NSString+LevenshteinDistance (0.0.1)"
-  - Pageboy (2.6.1)
-  - Swifter (1.5.0)
-  - Tabman (1.10.2):
-    - AutoInsetter (~> 1.3.0)
-    - Pageboy (~> 2.6.0)
+  - Pageboy (4.2.0)
+  - Tabman (3.2.0):
+    - Pageboy (~> 4.2.0)
 
 DEPENDENCIES:
   - "NSString+LevenshteinDistance"
-  - Swifter (~> 1.5.0)
-  - Tabman (~> 1.0)
+  - Tabman (~> 3.2)
 
 SPEC REPOS:
   trunk:
-    - AutoInsetter
     - "NSString+LevenshteinDistance"
     - Pageboy
-    - Swifter
     - Tabman
 
 SPEC CHECKSUMS:
-  AutoInsetter: 0ea4dddc17042ab45114ec5d5980764efae98584
   "NSString+LevenshteinDistance": d8dd9edc346e8a6444c6bce79e4cd94577cae4ca
-  Pageboy: c2a25d1c280e9b622014b692626f1ff9298e0ad2
-  Swifter: e71dd674404923d7f03ebb03f3f222d1c570bc8e
-  Tabman: 6cff148419c5d8812d0e9f08f93b6f1c6ba54502
+  Pageboy: 7f7886f61c76633df635861bf7839caf2cabdb3e
+  Tabman: 49f9181a2bfe5c29d002864dac2de8e0b7ea9180
 
-PODFILE CHECKSUM: 07c445f3e0faf6a2f76281cc57d9960eb2432ba3
+PODFILE CHECKSUM: ae7f95927f2570b33cd4d8b7043d0c0ca8e0401f
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

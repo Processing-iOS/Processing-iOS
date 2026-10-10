@@ -11,14 +11,17 @@ import Tabman
 import Pageboy
 import SafariServices
 
-class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSource {
+class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSource, TMBarDataSource {
     
     let project: SimpleTextProject!
+    private var editorFiles: [SourceCodeFile]
+    private var pendingBug: DetectedBug?
     
     init(withProject project: SimpleTextProject) {
         self.project = project
+        self.editorFiles = project.sourceCodeFiles
         super.init(nibName: "EditorTabViewController", bundle: Bundle.main)
-        self.automaticallyAdjustsChildScrollViewInsets = true
+        self.automaticallyAdjustsChildInsets = true
         self.dataSource = self
         
         
@@ -32,7 +35,6 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.bar.style = .scrollingButtonBar
         
         self.title = self.project.name
         
@@ -83,37 +85,30 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
             object: nil
         )
         
-        self.bar.appearance = TabmanBar.Appearance({ (appearance) in
-            
-            // customize appearance here
-            appearance.state.selectedColor = UIColor.white
-            appearance.state.color = UIColor.white
-            appearance.style.background = .solid(color: UIColor.processing())
-            appearance.indicator.color = UIColor.white
-            //appearance.state.color = UIColor.processing()
-            appearance.indicator.isProgressive = false
-        })
-        
-        reloadBarTitles()
-    }
-    
-    func reloadBarTitles() {
-        var titles = [Item]()
-        for sourceCodeFile in project.sourceCodeFiles {
-            titles.append(Item(title: "\(sourceCodeFile.fileName)"))
+        let bar = TMBar.ButtonBar()
+        bar.layout.transitionStyle = .snap
+        bar.buttons.customize { button in
+            button.tintColor = .white
+            button.selectedTintColor = .white
         }
-        if titles.count > 0 {
-            self.bar.items = titles
-        }
+        bar.backgroundView.style = .flat(color: UIColor.processing())
+        bar.indicator.tintColor = .white
+        addBar(bar, dataSource: self, at: .top)
     }
-    
+
+    func barItem(for bar: TMBar, at index: Int) -> TMBarItemable {
+        return TMBarItem(title: editorFiles[index].fileName)
+    }
+
     func numberOfViewControllers(in pageboyViewController: PageboyViewController) -> Int {
-        return project.sourceCodeFiles.count
+        return editorFiles.count
     }
     
     func viewController(for pageboyViewController: PageboyViewController,
                         at index: PageboyViewController.PageIndex) -> UIViewController? {
-        return PDEEditorViewController(sourceCodeFile: project.sourceCodeFiles[index])
+        let editor = PDEEditorViewController(sourceCodeFile: editorFiles[index])
+        editor?.completionFiles = editorFiles
+        return editor
     }
     
     func defaultPage(for pageboyViewController: PageboyViewController) -> PageboyViewController.Page? {
@@ -147,7 +142,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
                 discoverabilityTitle: "Close Project"
             ),
             UIKeyCommand(
-                input: UIKeyInputEscape,
+                input: UIKeyCommand.inputEscape,
                 modifierFlags: UIKeyModifierFlags(rawValue: 0),
                 action: #selector(EditorTabViewController.close),
                 discoverabilityTitle: "Close Project"
@@ -182,7 +177,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     }
     
     @objc func close() {
-        saveCode()
+        guard saveCode() else { return }
         self.navigationController?.popViewController(animated: true)
     }
     
@@ -192,56 +187,20 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     }
     
     @objc func share(sender: UIBarButtonItem) {
-        
-        saveCode()
-        
-        guard let view = sender.value(forKey: "view") as? UIView else {
-            return
+        guard saveCode() else { return }
+        let sourceCodeURLs = project.sourceCodeFiles.map {
+            URL(fileURLWithPath: $0.filePath)
         }
-        
-        let actionSheet = UIAlertController(title: "Export", message: "Select how you‘d like to export your project.", preferredStyle: .actionSheet)
-        actionSheet.modalPresentationStyle = .popover
-        
-        
-        let homescreen = UIAlertAction(title: "Add App to Homescreen", style: .default) { (_) in
-            if #available(iOS 11.0, *) {
-                let homeScreenShareVC = SelectAppIconViewController()
-                homeScreenShareVC.project = self.project
-                let navC = UINavigationController(rootViewController: homeScreenShareVC)
-                navC.modalPresentationStyle = .formSheet
-                self.present(navC, animated: true)
-            }
-        }
-        
-        let exportFolder = UIAlertAction(title: "Export Project", style: .default) { (_) in
-            let sourceCodeURLs = self.project.sourceCodeFiles.map { (sourceCodeFile) -> URL in
-                return URL(fileURLWithPath: sourceCodeFile.filePath)
-            }
-            let activityViewController = UIActivityViewController(activityItems: sourceCodeURLs, applicationActivities: nil)
-            activityViewController.popoverPresentationController?.sourceView = view
-            self.present(activityViewController, animated: true)
-        }
-        
-        let cancel = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
-            
-        }
-        
-        
-        actionSheet.addAction(homescreen)
-        actionSheet.addAction(exportFolder)
-        actionSheet.addAction(cancel)
-        
-        if let popover = actionSheet.popoverPresentationController {
-            popover.sourceView = view
-            popover.sourceRect = view.frame
-        }
-        
-        present(actionSheet, animated: true)
-        
+        let activityViewController = UIActivityViewController(
+            activityItems: sourceCodeURLs,
+            applicationActivities: nil
+        )
+        activityViewController.popoverPresentationController?.barButtonItem = sender
+        present(activityViewController, animated: true)
     }
-    
+
     @objc func runSketch() {
-        saveCode()
+        guard saveCode() else { return }
         let runVC = RunSketchViewController(simpleTextProject: project)!
         runVC.delegate = self
         navigationController?.pushViewController(runVC, animated: true)
@@ -252,12 +211,28 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         pdeFileViewController?.formatCode()
     }
     
-    @objc func saveCode() {
-        
-        let pdeFileViewController = currentViewController as? PDEEditorViewController
-        pdeFileViewController?.saveCode()
+    @discardableResult
+    @objc func saveCode() -> Bool {
+        let editor = currentViewController as? PDEEditorViewController
+        let currentSaved = editor?.saveCode() ?? true
+        // A tab may have failed to save while switching away from it. Retry its retained buffer.
+        for file in editorFiles where file.saveError != nil {
+            file.save()
+        }
+        if let file = editorFiles.first(where: { $0.saveError != nil || $0.readError != nil }) {
+            let error = file.saveError ?? file.readError
+            if viewIfLoaded?.window != nil && presentedViewController == nil {
+                let alert = UIAlertController(title: "Cannot Save Code",
+                    message: "\(file.fileName): \(error?.localizedDescription ?? "The file could not be saved.")\n\nYour edits are still in the editor. The sketch has not been run.",
+                    preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                present(alert, animated: true)
+            }
+            return false
+        }
+        return currentSaved
     }
-    
+
     @objc func showFolderContent() {
         let folderContenVC = FolderContentBrowserTableViewController(
             withPath: self.project.folder.path,
@@ -269,7 +244,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     }
     
     @objc func addNewPDEFile() {
-        saveCode()
+        guard saveCode() else { return }
         addNewFileName(withErrorMessage: nil, predefinedFileName: nil)
     }
     
@@ -309,8 +284,8 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
             if let newFileNameTextField = fileNameAlertController.textFields?.first {
                 if let newFileName = newFileNameTextField.text {
                     
-                    let letters = NSMutableCharacterSet.letters as? NSMutableCharacterSet
-                    letters?.addCharacters(in: "-_1234567890")
+                    var letters = CharacterSet.letters
+                    letters.formUnion(CharacterSet(charactersIn: "-_1234567890"))
                     
                     if newFileName.contains(" ") {
                         self.addNewFileName(
@@ -327,7 +302,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
                             withErrorMessage: "A file with the same name already exists. Please chose another name.",
                             predefinedFileName: newFileName
                         )
-                    } else if !(letters?.isSuperset(of: CharacterSet.init(charactersIn: newFileName)))! {
+                    } else if !letters.isSuperset(of: CharacterSet(charactersIn: newFileName)) {
                         self.addNewFileName(
                             withErrorMessage: "Please don't use any fancy characters in the file name.",
                             predefinedFileName: newFileName
@@ -338,8 +313,8 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
                         let className = newFileName.capitalized
                         let newClassCode = "class \(className) {\n   \n   \(className)() {\n      \n   }\n}"
                         self.project.createNewFile(withName: newFileName, content: newClassCode)
-                        self.reloadPages()
-                        self.reloadBarTitles()
+                        self.editorFiles = self.project.sourceCodeFiles
+                        self.reloadData()
                     }
                 }
             }
@@ -355,29 +330,24 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
 }
 
 extension EditorTabViewController: RunSketchViewControllerDelegate {
-    
     func didDetect(_ bug: DetectedBug!) {
-        var fileIndex: Int?
-        project.sourceCodeFiles.enumerated().forEach { (iterator) in
-            
-            let index = iterator.offset
-            let file = iterator.element
-            
-            let code = file.content!.lowercased()
-            
-            if code.contains(bug.wrongCode.lowercased()) {
-                fileIndex = index
-            }
+        pendingBug = bug
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard let bug = pendingBug else { return }
+        pendingBug = nil
+        guard let fileIndex = editorFiles.firstIndex(where: { $0.fileName == bug.fileName }) else { return }
+        let highlight: () -> Void = { [weak self] in
+            guard let editor = self?.currentViewController as? PDEEditorViewController else { return }
+            editor.highlightCompilerError(ofCode: bug)
         }
-        
-        if let fileIndex = fileIndex {
-            let page = PageboyViewController.Page.at(index: fileIndex)
-            scrollToPage(page, animated: true) { (newViewController, animated, finished) in
-                if let editor = self.currentViewController as? PDEEditorViewController {
-                    Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { (_) in
-                        editor.highlightCompilerError(ofCode: bug)
-                    }
-                }
+        if currentIndex == fileIndex {
+            highlight()
+        } else {
+            scrollToPage(.at(index: fileIndex), animated: false) { _, _, finished in
+                if finished { highlight() }
             }
         }
     }

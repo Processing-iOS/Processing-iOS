@@ -20,7 +20,7 @@
                 <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="frederik_riedel_neu" translatesAutoresizingMaskIntoConstraints="NO" id="OAs-Y5-Dw8">
                     <rect key="frame" x="0.0" y="0.0" width="1194" height="834"/>
                 </imageView>
-                <view alpha="0.59999999999999998" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Q4j-i4-VUi">
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Q4j-i4-VUi">
                     <rect key="frame" x="0.0" y="0.0" width="1194" height="834"/>
                     <subviews>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Developed by Frederik Riedel in Berlin and Barcelona." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="T2n-i2-mKv">
@@ -51,16 +51,16 @@
                                 </button>
                             </subviews>
                         </stackView>
-                        <view alpha="0.71999999999999997" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="D8b-nL-QxY">
+                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="D8b-nL-QxY">
                             <rect key="frame" x="90" y="549" width="1014" height="140"/>
                             <subviews>
-                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sponsored by one sec" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ckl-jd-HvR">
+                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Processing for iOS is completely free." textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ckl-jd-HvR">
                                     <rect key="frame" x="16" y="14" width="982" height="22"/>
                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="19"/>
                                     <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <nil key="highlightedColor"/>
                                 </label>
-                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="one sec is proven to help you stay focused on learning and programming reducing mindless social media scrolling." textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Kp-fV-0Wk">
+                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sponsored by one sec." textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Kp-fV-0Wk">
                                     <rect key="frame" x="16" y="41" width="982" height="43"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
                                     <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -69,13 +69,21 @@
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="H9g-ac-qWv">
                                     <rect key="frame" x="16" y="91" width="982" height="35"/>
                                     <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
-                                    <state key="normal" title="Learn more"/>
+                                    <constraints>
+                                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="44" id="sponsor-link-height"/>
+                                    </constraints>
+                                    <state key="normal" title="Visit one sec ↗"/>
                                     <connections>
                                         <action selector="openOneSec:" destination="-1" eventType="touchUpInside" id="asE-X2-P2e"/>
                                     </connections>
                                 </button>
                             </subviews>
                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <userDefinedRuntimeAttributes>
+                                <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                    <integer key="value" value="14"/>
+                                </userDefinedRuntimeAttribute>
+                            </userDefinedRuntimeAttributes>
                             <constraints>
                                 <constraint firstItem="H9g-ac-qWv" firstAttribute="top" secondItem="5Kp-fV-0Wk" secondAttribute="bottom" constant="7" id="2nN-p3-bQH"/>
                                 <constraint firstAttribute="trailing" secondItem="5Kp-fV-0Wk" secondAttribute="trailing" constant="16" id="5rF-BN-c3X"/>
@@ -98,7 +106,7 @@
                             </connections>
                         </button>
                     </subviews>
-                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <color key="backgroundColor" white="1" alpha="0.6" colorSpace="calibratedWhite"/>
                     <constraints>
                         <constraint firstItem="T2n-i2-mKv" firstAttribute="centerX" secondItem="Q4j-i4-VUi" secondAttribute="centerX" id="0T4-QS-Thl"/>
                         <constraint firstItem="AMq-tx-CZP" firstAttribute="centerX" secondItem="Q4j-i4-VUi" secondAttribute="centerX" id="A3F-YK-Vir"/>

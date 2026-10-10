@@ -135,7 +135,7 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         return 80
     }
 
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let path = "\(currentPath)/\(contents[indexPath.row])"
             try? FileManager.default.removeItem(atPath: path)

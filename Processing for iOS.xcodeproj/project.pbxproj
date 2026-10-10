@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0708F45A019FA07554E4C242 /* Pods_Processing_for_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 199569DDED991500E4F252CB /* Pods_Processing_for_iOS.framework */; };
+		1196CD74A1F931AF2F8C0290 /* SketchDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A5974307AC94B009C23A0 /* SketchDiagnosticsTests.swift */; };
 		5106B9C61C933EFA00AE74CC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5106B9C51C933EFA00AE74CC /* Main.storyboard */; };
 		5106B9C91C933F5600AE74CC /* UIColor+ProcessingColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 5106B9C81C933F5600AE74CC /* UIColor+ProcessingColor.m */; };
 		510926FC1FA0CE1E00C255D1 /* SketchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 510926FB1FA0CE1E00C255D1 /* SketchController.m */; };
@@ -33,23 +34,9 @@
 		5165FF9B2496E17400A6B137 /* p5js-sketch.js in Resources */ = {isa = PBXBuildFile; fileRef = 5165FF992496E17400A6B137 /* p5js-sketch.js */; };
 		5165FF9C2496E17400A6B137 /* p5js-container.html in Resources */ = {isa = PBXBuildFile; fileRef = 5165FF9A2496E17400A6B137 /* p5js-container.html */; };
 		5165FF9F2496E46400A6B137 /* FRFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5165FF9E2496E46400A6B137 /* FRFileManager.m */; };
-		517758DF24917B6200C9B79B /* HomeScreenSharer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517758DE24917B6200C9B79B /* HomeScreenSharer.swift */; };
-		517758E2249182C000C9B79B /* ProBenefitsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517758E0249182C000C9B79B /* ProBenefitsViewController.swift */; };
-		517758E3249182C000C9B79B /* ProBenefitsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517758E1249182C000C9B79B /* ProBenefitsViewController.xib */; };
 		517A804926FC665E008CD0F3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 517A804B26FC665E008CD0F3 /* Localizable.strings */; };
 		517EAA79249265650069EAD1 /* SourceCodeFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA78249265650069EAD1 /* SourceCodeFile.swift */; };
-		517EAA7B24926CBC0069EAD1 /* ActivityButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA7A24926CBC0069EAD1 /* ActivityButton.swift */; };
 		517EAA7D24926E900069EAD1 /* FredKitTimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA7C24926E900069EAD1 /* FredKitTimeInterval.swift */; };
-		517EAA80249270D60069EAD1 /* WelcomeToProViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA7E249270D50069EAD1 /* WelcomeToProViewController.swift */; };
-		517EAA81249270D60069EAD1 /* WelcomeToProViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517EAA7F249270D50069EAD1 /* WelcomeToProViewController.xib */; };
-		517EAA8424927C2C0069EAD1 /* AddToHomeScreenViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA8224927C2C0069EAD1 /* AddToHomeScreenViewController.swift */; };
-		517EAA8524927C2C0069EAD1 /* AddToHomeScreenViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517EAA8324927C2C0069EAD1 /* AddToHomeScreenViewController.xib */; };
-		517EAA88249286F40069EAD1 /* SelectAppIconViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA86249286F40069EAD1 /* SelectAppIconViewController.swift */; };
-		517EAA89249286F40069EAD1 /* SelectAppIconViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517EAA87249286F40069EAD1 /* SelectAppIconViewController.xib */; };
-		517EAA8C249287EC0069EAD1 /* ColorCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA8A249287EC0069EAD1 /* ColorCollectionViewCell.swift */; };
-		517EAA8D249287EC0069EAD1 /* ColorCollectionViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517EAA8B249287EC0069EAD1 /* ColorCollectionViewCell.xib */; };
-		517EAA90249288520069EAD1 /* IconCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EAA8E249288520069EAD1 /* IconCollectionViewCell.swift */; };
-		517EAA91249288520069EAD1 /* IconCollectionViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 517EAA8F249288520069EAD1 /* IconCollectionViewCell.xib */; };
 		5192E54D20A8A15E00354BC8 /* FolderContentBrowserTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5192E54B20A8A15E00354BC8 /* FolderContentBrowserTableViewController.swift */; };
 		5192E54E20A8A15E00354BC8 /* FolderContentBrowserTableViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5192E54C20A8A15E00354BC8 /* FolderContentBrowserTableViewController.xib */; };
 		5192E55320A8A67300354BC8 /* FileContentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5192E55120A8A67300354BC8 /* FileContentTableViewCell.swift */; };
@@ -72,24 +59,25 @@
 		51CEE44C1B3E9A270031D1BE /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 51CEE44B1B3E9A270031D1BE /* AppDelegate.m */; };
 		51CEE4541B3E9A2F0031D1BE /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 51CEE4531B3E9A2F0031D1BE /* Images.xcassets */; };
 		51CEE4571B3E9A300031D1BE /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51CEE4551B3E9A300031D1BE /* LaunchScreen.xib */; };
-		51CEE4631B3E9A310031D1BE /* Processing_for_iOSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 51CEE4621B3E9A310031D1BE /* Processing_for_iOSTests.m */; };
 		51CEE46E1B3E9D5E0031D1BE /* PDEFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 51CEE46D1B3E9D5E0031D1BE /* PDEFile.m */; };
 		51CEE4791B3EA6FC0031D1BE /* RunSketchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 51CEE4781B3EA6FC0031D1BE /* RunSketchViewController.m */; };
 		51CEE47B1B3EAC1C0031D1BE /* container.html in Resources */ = {isa = PBXBuildFile; fileRef = 51CEE47A1B3EAC1C0031D1BE /* container.html */; };
 		51D6F82524A521030007625B /* syntax-highlighting-p5js.plist in Resources */ = {isa = PBXBuildFile; fileRef = 51D6F82424A521030007625B /* syntax-highlighting-p5js.plist */; };
 		51D6F82824A5270E0007625B /* MultiFileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D6F82624A5270E0007625B /* MultiFileViewController.swift */; };
 		51D6F82924A5270E0007625B /* MultiFileViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51D6F82724A5270E0007625B /* MultiFileViewController.xib */; };
-		51DC7D0324B47CA400AFAA55 /* ProBenefitsPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51DC7D0124B47CA400AFAA55 /* ProBenefitsPageViewController.swift */; };
-		51DC7D0424B47CA400AFAA55 /* ProBenefitsPageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC7D0224B47CA400AFAA55 /* ProBenefitsPageViewController.xib */; };
-		51DC7D0724B47CBD00AFAA55 /* ProBenefitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51DC7D0524B47CBD00AFAA55 /* ProBenefitViewController.swift */; };
-		51DC7D0824B47CBD00AFAA55 /* ProBenefitViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51DC7D0624B47CBD00AFAA55 /* ProBenefitViewController.xib */; };
 		51FD83B624A3B21A0008AB57 /* CodeErrorDetectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51FD83B524A3B21A0008AB57 /* CodeErrorDetectionEngine.swift */; };
 		860DBA451E5736300022C90F /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 860DBA431E5736300022C90F /* AboutViewController.m */; };
 		860DBA461E5736300022C90F /* AboutViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 860DBA441E5736300022C90F /* AboutViewController.xib */; };
+		867A3DE3307AC662009C23A0 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A3DE2307AC662009C23A0 /* SceneDelegate.swift */; };
+		867A597C307AC9BD009C23A0 /* SketchProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A597B307AC9BD009C23A0 /* SketchProgram.swift */; };
+		867A597E307AC9E2009C23A0 /* SketchRuntime.js in Resources */ = {isa = PBXBuildFile; fileRef = 867A597D307AC9E2009C23A0 /* SketchRuntime.js */; };
+		867A5982307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A5981307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift */; };
+		867A5986307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A5985307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
 		86D067411E5266C70033A4FF /* Example_Gyroscope_Accelerometer.pde in Resources */ = {isa = PBXBuildFile; fileRef = 86D067401E5266C70033A4FF /* Example_Gyroscope_Accelerometer.pde */; };
+		9AD74461BECC796D9029EFD4 /* CodeCompletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 547EDEECCC745A40FA7AA58B /* CodeCompletionTests.swift */; };
 		EE17D00CAC04369949ADD945 /* Pods_Processing_for_iOSTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57D0A912304A1FC223B9ABD8 /* Pods_Processing_for_iOSTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -139,25 +127,11 @@
 		5165FF9A2496E17400A6B137 /* p5js-container.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "p5js-container.html"; sourceTree = "<group>"; };
 		5165FF9D2496E46300A6B137 /* FRFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FRFileManager.h; sourceTree = "<group>"; };
 		5165FF9E2496E46400A6B137 /* FRFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FRFileManager.m; sourceTree = "<group>"; };
-		517758DE24917B6200C9B79B /* HomeScreenSharer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenSharer.swift; sourceTree = "<group>"; };
-		517758E0249182C000C9B79B /* ProBenefitsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProBenefitsViewController.swift; sourceTree = "<group>"; };
-		517758E1249182C000C9B79B /* ProBenefitsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ProBenefitsViewController.xib; sourceTree = "<group>"; };
 		517A804626FBDBDD008CD0F3 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		517A804A26FC665E008CD0F3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		517A804C26FC6660008CD0F3 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		517EAA78249265650069EAD1 /* SourceCodeFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceCodeFile.swift; sourceTree = "<group>"; };
-		517EAA7A24926CBC0069EAD1 /* ActivityButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActivityButton.swift; sourceTree = "<group>"; };
 		517EAA7C24926E900069EAD1 /* FredKitTimeInterval.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FredKitTimeInterval.swift; sourceTree = "<group>"; };
-		517EAA7E249270D50069EAD1 /* WelcomeToProViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeToProViewController.swift; sourceTree = "<group>"; };
-		517EAA7F249270D50069EAD1 /* WelcomeToProViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = WelcomeToProViewController.xib; sourceTree = "<group>"; };
-		517EAA8224927C2C0069EAD1 /* AddToHomeScreenViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddToHomeScreenViewController.swift; sourceTree = "<group>"; };
-		517EAA8324927C2C0069EAD1 /* AddToHomeScreenViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = AddToHomeScreenViewController.xib; sourceTree = "<group>"; };
-		517EAA86249286F40069EAD1 /* SelectAppIconViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectAppIconViewController.swift; sourceTree = "<group>"; };
-		517EAA87249286F40069EAD1 /* SelectAppIconViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SelectAppIconViewController.xib; sourceTree = "<group>"; };
-		517EAA8A249287EC0069EAD1 /* ColorCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorCollectionViewCell.swift; sourceTree = "<group>"; };
-		517EAA8B249287EC0069EAD1 /* ColorCollectionViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ColorCollectionViewCell.xib; sourceTree = "<group>"; };
-		517EAA8E249288520069EAD1 /* IconCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconCollectionViewCell.swift; sourceTree = "<group>"; };
-		517EAA8F249288520069EAD1 /* IconCollectionViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = IconCollectionViewCell.xib; sourceTree = "<group>"; };
 		5192E54A20A8A15D00354BC8 /* Processing for iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Processing for iOS-Bridging-Header.h"; sourceTree = "<group>"; };
 		5192E54B20A8A15E00354BC8 /* FolderContentBrowserTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderContentBrowserTableViewController.swift; sourceTree = "<group>"; };
 		5192E54C20A8A15E00354BC8 /* FolderContentBrowserTableViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = FolderContentBrowserTableViewController.xib; sourceTree = "<group>"; };
@@ -186,7 +160,6 @@
 		51CEE4561B3E9A300031D1BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		51CEE45C1B3E9A300031D1BE /* Processing for iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Processing for iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		51CEE4611B3E9A310031D1BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		51CEE4621B3E9A310031D1BE /* Processing_for_iOSTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Processing_for_iOSTests.m; sourceTree = "<group>"; };
 		51CEE46C1B3E9D5E0031D1BE /* PDEFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEFile.h; sourceTree = "<group>"; };
 		51CEE46D1B3E9D5E0031D1BE /* PDEFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEFile.m; sourceTree = "<group>"; };
 		51CEE4771B3EA6FC0031D1BE /* RunSketchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RunSketchViewController.h; sourceTree = "<group>"; };
@@ -198,16 +171,19 @@
 		51D6F82424A521030007625B /* syntax-highlighting-p5js.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "syntax-highlighting-p5js.plist"; sourceTree = "<group>"; };
 		51D6F82624A5270E0007625B /* MultiFileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiFileViewController.swift; sourceTree = "<group>"; };
 		51D6F82724A5270E0007625B /* MultiFileViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MultiFileViewController.xib; sourceTree = "<group>"; };
-		51DC7D0124B47CA400AFAA55 /* ProBenefitsPageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProBenefitsPageViewController.swift; sourceTree = "<group>"; };
-		51DC7D0224B47CA400AFAA55 /* ProBenefitsPageViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ProBenefitsPageViewController.xib; sourceTree = "<group>"; };
-		51DC7D0524B47CBD00AFAA55 /* ProBenefitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProBenefitViewController.swift; sourceTree = "<group>"; };
-		51DC7D0624B47CBD00AFAA55 /* ProBenefitViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ProBenefitViewController.xib; sourceTree = "<group>"; };
 		51FD83B524A3B21A0008AB57 /* CodeErrorDetectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeErrorDetectionEngine.swift; sourceTree = "<group>"; };
+		547EDEECCC745A40FA7AA58B /* CodeCompletionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CodeCompletionTests.swift; path = "Processing for iOSTests/CodeCompletionTests.swift"; sourceTree = "<group>"; };
 		57D0A912304A1FC223B9ABD8 /* Pods_Processing_for_iOSTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Processing_for_iOSTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		75506C019411DF8A4B4F7575 /* Pods-Processing for iOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Processing for iOS.release.xcconfig"; path = "Pods/Target Support Files/Pods-Processing for iOS/Pods-Processing for iOS.release.xcconfig"; sourceTree = "<group>"; };
 		860DBA421E5736300022C90F /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
 		860DBA431E5736300022C90F /* AboutViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AboutViewController.m; sourceTree = "<group>"; };
 		860DBA441E5736300022C90F /* AboutViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AboutViewController.xib; sourceTree = "<group>"; };
+		867A3DE2307AC662009C23A0 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		867A5974307AC94B009C23A0 /* SketchDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchDiagnosticsTests.swift; sourceTree = "<group>"; };
+		867A597B307AC9BD009C23A0 /* SketchProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchProgram.swift; sourceTree = "<group>"; };
+		867A597D307AC9E2009C23A0 /* SketchRuntime.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = SketchRuntime.js; sourceTree = "<group>"; };
+		867A5981307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Processing for iOS/CodeCompletion.swift"; sourceTree = "<group>"; };
+		867A5985307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Processing for iOS/CodeCompletionController.swift"; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -318,6 +294,9 @@
 				51CEE4441B3E9A1D0031D1BE /* Products */,
 				1539D434AEC4870E1ADA7183 /* Pods */,
 				47B535D0FA9E13A148AEF96F /* Frameworks */,
+				867A5981307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift */,
+				867A5985307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift */,
+				547EDEECCC745A40FA7AA58B /* CodeCompletionTests.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -336,25 +315,7 @@
 				51082AD9273966E10016FA6A /* Processing for iOS.entitlements */,
 				5165FF942496E12E00A6B137 /* P5JS */,
 				5165FF932496E11B00A6B137 /* Processing Files */,
-				517758DE24917B6200C9B79B /* HomeScreenSharer.swift */,
-				517EAA7A24926CBC0069EAD1 /* ActivityButton.swift */,
 				51FD83B524A3B21A0008AB57 /* CodeErrorDetectionEngine.swift */,
-				517758E0249182C000C9B79B /* ProBenefitsViewController.swift */,
-				517758E1249182C000C9B79B /* ProBenefitsViewController.xib */,
-				51DC7D0124B47CA400AFAA55 /* ProBenefitsPageViewController.swift */,
-				51DC7D0224B47CA400AFAA55 /* ProBenefitsPageViewController.xib */,
-				51DC7D0524B47CBD00AFAA55 /* ProBenefitViewController.swift */,
-				51DC7D0624B47CBD00AFAA55 /* ProBenefitViewController.xib */,
-				517EAA7E249270D50069EAD1 /* WelcomeToProViewController.swift */,
-				517EAA7F249270D50069EAD1 /* WelcomeToProViewController.xib */,
-				517EAA8224927C2C0069EAD1 /* AddToHomeScreenViewController.swift */,
-				517EAA8324927C2C0069EAD1 /* AddToHomeScreenViewController.xib */,
-				517EAA86249286F40069EAD1 /* SelectAppIconViewController.swift */,
-				517EAA87249286F40069EAD1 /* SelectAppIconViewController.xib */,
-				517EAA8A249287EC0069EAD1 /* ColorCollectionViewCell.swift */,
-				517EAA8B249287EC0069EAD1 /* ColorCollectionViewCell.xib */,
-				517EAA8E249288520069EAD1 /* IconCollectionViewCell.swift */,
-				517EAA8F249288520069EAD1 /* IconCollectionViewCell.xib */,
 				517EAA7C24926E900069EAD1 /* FredKitTimeInterval.swift */,
 				5199DD6D1B3F232C004437DB /* Schriftart */,
 				51CEE44A1B3E9A250031D1BE /* AppDelegate.h */,
@@ -406,6 +367,9 @@
 				5106B9C51C933EFA00AE74CC /* Main.storyboard */,
 				51CEE4461B3E9A220031D1BE /* Supporting Files */,
 				5192E54A20A8A15D00354BC8 /* Processing for iOS-Bridging-Header.h */,
+				867A3DE2307AC662009C23A0 /* SceneDelegate.swift */,
+				867A597B307AC9BD009C23A0 /* SketchProgram.swift */,
+				867A597D307AC9E2009C23A0 /* SketchRuntime.js */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -422,8 +386,8 @@
 		51CEE45F1B3E9A310031D1BE /* Processing for iOSTests */ = {
 			isa = PBXGroup;
 			children = (
-				51CEE4621B3E9A310031D1BE /* Processing_for_iOSTests.m */,
 				51CEE4601B3E9A310031D1BE /* Supporting Files */,
+				867A5974307AC94B009C23A0 /* SketchDiagnosticsTests.swift */,
 			);
 			path = "Processing for iOSTests";
 			sourceTree = "<group>";
@@ -526,23 +490,20 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				867A597E307AC9E2009C23A0 /* SketchRuntime.js in Resources */,
 				5165FF9C2496E17400A6B137 /* p5js-container.html in Resources */,
 				51CEE4571B3E9A300031D1BE /* LaunchScreen.xib in Resources */,
 				860DBA461E5736300022C90F /* AboutViewController.xib in Resources */,
-				517EAA8524927C2C0069EAD1 /* AddToHomeScreenViewController.xib in Resources */,
 				51CC5590251E3769003ACFF5 /* ExternalScreenViewController.xib in Resources */,
-				517EAA89249286F40069EAD1 /* SelectAppIconViewController.xib in Resources */,
 				5199DD781B3F232C004437DB /* SourceCodePro-Light.ttf in Resources */,
 				5199DD7B1B3F232C004437DB /* SourceCodePro-Semibold.ttf in Resources */,
 				517A804926FC665E008CD0F3 /* Localizable.strings in Resources */,
 				511A4BF21B6D12C200B03259 /* Example_Draw.pde in Resources */,
 				86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */,
-				51DC7D0824B47CBD00AFAA55 /* ProBenefitViewController.xib in Resources */,
 				5165FF972496E16500A6B137 /* p5.sound.min.js in Resources */,
 				5199DD791B3F232C004437DB /* SourceCodePro-Medium.ttf in Resources */,
 				86D067411E5266C70033A4FF /* Example_Gyroscope_Accelerometer.pde in Resources */,
 				86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */,
-				51DC7D0424B47CA400AFAA55 /* ProBenefitsPageViewController.xib in Resources */,
 				511A4BF81B6D13FF00B03259 /* Example_Multitouch.pde in Resources */,
 				5192E54E20A8A15E00354BC8 /* FolderContentBrowserTableViewController.xib in Resources */,
 				510F51B120ACB12C0082B979 /* EditorTabViewController.xib in Resources */,
@@ -554,14 +515,10 @@
 				513BF2A924A022C900825346 /* SelectableOptionsViewController.xib in Resources */,
 				5165FF982496E16500A6B137 /* p5.min.js in Resources */,
 				5199DD751B3F232C004437DB /* SourceCodePro-Black.ttf in Resources */,
-				517758E3249182C000C9B79B /* ProBenefitsViewController.xib in Resources */,
-				517EAA81249270D60069EAD1 /* WelcomeToProViewController.xib in Resources */,
 				51D6F82524A521030007625B /* syntax-highlighting-p5js.plist in Resources */,
 				51CEE47B1B3EAC1C0031D1BE /* container.html in Resources */,
 				51CEE4541B3E9A2F0031D1BE /* Images.xcassets in Resources */,
 				5165FF9B2496E17400A6B137 /* p5js-sketch.js in Resources */,
-				517EAA91249288520069EAD1 /* IconCollectionViewCell.xib in Resources */,
-				517EAA8D249287EC0069EAD1 /* ColorCollectionViewCell.xib in Resources */,
 				511A4BF61B6D134100B03259 /* Example_FollowMe.pde in Resources */,
 				511A4BF51B6D134100B03259 /* Example_Clock.pde in Resources */,
 				5199DD7A1B3F232C004437DB /* SourceCodePro-Regular.ttf in Resources */,
@@ -606,18 +563,14 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Processing for iOS/Pods-Processing for iOS-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/AutoInsetter/AutoInsetter.framework",
 				"${BUILT_PRODUCTS_DIR}/NSString+LevenshteinDistance/NSString_LevenshteinDistance.framework",
 				"${BUILT_PRODUCTS_DIR}/Pageboy/Pageboy.framework",
-				"${BUILT_PRODUCTS_DIR}/Swifter/Swifter.framework",
 				"${BUILT_PRODUCTS_DIR}/Tabman/Tabman.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AutoInsetter.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NSString_LevenshteinDistance.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Pageboy.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Swifter.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Tabman.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -650,22 +603,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				51DC7D0324B47CA400AFAA55 /* ProBenefitsPageViewController.swift in Sources */,
 				5106B9C91C933F5600AE74CC /* UIColor+ProcessingColor.m in Sources */,
-				517EAA88249286F40069EAD1 /* SelectAppIconViewController.swift in Sources */,
 				5192E54D20A8A15E00354BC8 /* FolderContentBrowserTableViewController.swift in Sources */,
-				517758E2249182C000C9B79B /* ProBenefitsViewController.swift in Sources */,
 				51CEE46E1B3E9D5E0031D1BE /* PDEFile.m in Sources */,
 				51CD5DD824978D5E008F2343 /* P5JSProject.swift in Sources */,
+				867A5982307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift in Sources */,
 				513BF2AC24A029A700825346 /* CodeFixSuggestionTableViewCell.swift in Sources */,
+				867A3DE3307AC662009C23A0 /* SceneDelegate.swift in Sources */,
 				51D6F82824A5270E0007625B /* MultiFileViewController.swift in Sources */,
-				517EAA8424927C2C0069EAD1 /* AddToHomeScreenViewController.swift in Sources */,
 				510F51B020ACB12C0082B979 /* EditorTabViewController.swift in Sources */,
 				5165FF9F2496E46400A6B137 /* FRFileManager.m in Sources */,
 				510926FC1FA0CE1E00C255D1 /* SketchController.m in Sources */,
 				510926FF1FA0D72A00C255D1 /* PDESketch.m in Sources */,
-				51DC7D0724B47CBD00AFAA55 /* ProBenefitViewController.swift in Sources */,
-				517758DF24917B6200C9B79B /* HomeScreenSharer.swift in Sources */,
 				515230FA1B74B3D1003497F9 /* SettingsViewController.m in Sources */,
 				5192E55320A8A67300354BC8 /* FileContentTableViewCell.swift in Sources */,
 				51FD83B624A3B21A0008AB57 /* CodeErrorDetectionEngine.swift in Sources */,
@@ -678,16 +627,14 @@
 				513CADDF1FCD712100B9A6F1 /* FirstStart.m in Sources */,
 				860DBA451E5736300022C90F /* AboutViewController.m in Sources */,
 				517EAA7D24926E900069EAD1 /* FredKitTimeInterval.swift in Sources */,
-				517EAA80249270D60069EAD1 /* WelcomeToProViewController.swift in Sources */,
 				51CEE4791B3EA6FC0031D1BE /* RunSketchViewController.m in Sources */,
 				51CD5DD3249788D9008F2343 /* SimpleTextProject.swift in Sources */,
+				867A597C307AC9BD009C23A0 /* SketchProgram.swift in Sources */,
+				867A5986307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift in Sources */,
 				51CD5DD524978AD4008F2343 /* PDEProject.swift in Sources */,
-				517EAA8C249287EC0069EAD1 /* ColorCollectionViewCell.swift in Sources */,
 				51CC558F251E3769003ACFF5 /* ExternalScreenViewController.swift in Sources */,
 				510F51A220AB618E0082B979 /* ProjectSelectionTableViewController.swift in Sources */,
-				517EAA90249288520069EAD1 /* IconCollectionViewCell.swift in Sources */,
 				5192E55620A8AFFB00354BC8 /* ProcessingNavigationViewController.swift in Sources */,
-				517EAA7B24926CBC0069EAD1 /* ActivityButton.swift in Sources */,
 				51CEE4491B3E9A240031D1BE /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -696,7 +643,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				51CEE4631B3E9A310031D1BE /* Processing_for_iOSTests.m in Sources */,
+				1196CD74A1F931AF2F8C0290 /* SketchDiagnosticsTests.swift in Sources */,
+				9AD74461BECC796D9029EFD4 /* CodeCompletionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -848,13 +796,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = "Processing for iOS/Processing for iOS.entitlements";
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = 52U6XAJSSF;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0;
+				MARKETING_VERSION = 4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.polarapps.processing;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -862,7 +812,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Processing for iOS/Processing for iOS-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_SWIFT3_OBJC_INFERENCE = On;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -874,19 +824,21 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = "Processing for iOS/Processing for iOS.entitlements";
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = 52U6XAJSSF;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0;
+				MARKETING_VERSION = 4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.polarapps.processing;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "Processing for iOS/Processing for iOS-Bridging-Header.h";
 				SWIFT_SWIFT3_OBJC_INFERENCE = On;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -906,9 +858,11 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "Processing for iOSTests/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.polarapps.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Processing for iOS.app/Processing for iOS";
 			};
 			name = Debug;
@@ -924,9 +878,11 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "Processing for iOSTests/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.polarapps.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Processing for iOS.app/Processing for iOS";
 			};
 			name = Release;

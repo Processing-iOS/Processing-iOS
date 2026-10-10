@@ -23,13 +23,14 @@
 @interface PDEEditorViewController : UIViewController<UITextViewDelegate, SelectableOptionsViewControllerDelegate>
 
 -(instancetype)initWithSourceCodeFile:(SourceCodeFile*)sourceCodeFile;
--(void)saveCode;
+-(BOOL)saveCode;
 -(void)formatCode;
 - (void)highlightCompilerErrorOfCode: (DetectedBug*)detectedBug;
 
 @property(nonatomic,strong) SourceCodeFile* sourceCodeFile;
+@property(nonatomic,copy) NSArray<SourceCodeFile*> *completionFiles;
 @property (strong, nonatomic) IBOutlet UITextView *editor;
-@property (strong, nonatomic) NSString* bugToHighlight;
+@property (strong, nonatomic) DetectedBug* bugToHighlight;
 
 
 @end
