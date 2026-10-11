@@ -20,6 +20,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     private var runningSketch: RunSketchViewController?
     private var pendingReviewAfterSuccessfulRun = false
     private static let firstSuccessfulRunReviewKey = "requestedReviewAfterFirstSuccessfulRun"
+    private let saveStatusLabel = UILabel()
     
     init(withProject project: SimpleTextProject) {
         self.project = project
@@ -46,6 +47,24 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         )
         
         self.title = self.project.name
+        let projectTitle = UILabel()
+        projectTitle.text = project.name
+        projectTitle.font = .preferredFont(forTextStyle: .headline)
+        projectTitle.textColor = .white
+        projectTitle.lineBreakMode = .byTruncatingMiddle
+        saveStatusLabel.font = .preferredFont(forTextStyle: .caption2)
+        saveStatusLabel.textColor = .white.withAlphaComponent(0.85)
+        saveStatusLabel.text = "Saved"
+        let titleStack = UIStackView(arrangedSubviews: [projectTitle, saveStatusLabel])
+        titleStack.axis = .vertical
+        titleStack.alignment = .fill
+        projectTitle.textAlignment = .center
+        saveStatusLabel.textAlignment = .center
+        let titleContainer = UIView(frame: CGRect(x: 0, y: 0, width: 160, height: 42))
+        titleStack.frame = titleContainer.bounds
+        titleStack.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        titleContainer.addSubview(titleStack)
+        navigationItem.titleView = titleContainer
         
         let runButton = UIBarButtonItem(
             barButtonSystemItem: .play,
@@ -85,7 +104,9 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
             action: #selector(EditorTabViewController.showFolderContent)
         )
         
-        self.toolbarItems = [formatButton, flexibleSpace, organize, flexibleSpace, codeReferenceButton]
+        let history = UIBarButtonItem(title: "History", style: .plain, target: self, action: #selector(showHistory))
+        self.toolbarItems = [formatButton, flexibleSpace, organize, flexibleSpace, history, flexibleSpace, codeReferenceButton]
+        NotificationCenter.default.addObserver(self, selector: #selector(updateSaveStatus), name: SourceCodeFile.didChange, object: nil)
         
         NotificationCenter.default.addObserver(
             self,
@@ -189,6 +210,26 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         guard saveCode() else { return }
         self.navigationController?.popViewController(animated: true)
     }
+
+    @objc private func updateSaveStatus() {
+        if editorFiles.contains(where: { $0.saveError != nil }) {
+            saveStatusLabel.text = "Not saved"
+            saveStatusLabel.accessibilityHint = "Your edits are still open. Tap History to retry saving and see the error."
+        } else {
+            saveStatusLabel.text = editorFiles.contains(where: { $0.hasUnsavedChanges }) ? "Saving…" : "Saved"
+            saveStatusLabel.accessibilityHint = nil
+        }
+    }
+
+    @objc private func showHistory() {
+        guard saveCode(), let editor = currentViewController as? PDEEditorViewController else { return }
+        let history = SourceHistoryViewController(file: editor.sourceCodeFile) { [weak editor] in
+            guard let editor else { return }
+            editor.editor.text = editor.sourceCodeFile.content
+            editor.textViewDidChange(editor.editor)
+        }
+        present(UINavigationController(rootViewController: history), animated: true)
+    }
     
     @objc func showCodeReference() {
         let safariVC = SFSafariViewController(url: URL(string: "https://processing.org/reference/")!)
@@ -257,7 +298,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         let editor = currentViewController as? PDEEditorViewController
         let currentSaved = editor?.saveCode() ?? true
         // A tab may have failed to save while switching away from it. Retry its retained buffer.
-        for file in editorFiles where file.saveError != nil {
+        for file in editorFiles where file.saveError != nil || file.hasUnsavedChanges {
             file.save()
         }
         if let file = editorFiles.first(where: { $0.saveError != nil || $0.readError != nil }) {

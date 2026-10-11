@@ -604,6 +604,40 @@ struct SketchRuntimeTests {
         #expect(try String(contentsOf: originalURL) == "const edited = 2;")
     }
 
+    @Test func editingAutosavesAndAnOldTabCannotRestoreStaleText() async throws {
+        let fixture = try SketchFixture(language: "js", main: "const original = 1;")
+        defer { fixture.remove() }
+        let file = try #require(fixture.project.sourceCodeFiles.first)
+        let oldEditor = PDEEditorViewController(sourceCodeFile: file)!
+        oldEditor.loadViewIfNeeded()
+        let editor = PDEEditorViewController(sourceCodeFile: file)!
+        editor.loadViewIfNeeded()
+        editor.editor.text = "const edited = 2; // 🐻‍❄️"
+        editor.textViewDidChange(editor.editor)
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        #expect(try String(contentsOfFile: file.filePath) == "const edited = 2; // 🐻‍❄️")
+        // Page controllers can outlive their visible tab. A lifecycle save must
+        // never replace a newer shared buffer with an unchanged old view.
+        #expect(oldEditor.saveCode())
+        #expect(try String(contentsOfFile: file.filePath) == "const edited = 2; // 🐻‍❄️")
+    }
+
+    @Test func restoringHistoryPreservesBothVersionsAcrossReopening() throws {
+        let fixture = try SketchFixture(language: "js", main: "const original = 1;")
+        defer { fixture.remove() }
+        let file = try #require(fixture.project.sourceCodeFiles.first)
+        #expect(file.save(newContent: "const revised = 2;"))
+        let reopened = SourceCodeFile(filePath: file.filePath)
+        let original = try #require(reopened.history().first)
+        #expect(original.content == "const original = 1;")
+        try reopened.restore(original)
+        #expect(try String(contentsOfFile: file.filePath) == "const original = 1;")
+        #expect(try SourceCodeFile(filePath: file.filePath).history().contains { $0.content == "const revised = 2;" })
+        // An old model with no edits must also leave restored files untouched.
+        #expect(file.save())
+        #expect(try String(contentsOfFile: file.filePath) == "const original = 1;")
+    }
+
     @Test func editorCompletionSupportsTypingUndoAndSaving() throws {
         let fixture = try SketchFixture(language: "js", main: "bac")
         defer { fixture.remove() }

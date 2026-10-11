@@ -16,6 +16,7 @@
 @property(nonatomic,copy) NSString *suggestionSource;
 @property(nonatomic,assign) NSRange suggestionRange;
 @property(nonatomic,strong) CodeCompletionController *completionController;
+@property(nonatomic,copy) NSString *lastObservedText;
 @end
 
 @implementation PDEEditorViewController
@@ -38,10 +39,10 @@
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChange:) name:UIKeyboardWillChangeFrameNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(saveCode) name:@"saveCode" object:nil];
     
     
     self.editor.text = self.sourceCodeFile.content;
+    self.lastObservedText = self.editor.text;
     self.completionController = [[CodeCompletionController alloc] initWithTextView:self.editor file:self.sourceCodeFile projectFiles:self.completionFiles ?: @[]];
     __weak typeof(self) weakSelf = self;
     self.completionController.didComplete = ^{ [weakSelf textViewDidChange:weakSelf.editor]; };
@@ -156,6 +157,7 @@
     
     [self highlightCode];
     [self codeLineIndent];
+    [self saveCode];
 }
 
 -(void) codeLineIndent {
@@ -457,10 +459,16 @@
 -(BOOL)saveCode {
     // A failed read must not replace the original file with an empty editor buffer.
     if (!self.sourceCodeFile.content && self.sourceCodeFile.readError) return NO;
-    return [self.sourceCodeFile saveWithNewContent:self.editor.text];
+    if (![self.editor.text isEqualToString:self.lastObservedText]) {
+        self.lastObservedText = self.editor.text;
+        [self.sourceCodeFile updateContent:self.editor.text];
+    }
+    return [self.sourceCodeFile saveWithNewContent:nil];
 }
 
 -(void)textViewDidChange:(UITextView *) textView {
+    self.lastObservedText = self.editor.text;
+    [self.sourceCodeFile updateContent:self.editor.text];
     self.bugToHighlight = nil;
     self.suggestionSource = nil;
     [self highlightCode];

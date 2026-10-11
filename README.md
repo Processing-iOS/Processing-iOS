@@ -30,6 +30,8 @@ xcodebuild -workspace "Processing for iOS.xcworkspace" \
 
 ## Code completion
 
+Edits are saved automatically after a short pause, and while typing continuously at least every two seconds. The editor shows saving status and retains unsaved buffers if a write fails. **History** previews and restores earlier versions of the current file; restoring also keeps the current code. Up to 100 local versions are kept, with checkpoints at most once every 30 seconds during ordinary editing. History is stored in the project's hidden `.processing-history` folder.
+
 Start typing a name in the editor to see completions above the keyboard after two characters. Tap a suggestion, or press **Tab** on a hardware keyboard to accept the first one. **Control-Space** requests completions for a shorter prefix; **Escape** dismisses the suggestions. Swipe the strip to see more matches. The keyboard button ends editing and restores the editor toolbar.
 
 Completions include common Processing or P5.js functions, constants, keywords, and names used in the project's source files. Function suggestions show a signature and insert parentheses with the caret inside; existing parentheses and arguments are preserved. Normal Undo/Redo works. Suggestions are suppressed in comments, quoted strings, and after member-access dots. This is offline name completion, without type or scope inference.

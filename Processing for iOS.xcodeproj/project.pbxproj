@@ -76,6 +76,7 @@
 		867A7521307B6721009C23A0 /* Example_Sensors.pde in Resources */ = {isa = PBXBuildFile; fileRef = 867A7520307B6721009C23A0 /* Example_Sensors.pde */; };
 		867A7523307B6841009C23A0 /* Example_Camera.js in Resources */ = {isa = PBXBuildFile; fileRef = 867A7522307B6841009C23A0 /* Example_Camera.js */; };
 		867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */; };
+		867A8787307B7CE3009C23A0 /* SourceHistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -190,6 +191,7 @@
 		867A7520307B6721009C23A0 /* Example_Sensors.pde */ = {isa = PBXFileReference; lastKnownFileType = text; path = Example_Sensors.pde; sourceTree = "<group>"; };
 		867A7522307B6841009C23A0 /* Example_Camera.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Example_Camera.js; sourceTree = "<group>"; };
 		867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleProjectPickerViewController.swift; sourceTree = "<group>"; };
+		867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHistoryViewController.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -379,6 +381,7 @@
 				867A597B307AC9BD009C23A0 /* SketchProgram.swift */,
 				867A597D307AC9E2009C23A0 /* SketchRuntime.js */,
 				867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */,
+				867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -622,6 +625,7 @@
 				513BF2AC24A029A700825346 /* CodeFixSuggestionTableViewCell.swift in Sources */,
 				867A3DE3307AC662009C23A0 /* SceneDelegate.swift in Sources */,
 				51D6F82824A5270E0007625B /* MultiFileViewController.swift in Sources */,
+				867A8787307B7CE3009C23A0 /* SourceHistoryViewController.swift in Sources */,
 				510F51B020ACB12C0082B979 /* EditorTabViewController.swift in Sources */,
 				5165FF9F2496E46400A6B137 /* FRFileManager.m in Sources */,
 				510926FC1FA0CE1E00C255D1 /* SketchController.m in Sources */,
