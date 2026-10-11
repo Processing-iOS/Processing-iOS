@@ -21,6 +21,60 @@ window.SketchRuntime = (function () {
     var nativeCancelAnimationFrame = window.cancelAnimationFrame.bind(window);
     var disposedInstances = new WeakSet();
     var pendingImages = 0;
+    var consoleRecords = [], consoleTimer = null, omittedLogs = 0;
+
+    function printable(value, seen, depth) {
+        try {
+            if (typeof value === "string") return value.slice(0, 2000);
+            if (value == null || typeof value !== "object") return String(value).slice(0, 2000);
+            if (value instanceof Error) return value.name + ": " + value.message;
+            if (seen.has(value)) return "[Circular]";
+            if (depth >= 3) return "[…]";
+            seen.add(value);
+            var keys = Object.keys(value).slice(0, 20);
+            return (Array.isArray(value) ? "[" : "{") + keys.map(function (key) {
+                var descriptor = Object.getOwnPropertyDescriptor(value, key);
+                var item = descriptor && "value" in descriptor ? printable(descriptor.value, seen, depth + 1) : "[Getter]";
+                return (Array.isArray(value) ? "" : key + ": ") + item;
+            }).join(", ").slice(0, 2000) + (Array.isArray(value) ? "]" : "}");
+        } catch (_) { return "[Unreadable value]"; }
+    }
+
+    function takeConsole() {
+        if (consoleTimer !== null) nativeClearTimeout(consoleTimer);
+        consoleTimer = null;
+        var records = consoleRecords;
+        consoleRecords = [];
+        if (omittedLogs) records.unshift({ level: "warn", text: omittedLogs + " earlier messages omitted (output too fast).", newline: true });
+        omittedLogs = 0;
+        return records;
+    }
+
+    function flushConsole() {
+        var records = takeConsole();
+        if (records.length) post("iosbridge", { event: "console", records: records });
+    }
+
+    function log(level, args, newline) {
+        if (stopped) return;
+        var text = Array.prototype.slice.call(args, 0, 20).map(function (value) {
+            return printable(value, new Set(), 0);
+        }).join(" ").slice(0, 2000);
+        if (consoleRecords.length >= 199) { consoleRecords.shift(); omittedLogs++; }
+        consoleRecords.push({ level: level, text: text, newline: newline });
+        if (consoleTimer === null) consoleTimer = nativeTimeout(flushConsole, 100);
+    }
+
+    ["log", "info", "warn", "error", "debug"].forEach(function (level) {
+        window.console[level] = function () { log(level, arguments, true); };
+    });
+
+    function installProcessingConsole() {
+        Processing.registerLibrary("iosConsole", { attach: function (sketch) {
+            sketch.print = function () { log("log", arguments, false); };
+            sketch.println = function () { log("log", arguments, true); };
+        } });
+    }
 
     function saveImage(canvas, filename) {
         if (stopped) return;
@@ -112,6 +166,8 @@ window.SketchRuntime = (function () {
 
     function stop() {
         stopped = true;
+        if (consoleTimer !== null) nativeClearTimeout(consoleTimer);
+        consoleTimer = null;
         cameraViews.forEach(function (camera) { camera.dispose(); });
         cameraViews.clear();
         try {
@@ -164,6 +220,7 @@ window.SketchRuntime = (function () {
             }
             if (url === sourceURL) url = "sketch-source.js";
         }
+        flushConsole();
         post("error", {
             message: message.slice(0, 4000),
             phase: phase,
@@ -560,6 +617,7 @@ window.SketchRuntime = (function () {
                 // Its DOM scanner would otherwise exit our explicitly created instance.
                 Processing.disableInit();
                 installProcessingRetina();
+                installProcessingConsole();
                 var canvas = document.createElement("canvas");
                 canvas.id = "Sketch";
                 document.body.appendChild(canvas);
@@ -653,5 +711,5 @@ window.SketchRuntime = (function () {
 
     return { start: start, stop: stop, motion: motion, updateSensors: updateSensors,
         pauseCameras: pauseCameras, resumeCameras: resumeCameras,
-        saveImage: saveImage, imageSaved: imageSaved };
+        saveImage: saveImage, imageSaved: imageSaved, takeConsole: takeConsole };
 }());

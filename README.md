@@ -120,6 +120,8 @@ Use **Import → Import sample projects…** to choose which bundled examples to
 
 ## Sketch diagnostics
 
+The **Console** button in a running sketch displays Processing `print()`/`println()` and p5.js `print()`/JavaScript `console.log()`, `info()`, `warn()`, and `error()`. Return to **Tools → Console** in the editor to read the last run's output and errors. The resizable sheet supports selection, Copy, and Clear. Output is bounded; heavy logging drops earlier messages so it cannot consume unlimited memory.
+
 Sketches run from a saved source snapshot, with the project-named file first and other files sorted by name. Failed reads and saves stop execution instead of silently using incomplete or outdated code.
 
 The runtime reports syntax errors, runtime exceptions, unhandled promise rejections, missing resources, and WebKit failures. A sketch that blocks the JavaScript thread for 10 seconds is stopped with a recovery message. Only the first failure is presented per run.

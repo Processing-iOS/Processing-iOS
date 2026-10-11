@@ -22,6 +22,63 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test func printedOutputReachesTheConsoleInBothLanguages() async throws {
+        for language in ["pde", "js"] {
+            let code = language == "pde"
+                ? #"void setup() { size(20,20); print("Hello "); println(42); noLoop(); }"#
+                : "function setup() { createCanvas(20,20); let value = {answer:42}; value.self = value; console.warn('Hello', value); noLoop(); }"
+            let fixture = try SketchFixture(language: language, main: code)
+            defer { fixture.remove() }
+            let probe = RuntimeProbe()
+            defer { probe.close() }
+            try probe.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+            let output = try await probe.message(named: "iosbridge", event: "console")
+            let records = try #require(output["records"] as? [[String: Any]])
+            let text = records.compactMap { $0["text"] as? String }.joined()
+            #expect(text.contains("Hello"))
+            #expect(text.contains("42"))
+            if language == "js" {
+                #expect(text.contains("Circular"))
+                #expect(records.first?["level"] as? String == "warn")
+            }
+            try await Task.sleep(nanoseconds: 300_000_000)
+            let allOutput = probe.consoleOutput
+            #expect(!allOutput.contains("imported multiple times"))
+        }
+    }
+
+    @Test func consoleKeepsRecentOutputAndErrorsAfterLeavingTheSketch() async throws {
+        let fixture = try SketchFixture(language: "js", main: """
+        function setup() {
+          createCanvas(20,20);
+          for (let i=0; i<10000; i++) console.log('line', i, 'x'.repeat(1000));
+          console.log('LAST MESSAGE');
+          missingConsoleValue();
+        }
+        """)
+        defer { fixture.remove() }
+        let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = try #require(scene.windows.first { $0.isKeyWindow })
+        let previousRoot = window.rootViewController
+        let navigation = UINavigationController(rootViewController: UIViewController())
+        window.rootViewController = navigation
+        defer { window.rootViewController = previousRoot }
+        let runner = try #require(RunSketchViewController(simpleTextProject: fixture.project))
+        let console = try #require(runner.console)
+        navigation.pushViewController(runner, animated: false)
+        let deadline = Date().addingTimeInterval(10)
+        while !console.text.contains("missingConsoleValue"), Date() < deadline {
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+        navigation.popViewController(animated: false)
+        #expect(console.text.contains("LAST MESSAGE"))
+        #expect(console.text.contains("missingConsoleValue"))
+        #expect(console.text.contains("[ERROR]"))
+        #expect(console.text.utf8.count <= 60_000)
+        console.clear()
+        #expect(console.text.isEmpty)
+    }
+
     @Test(arguments: ["NotAllowedError", "NotFoundError", "cancelBeforePermissionCompletes"])
     func cameraExampleRequestsPermissionAutomaticallyAndHandlesFailure(outcome: String) async throws {
         let example = try #require(Bundle.main.url(forResource: "Example_Camera", withExtension: "js"))
@@ -933,6 +990,11 @@ private final class RuntimeProbe: NSObject, WKScriptMessageHandler, WKNavigation
     private var messages: [(String, [String: Any])] = []
     private var receive: ((String, [String: Any]) -> Void)?
     var errors: [[String: Any]] { messages.filter { $0.0 == "error" }.map(\.1) }
+    var consoleOutput: String {
+        messages.filter { $0.0 == "iosbridge" && $0.1["event"] as? String == "console" }
+            .flatMap { $0.1["records"] as? [[String: Any]] ?? [] }
+            .compactMap { $0["text"] as? String }.joined(separator: "\n")
+    }
 
     init(density: Int? = nil) {
         super.init()

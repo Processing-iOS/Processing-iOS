@@ -12,6 +12,7 @@
 
 @class DetectedBug;
 @class SimpleTextProject;
+@class SketchConsole;
 
 @protocol RunSketchViewControllerDelegate <NSObject>
 
@@ -27,6 +28,7 @@
     @property(nonatomic,strong) SimpleTextProject *project;
     @property(nonatomic,strong) WKWebView *sketchWebView;
     @property(nonatomic,readonly) BOOL completedSuccessfully;
+    @property(nonatomic,strong,readonly) SketchConsole *console;
     
     @property (nonatomic,strong) CMMotionManager* motionManager;
 

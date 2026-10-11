@@ -31,6 +31,7 @@
 @property(nonatomic,assign) BOOL failed;
 @property(nonatomic,assign) BOOL runtimeReady;
 @property(nonatomic,readwrite) BOOL completedSuccessfully;
+@property(nonatomic,strong,readwrite) SketchConsole *console;
 @property(nonatomic,copy) NSSet<NSString *> *requestedSensors;
 @property(nonatomic,strong) CMAltimeter *altimeter;
 @property(nonatomic,strong) NSTimer *sensorTimer;
@@ -52,7 +53,9 @@
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         self.project = project;
+        self.console = [SketchConsole new];
         self.title = project.name;
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Console" style:UIBarButtonItemStylePlain target:self action:@selector(showConsole)];
         self.imageExportQueue = dispatch_queue_create("Processing.image-export", DISPATCH_QUEUE_SERIAL);
     }
     return self;
@@ -120,6 +123,10 @@
     [self.sketchWebView loadFileURL:self.runtimeHTMLURL allowingReadAccessToURL:projectURL];
 }
 
+- (void)showConsole {
+    [SketchConsoleViewController presentConsole:self.console from:self];
+}
+
 - (void)resetWatchdog {
     self.lastRuntimeActivity = NSProcessInfo.processInfo.systemUptime;
     if (self.runtimeReady && !self.failed && !self.sensorTimer &&
@@ -138,6 +145,17 @@
         if (bug) [self reportBug:bug];
     } else if ([message.name isEqualToString:@"iosbridge"] && [message.body isKindOfClass:NSDictionary.class]) {
         id event = message.body[@"event"];
+        if ([event isEqual:@"console"]) {
+            id records = message.body[@"records"];
+            if ([records isKindOfClass:NSArray.class]) {
+                NSMutableArray *valid = [NSMutableArray array];
+                for (id record in [records subarrayWithRange:NSMakeRange(0, MIN([records count], 200))]) {
+                    if ([record isKindOfClass:NSDictionary.class]) [valid addObject:record];
+                }
+                [self.console appendRecords:valid];
+            }
+            return;
+        }
         if ([event isEqual:@"saveImage"]) {
             [self saveImage:message.body];
             return;
@@ -171,14 +189,17 @@
     __weak typeof(self) weakSelf = self;
     dispatch_async(self.imageExportQueue, ^{
         NSError *error = nil;
-        [SketchImageExport save:payload in:folder error:&error];
+        NSString *savedPath = [SketchImageExport save:payload in:folder error:&error];
         dispatch_async(dispatch_get_main_queue(), ^{
             typeof(self) self = weakSelf;
             if (!self) return;
             if (self.pendingImageExports > 0) --self.pendingImageExports;
             if (!self.sketchWebView || self.failed) return;
             if (error) [self reportError:[NSString stringWithFormat:@"Cannot save image: %@", error.localizedDescription]];
-            else [self.sketchWebView evaluateJavaScript:@"SketchRuntime.imageSaved()" completionHandler:nil];
+            else {
+                [self.console append:[@"Saved " stringByAppendingString:savedPath] level:@"log"];
+                [self.sketchWebView evaluateJavaScript:@"SketchRuntime.imageSaved()" completionHandler:nil];
+            }
         });
     });
 }
@@ -190,10 +211,13 @@
 - (void)reportBug:(DetectedBug *)bug {
     if (self.failed || !bug) return;
     self.failed = YES;
+    [self.console append:bug.displayMessage level:@"error"];
     self.completedSuccessfully = NO;
     self.pendingBug = bug;
     [self stopRuntime];
-    [self presentPendingBug];
+    if (self.presentedViewController && ![self.presentedViewController isKindOfClass:UIAlertController.class]) {
+        [self dismissViewControllerAnimated:YES completion:^{ [self presentPendingBug]; }];
+    } else [self presentPendingBug];
 }
 
 - (void)presentPendingBug {
@@ -405,7 +429,10 @@
     self.watchdog = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self pauseSensors];
-    [self.sketchWebView evaluateJavaScript:@"SketchRuntime.stop()" completionHandler:nil];
+    SketchConsole *console = self.console;
+    [self.sketchWebView evaluateJavaScript:@"SketchRuntime.stop(); SketchRuntime.takeConsole()" completionHandler:^(id result, NSError *error) {
+        if ([result isKindOfClass:NSArray.class]) [console appendRecords:result];
+    }];
     [self stopMediaCapture];
     [self.sketchWebView pauseAllMediaPlaybackWithCompletionHandler:nil];
     [self.sketchWebView.configuration.userContentController removeScriptMessageHandlerForName:@"error"];

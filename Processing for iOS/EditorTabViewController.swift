@@ -18,6 +18,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     private var editorFiles: [SourceCodeFile]
     private var pendingBug: DetectedBug?
     private var runningSketch: RunSketchViewController?
+    private var lastConsole = SketchConsole()
     private var pendingReviewAfterSuccessfulRun = false
     private static let firstSuccessfulRunReviewKey = "requestedReviewAfterFirstSuccessfulRun"
     private let saveStatusLabel = UILabel()
@@ -83,12 +84,14 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         )
         self.navigationItem.rightBarButtonItems = [runButton, addNewPDEFile, shareButton]
         
-        let formatButton = UIBarButtonItem(
-            title: NSLocalizedString("Format Code", comment: ""),
-            style: .plain,
-            target: self,
-            action: #selector(EditorTabViewController.formatCode)
-        )
+        let formatButton = UIBarButtonItem(title: "Tools", menu: UIMenu(children: [
+            UIAction(title: "Format Code", image: UIImage(systemName: "text.alignleft")) { [weak self] _ in self?.formatCode() },
+            UIAction(title: "Console", image: UIImage(systemName: "terminal")) { [weak self] _ in
+                guard let self else { return }
+                self.view.endEditing(true)
+                SketchConsoleViewController.presentConsole(self.lastConsole, from: self)
+            }
+        ]))
         
         let codeReferenceButton = UIBarButtonItem(
             title: NSLocalizedString("Reference", comment: ""),
@@ -255,6 +258,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         let runVC = RunSketchViewController(simpleTextProject: project)!
         runVC.delegate = self
         runningSketch = runVC
+        lastConsole = runVC.console
         pendingReviewAfterSuccessfulRun = false
         navigationController?.pushViewController(runVC, animated: true)
     }
