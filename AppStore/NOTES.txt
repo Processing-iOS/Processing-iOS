@@ -1,4 +1,11 @@
-English App Store copy prepared for the updated app. These files do not publish changes to App Store Connect.
+App Store copy for Processing 3.0. The English (US) and German What's New text was saved to the iOS 3.0 draft through Helm on 2026-10-11 and verified by reading it back. Other metadata files remain prepared copy; they have not been applied to App Store Connect.
+
+App ID: 648955851
+iOS 3.0 version ID: 8e898e60-c2b0-4c84-8891-678e95afb14a
+English localization ID: 54bc817d-e7b2-46c4-b7a1-6e394ac0c73d
+German localization ID: 6c4a683c-dfa9-4654-ab49-fdb31476d204
+
+The release remains Prepare for Submission. Upload a current 3.0 build before submission; build 43 was uploaded as 4.0 and predates the latest feature changes.
 
 Name: 30-character maximum.
 Subtitle: 30-character maximum.

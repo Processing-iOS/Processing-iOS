@@ -1,15 +1,24 @@
-Processing is completely free, sponsored by one sec.
+Processing 3.0 is completely free for everyone! All features are included, with no in-app purchases or subscriptions. Sponsored by one sec: https://one-sec.app
 
-This update brings:
-• Autosave, code history, and protection against conflicting edits.
-• Faster, more reliable syntax highlighting and offline code completion.
-• Find and replace, undoable formatting, adjustable text size, and editing shortcuts.
-• Complete project imports, selective sample imports, rename, and duplicate.
-• Linked folders in Files and whole-project ZIP or folder sharing.
-• A console for printed output and errors, plus clearer diagnostics and more reliable repeated runs.
-• A searchable offline reference with copyable examples.
-• JavaScript library imports with configurable load order and library-specific error locations.
-• Retina drawing, PNG/JPEG canvas export, more sensor inputs, and a simple CameraView API.
-• Processing compatibility additions, including StringList, circle, and square.
+A better place to create
+• Enjoy sharper Retina drawing and a simpler app name: Processing.
+• Add a front or back camera to your sketches with CameraView, and explore more device sensors.
+• Save your drawings as PNG or JPEG images.
 
-The app is now named Processing. In-app purchases and the obsolete Add to Home Screen flow have been removed.
+More comfortable coding
+• Write with improved syntax highlighting, code completion, find and replace, undo and redo, and adjustable text size.
+• Keep your work protected with autosave, code history, and help resolving conflicting edits.
+• Find problems faster with clearer error messages and a console for printed output.
+• Run your sketches repeatedly with improved reliability.
+
+Easier project management
+• Import complete projects or choose individual sample projects to try again.
+• Rename and duplicate projects and files.
+• Open project folders from Files, including supported iCloud Drive locations, and share whole projects.
+
+Learn and explore
+• Browse a searchable offline reference with examples you can copy.
+• Add compatible JavaScript libraries to p5.js projects and choose their load order.
+• Enjoy expanded Processing compatibility, including StringList, circle, and square.
+
+The old Add to Home Screen feature has been removed because it no longer works reliably.

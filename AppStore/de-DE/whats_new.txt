@@ -1,0 +1,24 @@
+Processing 3.0 ist jetzt für alle komplett kostenlos! Alle Funktionen sind enthalten, ohne In-App-Käufe oder Abonnements. Gesponsert von one sec: https://one-sec.app
+
+Mehr Möglichkeiten für deine Ideen
+• Zeichne in scharfer Retina-Auflösung. Die App heißt jetzt einfach Processing.
+• Nutze die Front- oder Rückkamera mit CameraView in deinen Sketchen und entdecke weitere Gerätesensoren.
+• Speichere deine Zeichnungen als PNG- oder JPEG-Bilder.
+
+Angenehmer programmieren
+• Verbesserte Syntaxhervorhebung, Codevervollständigung, Suchen und Ersetzen, Rückgängig und Wiederholen sowie eine einstellbare Textgröße.
+• Automatisches Speichern, ein Codeverlauf und Hilfe beim Auflösen von Bearbeitungskonflikten schützen deine Arbeit.
+• Klarere Fehlermeldungen und eine Konsole für Textausgaben helfen dir bei der Fehlersuche.
+• Sketche lassen sich zuverlässiger wiederholt ausführen.
+
+Projekte einfacher verwalten
+• Importiere vollständige Projekte oder wähle einzelne Beispielprojekte zum erneuten Importieren aus.
+• Benenne Projekte und Dateien um oder dupliziere sie.
+• Öffne Projektordner aus der Dateien-App, auch von unterstützten iCloud-Drive-Speicherorten, und teile ganze Projekte.
+
+Lernen und entdecken
+• Durchsuche die integrierte Offline-Referenz mit kopierbaren Beispielen.
+• Füge kompatible JavaScript-Bibliotheken zu p5.js-Projekten hinzu und lege ihre Ladereihenfolge fest.
+• Nutze zusätzliche Processing-Funktionen wie StringList, circle und square.
+
+Die bisherige Funktion „Zum Home-Bildschirm hinzufügen“ wurde entfernt, da sie nicht mehr zuverlässig funktioniert.
