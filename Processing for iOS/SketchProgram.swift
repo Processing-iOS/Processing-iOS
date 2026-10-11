@@ -35,6 +35,7 @@ struct SketchSource {
 /// An immutable snapshot: execution order, HTML and diagnostics use the same source.
 @objc class SketchProgram: NSObject {
     let sources: [SketchSource]
+    let projectLibraries: [SketchSource]
     let language: String
     @objc let htmlPage: String
     @objc let preflightBug: DetectedBug?
@@ -56,6 +57,7 @@ struct SketchSource {
         guard !sources.isEmpty else {
             throw Self.failure("This project contains no .\(language) source files.")
         }
+        projectLibraries = try ProjectLibraries.sources(in: project)
         let code = sources.map { SketchSource.normalized($0.content) + "\n" }.joined()
         let scanned = language == "pde" ? ProcessingSourceScanner.scan(code) : nil
         if let issue = scanned?.issue ?? scanned.flatMap({ Self.unsupportedImport(in: $0.code) }) {
@@ -73,6 +75,7 @@ struct SketchSource {
         }
         let libraryNames = language == "pde" ? ["processing.min", "ProcessingCompatibility"] : ["p5.min", "p5.sound.min"]
         let libraries = try libraryNames.map { ["name": $0 + ".js", "code": try Self.resource($0, extension: "js")] }
+            + projectLibraries.map { ["name": $0.name, "code": $0.content] }
         let payload: [String: Any] = ["language": language, "code": code, "libraries": libraries]
         let data = try JSONSerialization.data(withJSONObject: payload)
         // JSON is data, never HTML. Escape script terminators and JavaScript line separators.
@@ -105,7 +108,10 @@ struct SketchSource {
         let url = payload["url"] as? String ?? ""
         let line = Self.positiveInteger(payload["line"])
         let column = Self.positiveInteger(payload["column"])
-        if language == "js", url == "sketch-source.js", line > 0,
+        if let library = projectLibraries.first(where: { $0.name == url }), line > 0,
+           let range = library.range(line: line, column: column) {
+            bug.locate(in: library, range: tokenRange(bug.wrongCode, in: library, near: range) ?? range)
+        } else if language == "js", url == "sketch-source.js", line > 0,
            let file = sources.last(where: { $0.firstLine <= line }),
            let range = file.range(line: line - file.firstLine + 1, column: column) {
             bug.locate(in: file, range: tokenRange(bug.wrongCode, in: file, near: range) ?? range)

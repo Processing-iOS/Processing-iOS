@@ -22,6 +22,76 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test func projectLibrariesLoadInOrderAndReportTheirOwnSourceLocations() async throws {
+        let fixture = try SketchFixture(language: "js", main: "function setup() { createCanvas(20,20); background(ReviewResult); noLoop(); }")
+        defer { fixture.remove() }
+        let incoming = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: incoming, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: incoming) }
+        let first = incoming.appendingPathComponent("seed.js"), second = incoming.appendingPathComponent("dependent.js")
+        try "window.ReviewSeed = 40;".write(to: first, atomically: true, encoding: .utf8)
+        try "// requires seed\nwindow.ReviewResult = ReviewSeed + 2;".write(to: second, atomically: true, encoding: .utf8)
+        try ProjectLibraries.add([first, second], to: fixture.project)
+        let order = try ProjectLibraries.paths(in: fixture.project)
+        #expect(order == ["libraries/seed.js", "libraries/dependent.js"])
+        let probe = RuntimeProbe()
+        defer { probe.close() }
+        try probe.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await probe.message(named: "iosbridge", event: "ready")
+        #expect(try await probe.webView.evaluateJavaScript("ReviewResult") as? Int == 42)
+        #expect(probe.errors.isEmpty)
+        probe.close()
+
+        // Changing the persisted order really changes execution, with diagnostics
+        // pointing into the library rather than an unrelated source tab.
+        try ProjectLibraries.reorder(Array(order.reversed()), in: fixture.project)
+        try "function setup() { createCanvas(20,20); causeLibraryError(); }".write(to: fixture.project.folder.appendingPathComponent(fixture.mainName), atomically: true, encoding: .utf8)
+        let failures = [
+            ("// requires seed\nwindow.ReviewResult = ReviewSeed + 2;", 2),
+            ("// invalid bundle\nconst bad = ;", 2),
+            ("// called from the sketch\nfunction causeLibraryError() { libraryMissing(); }", 2)
+        ]
+        for (code, line) in failures {
+            try code.write(to: fixture.project.folder.appendingPathComponent(order[1]), atomically: true, encoding: .utf8)
+            let failed = RuntimeProbe()
+            defer { failed.close() }
+            let program = try fixture.project.prepareRuntime()
+            try failed.load(program, in: fixture.project.folder)
+            let message = try await failed.message(named: "error")
+            let bug = try #require(program.bug(fromMessage: message))
+            #expect(bug.fileName == "libraries/dependent.js")
+            #expect(bug.line == line)
+            #expect(bug.range(inSource: code).location != NSNotFound)
+        }
+        try ProjectLibraries.exclude(order[1], from: fixture.project)
+        #expect(try ProjectLibraries.paths(in: fixture.project) == [order[0]])
+        #expect(FileManager.default.fileExists(atPath: fixture.project.folder.appendingPathComponent(order[1]).path))
+        try FileManager.default.removeItem(at: fixture.project.folder.appendingPathComponent(order[0]))
+        #expect(throws: (any Error).self) { try fixture.project.prepareRuntime() }
+    }
+
+    @Test func libraryImportsNeverOverwriteCodeOrReadOutsideTheProject() throws {
+        let fixture = try SketchFixture(language: "js", main: "function setup() {}")
+        defer { fixture.remove() }
+        let incoming = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: incoming, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: incoming) }
+        let first = incoming.appendingPathComponent("existing.js"), another = incoming.appendingPathComponent("new.js")
+        try "window.Example=1;".write(to: first, atomically: true, encoding: .utf8)
+        try "window.NewExample=2;".write(to: another, atomically: true, encoding: .utf8)
+        try ProjectLibraries.add([first], to: fixture.project)
+        try "window.Example=999;".write(to: first, atomically: true, encoding: .utf8)
+        #expect(throws: (any Error).self) { try ProjectLibraries.add([another, first], to: fixture.project) }
+        #expect(try ProjectLibraries.source("libraries/existing.js", in: fixture.project) == "window.Example=1;")
+        #expect(!FileManager.default.fileExists(atPath: fixture.project.folder.appendingPathComponent("libraries/new.js").path))
+        let manifest = fixture.project.folder.appendingPathComponent(".processing-libraries.json")
+        try Data("[\"libraries/../../outside.js\"]".utf8).write(to: manifest)
+        #expect(throws: (any Error).self) { try fixture.project.prepareRuntime() }
+        try Data("[\"libraries/escape.js\"]".utf8).write(to: manifest)
+        try FileManager.default.createSymbolicLink(at: fixture.project.folder.appendingPathComponent("libraries/escape.js"), withDestinationURL: first)
+        #expect(throws: (any Error).self) { try fixture.project.prepareRuntime() }
+    }
+
     @Test func offlineReferenceExamplesRunInTheirDocumentedLanguage() async throws {
         for language in ["pde", "js"] {
             #expect(OfflineReference.search(" GRAVITYupdated ", language: language).map(\.id) == ["sensors"])

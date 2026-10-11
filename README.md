@@ -60,6 +60,10 @@ P5.js retains its built-in Retina support and still honors an explicit `pixelDen
 
 ## Processing compatibility and image export
 
+In a p5.js project, **Tools → JavaScript Libraries** imports local browser-compatible `.js` bundles. Tap Edit and drag to set their load order; they run after the bundled p5.js/p5.sound and before the sketch. Swipe **Exclude** to stop loading a library while retaining its source file. Importing that same file again enables it; different content with the same name is rejected without overwriting anything. Tap a library to read/copy its source and use Files to edit it.
+
+The ordered `.processing-libraries.json` list and `libraries/` folder travel with project copies and exports. Library syntax/runtime errors identify the library and line; Show in Code opens its source. Missing files, invalid lists, and paths outside the project stop the run with an actionable error. Limits are 32 libraries and 16 MB of combined JavaScript. Use classic scripts or browser/UMD builds compatible with p5.js 1.4.0; npm installation, Node.js APIs, and ES modules are not supported. Relative asset paths resolve from the project folder.
+
 The bundled runtimes are Processing.js 1.6.6 and p5.js 1.4.0. PDE sketches support the Processing.js API, with additions for `circle`, `square`, `displayWidth`, `displayHeight`, `fullScreen`, and `StringList`. The list supports append/get/set/remove, size/clear, hasValue, sort/sortReverse/reverse/shuffle, upper/lower, copy, join, array/toArray, and iteration. Parameterized functions, PVector math, map, and ellipse modes are covered by runtime regression checks.
 
 `saveFrame("frame-####.png")` in Processing and `saveCanvas("frame", "png")` in p5.js write images into the project's **exports** folder, available through the folder browser and Files. PNG and JPEG are supported, including Retina pixels and numbered Processing filenames. Use simple filenames without folder paths. Image limits are 16 million pixels, 8192 pixels per side, and 18 MB encoded image data. A busy export queue reports an error instead of accumulating unbounded images; lower `frameRate()` for image sequences.

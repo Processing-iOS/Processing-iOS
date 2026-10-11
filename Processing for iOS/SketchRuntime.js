@@ -5,7 +5,7 @@ window.SketchRuntime = (function () {
     var stopped = false;
     var instance = null;
     var phase = "compile";
-    var sourceURL = "";
+    var projectScriptNames = Object.create(null);
     var scriptURLs = [];
     var sensorCallbacks = {
         accelerometerUpdated: 3, gyroscopeUpdated: 3, orientationUpdated: 3,
@@ -209,17 +209,24 @@ window.SketchRuntime = (function () {
         if (!message.trim()) message = "The sketch threw an empty error.";
         var stack = "";
         try { if (error && typeof error.stack === "string") stack = error.stack; } catch (_) {}
-        // Errors thrown by a library often retain a caller in the original sketch.
-        if (sourceURL) {
-            var escapedURL = sourceURL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            var frame = stack.match(new RegExp(escapedURL + ":(\\d+):(\\d+)"));
-            if (frame) {
-                url = sourceURL;
-                line = Number(frame[1]);
-                column = Number(frame[2]);
+        // Map the first project frame, including a project library's own code.
+        // Built-in runtime frames fall through to their caller in the sketch.
+        var frames = stack.split("\n"), located = false;
+        for (var frame of frames) {
+            for (var scriptURL of Object.keys(projectScriptNames)) {
+                var escapedURL = scriptURL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                var match = frame.match(new RegExp(escapedURL + ":(\\d+):(\\d+)"));
+                if (match) {
+                    url = scriptURL;
+                    line = Number(match[1]);
+                    column = Number(match[2]);
+                    located = true;
+                    break;
+                }
             }
-            if (url === sourceURL) url = "sketch-source.js";
+            if (located) break;
         }
+        if (projectScriptNames[url]) url = projectScriptNames[url];
         flushConsole();
         post("error", {
             message: message.slice(0, 4000),
@@ -252,7 +259,7 @@ window.SketchRuntime = (function () {
             var element = document.createElement("script");
             var url = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
             scriptURLs.push(url);
-            if (name === "sketch-source.js") sourceURL = url;
+            if (name === "sketch-source.js" || name.indexOf("libraries/") === 0) projectScriptNames[url] = name;
             element.src = url;
             element.onload = function () { element.remove(); resolve(); };
             element.onerror = function () { element.remove(); reject(new Error("Cannot load " + name)); };

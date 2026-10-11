@@ -87,6 +87,11 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         self.navigationItem.rightBarButtonItems = [runButton, addNewPDEFile, shareButton]
         
         let formatButton = UIBarButtonItem(title: "Tools", menu: UIMenu(children: [
+            UIAction(title: "JavaScript Libraries", image: UIImage(systemName: "shippingbox"), attributes: project.sourceCodeExtension == "js" ? [] : [.hidden]) { [weak self] _ in
+                guard let self, self.saveCode() else { return }
+                self.view.endEditing(true)
+                self.present(UINavigationController(rootViewController: ProjectLibrariesViewController(project: self.project)), animated: true)
+            },
             UIAction(title: "Format Code", image: UIImage(systemName: "text.alignleft")) { [weak self] _ in self?.formatCode() },
             UIAction(title: "Find and Replace", image: UIImage(systemName: "magnifyingglass")) { [weak self] _ in self?.findCode() },
             UIAction(title: "Undo", image: UIImage(systemName: "arrow.uturn.backward")) { [weak self] _ in
@@ -502,6 +507,13 @@ extension EditorTabViewController: RunSketchViewControllerDelegate {
         requestPendingReviewIfPossible()
         guard let bug = pendingBug else { return }
         pendingBug = nil
+        if let path = bug.fileName, path.hasPrefix("libraries/") {
+            do {
+                let code = try ProjectLibraries.source(path, in: project)
+                navigationController?.pushViewController(LibrarySourceViewController(path: path, code: code, bug: bug), animated: true)
+            } catch { showConflictError(error) }
+            return
+        }
         guard let fileIndex = editorFiles.firstIndex(where: { $0.fileName == bug.fileName }) else { return }
         let highlight: () -> Void = { [weak self] in
             guard let editor = self?.currentViewController as? PDEEditorViewController else { return }

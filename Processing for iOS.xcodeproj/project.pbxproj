@@ -88,6 +88,8 @@
 		867A881E307B8B70009C23A0 /* LinkedProjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881D307B8B70009C23A0 /* LinkedProjects.swift */; };
 		867A8820307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */; };
 		867A8822307B8E5A009C23A0 /* OfflineReference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8821307B8E5A009C23A0 /* OfflineReference.swift */; };
+		867A8824307B8F87009C23A0 /* ProjectLibraries.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8823307B8F87009C23A0 /* ProjectLibraries.swift */; };
+		867A8826307B8F88009C23A0 /* ProjectLibrariesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8825307B8F88009C23A0 /* ProjectLibrariesViewController.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -214,6 +216,8 @@
 		867A881D307B8B70009C23A0 /* LinkedProjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedProjects.swift; sourceTree = "<group>"; };
 		867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRuntimeSnapshot.swift; sourceTree = "<group>"; };
 		867A8821307B8E5A009C23A0 /* OfflineReference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineReference.swift; sourceTree = "<group>"; };
+		867A8823307B8F87009C23A0 /* ProjectLibraries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectLibraries.swift; sourceTree = "<group>"; };
+		867A8825307B8F88009C23A0 /* ProjectLibrariesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectLibrariesViewController.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -415,6 +419,8 @@
 				867A881D307B8B70009C23A0 /* LinkedProjects.swift */,
 				867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */,
 				867A8821307B8E5A009C23A0 /* OfflineReference.swift */,
+				867A8823307B8F87009C23A0 /* ProjectLibraries.swift */,
+				867A8825307B8F88009C23A0 /* ProjectLibrariesViewController.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -670,6 +676,8 @@
 				515230FA1B74B3D1003497F9 /* SettingsViewController.m in Sources */,
 				5192E55320A8A67300354BC8 /* FileContentTableViewCell.swift in Sources */,
 				51FD83B624A3B21A0008AB57 /* CodeErrorDetectionEngine.swift in Sources */,
+				867A8824307B8F87009C23A0 /* ProjectLibraries.swift in Sources */,
+				867A8826307B8F88009C23A0 /* ProjectLibrariesViewController.swift in Sources */,
 				86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */,
 				51CEE44C1B3E9A270031D1BE /* AppDelegate.m in Sources */,
 				867A8789307B7F5B009C23A0 /* CodeHighlighter.swift in Sources */,
