@@ -59,7 +59,7 @@ enum OfflineReference {
                 example: "\(fn) setup() {\n  \(canvas)\n  background(255);\n  stroke(20);\n  strokeWeight(4);\n}\n\n\(fn) mouseDragged() {\n  line(pmouseX, pmouseY, mouseX, mouseY);\n}"),
             ReferenceTopic(id: "console", title: "Print and debug",
                 keywords: "console log warn error print println debugging",
-                explanation: "Open Console while running, or Tools → Console after returning to the editor. Copy preserves the output and Clear empties it. The console keeps a bounded recent history, so printing every frame can remove older messages. Syntax/runtime errors also appear here.",
+                explanation: "Open Console while running, or … → Console after returning to the editor. Copy preserves the output and Clear empties it. The console keeps a bounded recent history, so printing every frame can remove older messages. Syntax/runtime errors also appear here.",
                 example: sketch(js ? "console.log(\"Canvas:\", width, height);\nconsole.warn(\"A sample warning\");" : "println(\"Canvas width: \" + width);\nprintln(\"Hello from Processing\");")),
             ReferenceTopic(id: "export", title: "Save a canvas image",
                 keywords: "saveFrame saveCanvas PNG JPEG exports share screenshot",

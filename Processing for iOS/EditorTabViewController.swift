@@ -88,7 +88,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         )
         self.navigationItem.rightBarButtonItems = [runButton, addNewPDEFile, shareButton]
         
-        let formatButton = UIBarButtonItem(title: "Tools", menu: UIMenu(children: [
+        let editorTools = UIMenu(options: .displayInline, children: [
             UIAction(title: "JavaScript Libraries", image: UIImage(systemName: "shippingbox"), attributes: project.sourceCodeExtension == "js" ? [] : [.hidden]) { [weak self] _ in
                 guard let self, self.saveCode() else { return }
                 self.view.endEditing(true)
@@ -105,7 +105,14 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
                 self.view.endEditing(true)
                 SketchConsoleViewController.presentConsole(self.lastConsole, from: self)
             }
+        ])
+        let moreButton = UIBarButtonItem(image: UIImage(systemName: "ellipsis"), menu: UIMenu(children: [
+            UIAction(title: "Folder Contents", image: UIImage(systemName: "folder")) { [weak self] _ in
+                self?.showFolderContent()
+            },
+            editorTools
         ]))
+        moreButton.accessibilityLabel = "More"
         
         let codeReferenceButton = UIBarButtonItem(
             image: UIImage(systemName: "book"),
@@ -116,15 +123,9 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         codeReferenceButton.accessibilityLabel = NSLocalizedString("Reference", comment: "")
         
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        let organize = UIBarButtonItem(
-            barButtonSystemItem: .organize,
-            target: self,
-            action: #selector(EditorTabViewController.showFolderContent)
-        )
-        
         undoButton.accessibilityLabel = "Undo"
         redoButton.accessibilityLabel = "Redo"
-        self.toolbarItems = [formatButton, flexibleSpace, organize, undoButton, redoButton, flexibleSpace, codeReferenceButton]
+        self.toolbarItems = [undoButton, redoButton, flexibleSpace, codeReferenceButton, moreButton]
         updateUndoRedo()
         for name in [Notification.Name.NSUndoManagerDidCloseUndoGroup, .NSUndoManagerDidUndoChange,
                      .NSUndoManagerDidRedoChange, UITextView.textDidChangeNotification] {

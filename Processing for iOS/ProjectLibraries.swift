@@ -73,7 +73,7 @@ enum ProjectLibraries {
                     }
                     return SketchSource(name: path, content: text, firstLine: 1)
                 } catch {
-                    throw ProjectFileError(message: "Cannot load \(path). \(error.localizedDescription) Open Tools → JavaScript Libraries to fix the file or exclude it.")
+                    throw ProjectFileError(message: "Cannot load \(path). \(error.localizedDescription) Open … → JavaScript Libraries to fix the file or exclude it.")
                 }
             }
             return sources
