@@ -73,6 +73,9 @@
 		867A597E307AC9E2009C23A0 /* SketchRuntime.js in Resources */ = {isa = PBXBuildFile; fileRef = 867A597D307AC9E2009C23A0 /* SketchRuntime.js */; };
 		867A5982307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A5981307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift */; };
 		867A5986307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A5985307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift */; };
+		867A7521307B6721009C23A0 /* Example_Sensors.pde in Resources */ = {isa = PBXBuildFile; fileRef = 867A7520307B6721009C23A0 /* Example_Sensors.pde */; };
+		867A7523307B6841009C23A0 /* Example_Camera.js in Resources */ = {isa = PBXBuildFile; fileRef = 867A7522307B6841009C23A0 /* Example_Camera.js */; };
+		867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -184,6 +187,9 @@
 		867A597D307AC9E2009C23A0 /* SketchRuntime.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = SketchRuntime.js; sourceTree = "<group>"; };
 		867A5981307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Processing for iOS/CodeCompletion.swift"; sourceTree = "<group>"; };
 		867A5985307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Processing for iOS/CodeCompletionController.swift"; sourceTree = "<group>"; };
+		867A7520307B6721009C23A0 /* Example_Sensors.pde */ = {isa = PBXFileReference; lastKnownFileType = text; path = Example_Sensors.pde; sourceTree = "<group>"; };
+		867A7522307B6841009C23A0 /* Example_Camera.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Example_Camera.js; sourceTree = "<group>"; };
+		867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleProjectPickerViewController.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -244,6 +250,8 @@
 				86D067401E5266C70033A4FF /* Example_Gyroscope_Accelerometer.pde */,
 				51CEE47A1B3EAC1C0031D1BE /* container.html */,
 				5128B7521B3EEAA700572894 /* syntax-highlighting-pde.plist */,
+				867A7520307B6721009C23A0 /* Example_Sensors.pde */,
+				867A7522307B6841009C23A0 /* Example_Camera.js */,
 			);
 			path = "Processing Files";
 			sourceTree = "<group>";
@@ -370,6 +378,7 @@
 				867A3DE2307AC662009C23A0 /* SceneDelegate.swift */,
 				867A597B307AC9BD009C23A0 /* SketchProgram.swift */,
 				867A597D307AC9E2009C23A0 /* SketchRuntime.js */,
+				867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -504,11 +513,13 @@
 				5199DD791B3F232C004437DB /* SourceCodePro-Medium.ttf in Resources */,
 				86D067411E5266C70033A4FF /* Example_Gyroscope_Accelerometer.pde in Resources */,
 				86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */,
+				867A7521307B6721009C23A0 /* Example_Sensors.pde in Resources */,
 				511A4BF81B6D13FF00B03259 /* Example_Multitouch.pde in Resources */,
 				5192E54E20A8A15E00354BC8 /* FolderContentBrowserTableViewController.xib in Resources */,
 				510F51B120ACB12C0082B979 /* EditorTabViewController.xib in Resources */,
 				5192E55420A8A67300354BC8 /* FileContentTableViewCell.xib in Resources */,
 				513BF2AD24A029A700825346 /* CodeFixSuggestionTableViewCell.xib in Resources */,
+				867A7523307B6841009C23A0 /* Example_Camera.js in Resources */,
 				5199DD761B3F232C004437DB /* SourceCodePro-Bold.ttf in Resources */,
 				51D6F82924A5270E0007625B /* MultiFileViewController.xib in Resources */,
 				511A4BF11B6D12C200B03259 /* Example_3D.pde in Resources */,
@@ -627,6 +638,7 @@
 				513CADDF1FCD712100B9A6F1 /* FirstStart.m in Sources */,
 				860DBA451E5736300022C90F /* AboutViewController.m in Sources */,
 				517EAA7D24926E900069EAD1 /* FredKitTimeInterval.swift in Sources */,
+				867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */,
 				51CEE4791B3EA6FC0031D1BE /* RunSketchViewController.m in Sources */,
 				51CD5DD3249788D9008F2343 /* SimpleTextProject.swift in Sources */,
 				867A597C307AC9BD009C23A0 /* SketchProgram.swift in Sources */,
@@ -801,7 +813,17 @@
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Processing;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow sketches you run to use the camera for live visuals.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Allow sketches you run to use microphone audio.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Allow sketches you run to use motion and altitude measurements.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 4.0;
@@ -829,7 +851,17 @@
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Processing for iOS/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Processing;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow sketches you run to use the camera for live visuals.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Allow sketches you run to use microphone audio.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Allow sketches you run to use motion and altitude measurements.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 4.0;

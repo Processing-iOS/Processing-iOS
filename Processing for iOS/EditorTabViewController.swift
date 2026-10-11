@@ -10,12 +10,16 @@ import UIKit
 import Tabman
 import Pageboy
 import SafariServices
+import StoreKit
 
 class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSource, TMBarDataSource {
     
     let project: SimpleTextProject!
     private var editorFiles: [SourceCodeFile]
     private var pendingBug: DetectedBug?
+    private var runningSketch: RunSketchViewController?
+    private var pendingReviewAfterSuccessfulRun = false
+    private static let firstSuccessfulRunReviewKey = "requestedReviewAfterFirstSuccessfulRun"
     
     init(withProject project: SimpleTextProject) {
         self.project = project
@@ -35,6 +39,11 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(requestPendingReviewIfPossible),
+            name: UIScene.didActivateNotification, object: nil
+        )
         
         self.title = self.project.name
         
@@ -203,7 +212,39 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         guard saveCode() else { return }
         let runVC = RunSketchViewController(simpleTextProject: project)!
         runVC.delegate = self
+        runningSketch = runVC
+        pendingReviewAfterSuccessfulRun = false
         navigationController?.pushViewController(runVC, animated: true)
+    }
+
+    private func didReturnFromSketch() {
+        guard let runner = runningSketch,
+              navigationController?.topViewController === self,
+              navigationController?.viewControllers.contains(where: { $0 === runner }) == false else { return }
+        pendingReviewAfterSuccessfulRun = runner.completedSuccessfully
+        runningSketch = nil
+    }
+
+    @objc private func requestPendingReviewIfPossible() {
+        guard pendingReviewAfterSuccessfulRun else { return }
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.firstSuccessfulRunReviewKey) else {
+            pendingReviewAfterSuccessfulRun = false
+            return
+        }
+        guard pendingBug == nil, presentedViewController == nil,
+              navigationController?.topViewController === self,
+              let scene = viewIfLoaded?.window?.windowScene,
+              scene.activationState == .foregroundActive else { return }
+
+        pendingReviewAfterSuccessfulRun = false
+        // StoreKit decides whether to show its dialog. Record the request, not a rating.
+        defaults.set(true, forKey: Self.firstSuccessfulRunReviewKey)
+        if #available(iOS 16.0, *) {
+            AppStore.requestReview(in: scene)
+        } else {
+            SKStoreReviewController.requestReview(in: scene)
+        }
     }
     
     @objc func formatCode() {
@@ -336,6 +377,8 @@ extension EditorTabViewController: RunSketchViewControllerDelegate {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        didReturnFromSketch()
+        requestPendingReviewIfPossible()
         guard let bug = pendingBug else { return }
         pendingBug = nil
         guard let fileIndex = editorFiles.firstIndex(where: { $0.fileName == bug.fileName }) else { return }

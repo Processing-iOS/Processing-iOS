@@ -60,19 +60,9 @@
 	</dict>
 	<dict>
 		<key>name</key>
-		<string>text string incomplete</string>
-		<key>regex</key>
-		<string>(&quot;)(.*?)(\n)</string>
-		<key>color</key>
-		<string>102,102,102</string>
-		<key>bold</key>
-		<true/>
-	</dict>
-	<dict>
-		<key>name</key>
 		<string>text string</string>
 		<key>regex</key>
-		<string>(&quot;)(.*?)(&quot;)</string>
+		<string>&quot;(?:\\[\s\S]|[^&quot;\\\r\n])*(?:&quot;|\\?(?=\r|\n|$))|'(?:\\[\s\S]|[^'\\\r\n])*(?:'|\\?(?=\r|\n|$))</string>
 		<key>color</key>
 		<string>126,68,149</string>
 	</dict>

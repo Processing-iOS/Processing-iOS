@@ -26,6 +26,7 @@
     
     @property(nonatomic,strong) SimpleTextProject *project;
     @property(nonatomic,strong) WKWebView *sketchWebView;
+    @property(nonatomic,readonly) BOOL completedSuccessfully;
     
     @property (nonatomic,strong) CMMotionManager* motionManager;
 

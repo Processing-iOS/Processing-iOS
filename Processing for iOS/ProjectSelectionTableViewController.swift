@@ -72,7 +72,7 @@ class ProjectSelectionTableViewController: UITableViewController,
     
     @IBAction func importProject(_ sender: UIBarButtonItem) {
         
-        let actionSheet = UIAlertController(title: "Import…", message: "Would you like to import a project folder or an individual file?", preferredStyle: .actionSheet)
+        let actionSheet = UIAlertController(title: "Import…", message: "Import a file, a project folder, or the bundled sample projects. Existing projects will be kept.", preferredStyle: .actionSheet)
         
         actionSheet.popoverPresentationController?.barButtonItem = sender
         
@@ -97,14 +97,63 @@ class ProjectSelectionTableViewController: UITableViewController,
         
         actionSheet.addAction(singleFile)
         actionSheet.addAction(projectFolder)
+        actionSheet.addAction(UIAlertAction(title: "Import sample projects…", style: .default) { [weak self] _ in
+            self?.showSampleProjectPicker()
+        })
         actionSheet.addAction(cancel)
         
         self.present(actionSheet, animated: true)
         
     }
+
+    private func showSampleProjectPicker() {
+        let picker = SampleProjectPickerViewController { [weak self] fileNames in
+            self?.importSampleProjects(fileNames)
+        }
+        let navigation = ProcessingNavigationViewController(rootViewController: picker)
+        navigation.modalPresentationStyle = .formSheet
+        present(navigation, animated: true)
+    }
+
+    private func importSampleProjects(_ fileNames: [String]) {
+        // Clear any search so restored projects are immediately visible.
+        searchController.isActive = false
+        searchController.searchBar.text = nil
+        tableView.setEditing(false, animated: true)
+        let editButton = toolbarItems?.first { $0.action == #selector(toggleEditMode(_:)) }
+        editButton?.title = "Edit"
+        editButton?.style = .plain
+
+        let message: String
+        let title: String
+        do {
+            let imported = try SketchController.importSampleProjects(fileNames)
+            title = "Sample Projects"
+            if imported.isEmpty {
+                message = "The selected sample projects are already available."
+            } else {
+                let count = imported.count
+                message = "Imported \(count) sample \(count == 1 ? "project" : "projects"). Existing projects were kept; fresh copies of edited samples have a numbered name."
+            }
+        } catch {
+            title = "Import Error"
+            message = "Some selected samples could not be imported. You can try again.\n\n\(error.localizedDescription)"
+        }
+
+        SketchController.loadProjects { projects in
+            self.projects = projects
+            self.filteredProjects = nil
+            self.tableView.reloadData()
+            self.refreshProjectsCountLabel()
+        }
+        let result = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        result.addAction(UIAlertAction(title: "OK", style: .default))
+        present(result, animated: true)
+    }
     
     func refreshProjectsCountLabel() {
         projectCountView.text = "\(projects?.count ?? 0) Projects"
+        projectsCountLabel.accessibilityLabel = projectCountView.text
         projectCountView.sizeToFit()
     }
     

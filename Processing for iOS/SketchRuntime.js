@@ -7,6 +7,17 @@ window.SketchRuntime = (function () {
     var phase = "compile";
     var sourceURL = "";
     var scriptURLs = [];
+    var sensorCallbacks = {
+        accelerometerUpdated: 3, gyroscopeUpdated: 3, orientationUpdated: 3,
+        gravityUpdated: 3, userAccelerationUpdated: 3, rotationRateUpdated: 3,
+        magnetometerUpdated: 3, altimeterUpdated: 2
+    };
+    var sketchLanguage = "";
+    var cameraViews = new Set();
+
+    function sketchCallbacks() {
+        return sketchLanguage === "pde" ? instance : window;
+    }
 
     function post(channel, body) {
         var handlers = window.webkit && window.webkit.messageHandlers;
@@ -17,6 +28,8 @@ window.SketchRuntime = (function () {
 
     function stop() {
         stopped = true;
+        cameraViews.forEach(function (camera) { camera.dispose(); });
+        cameraViews.clear();
         try {
             if (instance && typeof instance.noLoop === "function") instance.noLoop();
             if (window.p5 && window.p5.instance) window.p5.instance.noLoop();
@@ -113,15 +126,346 @@ window.SketchRuntime = (function () {
         });
     }
 
+    // Capture and permission handling belong to the runtime, not every sketch.
+    // Each constructor is bound to its sketch's canvas, including during setup().
+    function cameraViewConstructor(contextForDrawing) {
+        return function CameraView(facing, x, y, width, height) {
+            if (!(this instanceof CameraView)) return new CameraView(facing, x, y, width, height);
+            var view = this;
+            var video = document.createElement("video");
+            var stream = null, request = 0, wanted = false;
+            var state = "stopped", message = "Camera is stopped.";
+            var direction = facing === undefined ? "back" : facing;
+            validateFacing(direction);
+            view.x = x === undefined ? 0 : x;
+            view.y = y === undefined ? 0 : y;
+            view.width = width === undefined ? 320 : width;
+            view.height = height === undefined ? 240 : height;
+            validateBounds();
+            video.muted = true;
+            video.playsInline = true;
+            video.style.display = "none";
+            document.body.appendChild(video);
+            var statusLabel = document.createElement("span");
+            statusLabel.setAttribute("role", "status");
+            statusLabel.setAttribute("aria-live", "polite");
+            statusLabel.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)";
+            document.body.appendChild(statusLabel);
+            Object.defineProperties(view, {
+                status: { get: function () { return state; } },
+                message: { get: function () { return message; } },
+                facing: { get: function () { return direction; } }
+            });
+
+            function validateFacing(value) {
+                if (value !== "front" && value !== "back") throw new Error('CameraView facing must be "front" or "back".');
+            }
+            function validateBounds() {
+                if (![view.x, view.y, view.width, view.height].every(Number.isFinite) || view.width < 0 || view.height < 0) {
+                    throw new Error("CameraView needs finite coordinates and non-negative width and height.");
+                }
+            }
+            function status(value, detail) {
+                state = value;
+                message = detail;
+                statusLabel.textContent = detail;
+            }
+            function release(value, detail) {
+                ++request;
+                var previous = stream;
+                stream = null;
+                if (previous) previous.getTracks().forEach(function (track) { track.stop(); });
+                video.pause();
+                video.srcObject = null;
+                status(value, detail);
+            }
+            async function open() {
+                if (stopped || failed || !wanted || stream || state === "waiting") return;
+                if (document.hidden) { status("paused", "Camera is paused."); return; }
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    status("unavailable", "Camera capture is unavailable on this device.");
+                    return;
+                }
+                var current = ++request;
+                status("waiting", "Waiting for camera access…");
+                try {
+                    var acquired = await navigator.mediaDevices.getUserMedia({ audio: false, video: {
+                        facingMode: { ideal: direction === "front" ? "user" : "environment" },
+                        width: { ideal: 1280 }, height: { ideal: 720 }
+                    } });
+                    if (current !== request || stopped || failed || document.hidden) {
+                        acquired.getTracks().forEach(function (track) { track.stop(); });
+                        if (current === request) release("paused", "Camera is paused.");
+                        return;
+                    }
+                    stream = acquired;
+                    video.srcObject = acquired;
+                    acquired.getVideoTracks().forEach(function (track) {
+                        track.addEventListener("ended", function () {
+                            if (stream === acquired) release(document.hidden ? "paused" : "error", "Camera was interrupted. Run the sketch again to retry.");
+                        });
+                    });
+                    await video.play();
+                    if (current === request) status("active", direction === "front" ? "Front camera is live." : "Back camera is live.");
+                } catch (error) {
+                    if (current !== request) return;
+                    var value = "error", detail = "Camera could not start. Run the sketch again to retry.";
+                    if (error.name === "NotAllowedError") {
+                        value = "denied"; detail = "Camera access denied. Allow camera access in iOS Settings, then run the sketch again.";
+                    } else if (error.name === "NotFoundError") {
+                        value = "unavailable"; detail = "No camera is available on this device.";
+                    } else if (error.name === "NotReadableError") {
+                        detail = "Camera is busy. Run the sketch again to retry.";
+                    }
+                    release(value, detail);
+                }
+            }
+            view.start = function () { wanted = true; open(); };
+            view.stop = function () { wanted = false; release("stopped", "Camera is stopped."); };
+            view.setFacing = function (value) {
+                validateFacing(value);
+                if (value === direction) return;
+                direction = value;
+                release("stopped", "Camera is stopped.");
+                if (wanted) open();
+            };
+            view.draw = function (x, y, width, height) {
+                if (arguments.length) {
+                    view.x = x; view.y = y; view.width = width; view.height = height;
+                }
+                validateBounds();
+                if (view.width === 0 || view.height === 0) return;
+                var context = contextForDrawing();
+                if (!context || typeof context.drawImage !== "function") throw new Error("CameraView.draw() requires a 2D sketch canvas.");
+                context.save();
+                try {
+                    context.beginPath();
+                    context.rect(view.x, view.y, view.width, view.height);
+                    context.clip();
+                    if (stream && video.readyState >= 2 && video.videoWidth > 0) {
+                        // Aspect-fill without stretching; preserve the canvas's Retina transform.
+                        var scale = Math.max(view.width / video.videoWidth, view.height / video.videoHeight);
+                        var w = video.videoWidth * scale, h = video.videoHeight * scale;
+                        context.drawImage(video, view.x + (view.width - w) / 2, view.y + (view.height - h) / 2, w, h);
+                    } else {
+                        context.fillStyle = "#1e2836";
+                        context.fillRect(view.x, view.y, view.width, view.height);
+                        context.fillStyle = "#d7e1eb";
+                        context.font = "14px system-ui";
+                        context.textAlign = "left";
+                        context.textBaseline = "top";
+                        var line = "", row = 0;
+                        message.split(" ").forEach(function (word) {
+                            var next = line ? line + " " + word : word;
+                            if (line && context.measureText(next).width > view.width - 24) {
+                                context.fillText(line, view.x + 12, view.y + 12 + row++ * 19);
+                                line = word;
+                            } else line = next;
+                        });
+                        context.fillText(line, view.x + 12, view.y + 12 + row * 19);
+                    }
+                } finally { context.restore(); }
+            };
+            cameraViews.add({
+                pause: function () {
+                    // Native capture shutdown can deliver track.ended before
+                    // this background notification reaches JavaScript.
+                    if (wanted && ["waiting", "active", "error"].indexOf(state) !== -1) release("paused", "Camera is paused.");
+                },
+                resume: function () { if (wanted && state === "paused") open(); },
+                dispose: function () { view.stop(); video.remove(); statusLabel.remove(); }
+            });
+            view.start();
+        };
+    }
+
+    function pauseCameras() { cameraViews.forEach(function (camera) { camera.pause(); }); }
+    function resumeCameras() { cameraViews.forEach(function (camera) { camera.resume(); }); }
+    document.addEventListener("visibilitychange", function () { document.hidden ? pauseCameras() : resumeCameras(); });
+    window.addEventListener("pagehide", pauseCameras);
+    window.addEventListener("pageshow", resumeCameras);
+
+    function installCameraViews() {
+        window.CameraView = cameraViewConstructor(function () { return window.drawingContext; });
+        if (sketchLanguage === "pde") {
+            // The parser uses the default scope to recognize built-in types.
+            Processing.prototype.CameraView = window.CameraView;
+            Processing.registerLibrary("cameraView", { attach: function (sketch) {
+                sketch.CameraView = cameraViewConstructor(function () {
+                    // Flush Processing's deferred pixel writes/matrix changes first.
+                    sketch.pushMatrix(); sketch.popMatrix();
+                    return sketch.externals.canvas.getContext("2d");
+                });
+            } });
+        }
+    }
+
+    function installProcessingRetina() {
+        var density = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+        if (!Number.isFinite(density)) density = 1;
+        var canvases = new WeakSet();
+
+        function prepareCanvas(canvas) {
+            if (density === 1 || canvases.has(canvas)) return;
+            canvases.add(canvas);
+            var context = null;
+            var reset = function () {};
+            var getContext = canvas.getContext.bind(canvas);
+            // Processing.js predates pixelDensity(). Keep its canvas dimensions,
+            // camera and input in logical pixels; only the backing store grows.
+            ["width", "height"].forEach(function (name) {
+                var property = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, name);
+                var logical = property.get.call(canvas);
+                Object.defineProperty(canvas, name, {
+                    get: function () { return logical; },
+                    set: function (value) {
+                        logical = Math.max(0, Math.floor(Number(value) || 0));
+                        property.set.call(canvas, logical * density);
+                        canvas.style[name] = logical + "px";
+                        reset();
+                    }
+                });
+                canvas[name] = logical;
+            });
+            // The legacy touch initializer replaces the entire style attribute.
+            // Without restoring these dimensions, the first touch enlarges the
+            // canvas to its physical pixel size and breaks drawing alignment.
+            var setAttribute = canvas.setAttribute.bind(canvas);
+            canvas.setAttribute = function (name, value) {
+                setAttribute(name, value);
+                if (String(name).toLowerCase() === "style") {
+                    canvas.style.width = canvas.width + "px";
+                    canvas.style.height = canvas.height + "px";
+                }
+            };
+
+            canvas.getContext = function (kind) {
+                var result = getContext.apply(null, arguments);
+                if (!result || context) return result;
+                context = result;
+                if (kind === "2d") {
+                    var setTransform = context.setTransform.bind(context);
+                    var drawImage = context.drawImage.bind(context);
+                    var scratch = document.createElement("canvas");
+                    var scratchContext = scratch.getContext("2d");
+                    reset = function () { setTransform(density, 0, 0, density, 0, 0); };
+                    context.setTransform = function (a, b, c, d, e, f) {
+                        setTransform(a * density, b * density, c * density, d * density, e * density, f * density);
+                    };
+                    context.resetTransform = reset;
+                    context.drawImage = function (source) {
+                        var args = Array.prototype.slice.call(arguments);
+                        if (canvases.has(source)) {
+                            if (args.length === 3) args.push(source.width, source.height);
+                            else if (args.length === 9) {
+                                for (var i = 1; i <= 4; i++) args[i] *= density;
+                            }
+                        }
+                        drawImage.apply(null, args);
+                    };
+                    // Preserve the legacy width*height pixels[] API. Pixel reads
+                    // sample the logical image; writes expand each logical pixel.
+                    // Other drawing still takes place at full Retina resolution.
+                    context.getImageData = function (x, y, width, height) {
+                        if (width < 0) { x += width; width = -width; }
+                        if (height < 0) { y += height; height = -height; }
+                        scratch.width = width;
+                        scratch.height = height;
+                        scratchContext.drawImage(canvas, x * density, y * density, width * density, height * density,
+                            0, 0, width, height);
+                        return scratchContext.getImageData(0, 0, width, height);
+                    };
+                    context.putImageData = function (data, x, y) {
+                        // Processing only uses the three-argument form, including
+                        // set(), updatePixels(), copy() and filters.
+                        scratch.width = data.width;
+                        scratch.height = data.height;
+                        scratchContext.putImageData(data, 0, 0);
+                        context.save();
+                        reset();
+                        context.globalAlpha = 1;
+                        context.globalCompositeOperation = "source-over";
+                        context.imageSmoothingEnabled = false;
+                        context.clearRect(x, y, data.width, data.height);
+                        drawImage(scratch, x, y);
+                        context.restore();
+                    };
+                } else {
+                    var viewport = context.viewport.bind(context);
+                    var readPixels = context.readPixels.bind(context);
+                    var lineWidth = context.lineWidth.bind(context);
+                    var uniformLocation = context.getUniformLocation.bind(context);
+                    var uniform1f = context.uniform1f.bind(context);
+                    var pointSizes = new WeakSet();
+                    reset = function () { viewport(0, 0, canvas.width * density, canvas.height * density); };
+                    context.viewport = function (x, y, width, height) {
+                        viewport(x * density, y * density, width * density, height * density);
+                    };
+                    context.lineWidth = function (width) { lineWidth(width * density); };
+                    context.getUniformLocation = function (program, name) {
+                        var location = uniformLocation(program, name);
+                        if (location && name === "uPointSize") pointSizes.add(location);
+                        return location;
+                    };
+                    context.uniform1f = function (location, value) {
+                        uniform1f(location, pointSizes.has(location) ? value * density : value);
+                    };
+                    context.readPixels = function (x, y, width, height, format, type, pixels) {
+                        if (format !== context.RGBA || type !== context.UNSIGNED_BYTE || width <= 0 || height <= 0) {
+                            return readPixels.apply(null, arguments);
+                        }
+                        var physicalWidth = width * density;
+                        var physical = new Uint8Array(physicalWidth * height * density * 4);
+                        readPixels(x * density, y * density, physicalWidth, height * density, format, type, physical);
+                        var center = Math.floor(density / 2);
+                        for (var row = 0; row < height; row++) {
+                            for (var col = 0; col < width; col++) {
+                                var offset = ((row * density + center) * physicalWidth + col * density + center) * 4;
+                                pixels.set(physical.subarray(offset, offset + 4), (row * width + col) * 4);
+                            }
+                        }
+                    };
+                }
+                reset();
+                return result;
+            };
+        }
+
+        function attach(sketch) {
+            prepareCanvas(sketch.externals.canvas);
+            sketch.createGraphics = function (width, height, renderer) {
+                // Match Processing's offscreen constructor, preparing its canvas
+                // before size() creates a context or initializes WebGL shaders.
+                var graphics = new Processing();
+                attach(graphics);
+                graphics.size(width, height, renderer);
+                graphics.background(0, 0);
+                // Let image() draw the full-resolution surface directly.
+                Object.defineProperty(graphics, "sourceImg", { get: function () {
+                    // set() buffers pixel edits until the next context operation.
+                    // Flush through the public matrix API before reading the canvas.
+                    graphics.pushMatrix();
+                    graphics.popMatrix();
+                    return graphics.externals.canvas;
+                } });
+                return graphics;
+            };
+        }
+        Processing.registerLibrary("retina", { attach: attach });
+    }
+
     async function start(program) {
         try {
+            sketchLanguage = program.language;
             for (var library of program.libraries) {
                 await script(library.code, library.name);
                 if (failed) return;
             }
+            installCameraViews();
             if (program.language === "pde") {
                 // Its DOM scanner would otherwise exit our explicitly created instance.
                 Processing.disableInit();
+                installProcessingRetina();
                 var canvas = document.createElement("canvas");
                 canvas.id = "Sketch";
                 document.body.appendChild(canvas);
@@ -140,15 +484,37 @@ window.SketchRuntime = (function () {
                     "return (" + compiled.sourceCode + "\n);\n//# sourceURL=processing-generated.js"
                 )();
                 phase = "runtime";
-                instance = new Processing(canvas, compiled);
+                await new Promise(function (resolve) {
+                    var onLoad = compiled.onLoad;
+                    compiled.onLoad = function (sketch) {
+                        onLoad.call(this, sketch);
+                        // Attachment and setup finish synchronously after onLoad,
+                        // including sketches that wait for preloaded images.
+                        Promise.resolve().then(resolve);
+                    };
+                    instance = new Processing(canvas, compiled);
+                });
             } else {
                 installP5AssetDiagnostics();
                 await script(program.code, "sketch-source.js");
                 if (failed) return;
                 phase = "runtime";
-                instance = new p5();
+                await new Promise(function (resolve) {
+                    var setup = window.setup;
+                    window.setup = function () {
+                        try { if (typeof setup === "function") setup.apply(this, arguments); }
+                        catch (error) { report(error); }
+                        finally { resolve(); }
+                    };
+                    instance = new p5();
+                });
             }
-            if (!failed) post("iosbridge", { event: "ready" });
+            if (!failed && !stopped) {
+                var callbacks = sketchCallbacks();
+                post("iosbridge", { event: "ready", sensors: Object.keys(sensorCallbacks).filter(function (name) {
+                    return callbacks && typeof callbacks[name] === "function";
+                }) });
+            }
         } catch (error) {
             report(error);
         }
@@ -160,15 +526,34 @@ window.SketchRuntime = (function () {
     }, 1000);
 
     function motion(callback, x, y, z) {
-        if (failed || stopped || !window.Processing) return;
-        var sketch = Processing.getInstanceById("Sketch");
-        if (!sketch || typeof sketch[callback] !== "function") return;
+        var readings = {};
+        readings[callback] = [x, y, z];
+        updateSensors({ readings: readings });
+    }
+
+    function updateSensors(packet) {
+        if (failed || stopped || !packet || typeof packet !== "object") return;
+        var sketch = sketchCallbacks();
+        if (!sketch) return;
         try {
-            sketch[callback](x, y, z);
+            var statuses = packet.statuses || {};
+            var readings = packet.readings || {};
+            Object.keys(sensorCallbacks).forEach(function (callback) {
+                if (failed || stopped) return;
+                var status = statuses[callback];
+                if (["waiting", "active", "unavailable", "denied", "error"].indexOf(status) !== -1 &&
+                    typeof sketch.sensorStatusUpdated === "function") sketch.sensorStatusUpdated(callback, status);
+                var values = readings[callback];
+                if (Array.isArray(values) && values.length === sensorCallbacks[callback] &&
+                    values.every(Number.isFinite) && typeof sketch[callback] === "function") {
+                    sketch[callback].apply(sketch, values);
+                }
+            });
         } catch (error) {
             report(error);
         }
     }
 
-    return { start: start, stop: stop, motion: motion };
+    return { start: start, stop: stop, motion: motion, updateSensors: updateSensors,
+        pauseCameras: pauseCameras, resumeCameras: resumeCameras };
 }());

@@ -1,8 +1,10 @@
-# Processing for iOS
+# Processing
 
 A free, open-source port of the Processing programming environment to iOS, with support for Processing (.pde) and P5.js (.js) projects.
 
 All features are included without in-app purchases or subscriptions, including code-error assistance and exporting source files. The obsolete Add to Home Screen flow has been removed; sketches run inside the app.
+
+The app requests a native App Store rating once, when returning to the editor after the first successful sketch run. Compilation, setup, and runtime errors do not trigger the request. An app-wide, unversioned UserDefaults flag remembers the request across launches and updates. Apple decides whether the rating dialog is displayed; the app does not retry even if Apple suppresses it.
 
 ## Build with Xcode 27
 
@@ -32,6 +34,72 @@ Start typing a name in the editor to see completions above the keyboard after tw
 
 Completions include common Processing or P5.js functions, constants, keywords, and names used in the project's source files. Function suggestions show a signature and insert parentheses with the caret inside; existing parentheses and arguments are preserved. Normal Undo/Redo works. Suggestions are suppressed in comments, quoted strings, and after member-access dots. This is offline name completion, without type or scope inference.
 
+## Retina rendering
+
+Processing sketches automatically render at the screen's pixel density, including 2D, P3D, and offscreen graphics. Sketch dimensions, touch coordinates, and the legacy `width * height` pixel array remain in logical pixels. Pixel-array operations retain their logical resolution; vector drawing uses the full-resolution canvas.
+
+P5.js retains its built-in Retina support and still honors an explicit `pixelDensity(1)` for pixel-based sketches.
+
+The bundled Processing.js copies also contain touch fixes: the first touch is delivered immediately, old mouse/initialization listeners are removed correctly so gestures do not accumulate duplicate callbacks, and each new contact resets previous mouse coordinates so separate strokes do not get connected. Keep these fixes when updating the library.
+
+## Sensor inputs
+
+`Example_Sensors` displays the available readings. Define any of these callbacks in a Processing sketch, or use `function name(...)` in a global p5.js sketch. Only the sensors with defined callbacks are started; callbacks must exist by the end of `setup()`.
+
+| Callback | Values and units |
+| --- | --- |
+| `accelerometerUpdated(x, y, z)` | Acceleration including gravity, in g (existing API) |
+| `gyroscopeUpdated(x, y, z)` | Raw rotation rate, in radians/second (existing API) |
+| `orientationUpdated(roll, pitch, yaw)` | Orientation, in radians; yaw is relative, not compass north |
+| `gravityUpdated(x, y, z)` | Gravity vector, in g |
+| `userAccelerationUpdated(x, y, z)` | Acceleration with gravity removed, in g |
+| `rotationRateUpdated(x, y, z)` | Device-motion rotation rate, in radians/second |
+| `magnetometerUpdated(x, y, z)` | Raw magnetic field, in microtesla; includes nearby magnetic interference |
+| `altimeterUpdated(relativeAltitude, pressure)` | Relative altitude in meters and pressure in kilopascals |
+| `sensorStatusUpdated(sensor, status)` | Callback name and `waiting`, `active`, `unavailable`, `denied`, or `error` |
+
+Vector axes follow the device: +X points right, +Y toward its top, and +Z out of the screen. Rotating the interface does not remap them. Motion updates are delivered at up to 30 Hz; altitude updates arrive at the hardware's slower rate. Sensing pauses in the background and stops when leaving the sketch. Orientation and relative altitude establish a new reference when sensing restarts. Simulators and devices without a sensor report `unavailable`; they do not generate simulated readings.
+
+```java
+float tilt = 0;
+void setup() { size(screenWidth, screenHeight); }
+void draw() {
+  background(20);
+  ellipse(width / 2 + tilt * 100, height / 2, 40, 40);
+}
+void gravityUpdated(float x, float y, float z) { tilt = x; }
+```
+
+## Camera input
+
+`Example_Camera` uses the built-in `CameraView`. Choose the camera once in `setup()`, then pass its position and size to `camera.draw(x, y, width, height)` each frame, just like other drawing commands. Permission is requested automatically; the sketch needs no browser, video, or permission-handling code. The user must accept the iOS camera prompt once; subsequent runs reuse the app's authorization. Embedded frames and pages outside the local sketch are denied capture access.
+
+```javascript
+let camera;
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  camera = new CameraView("back");
+}
+function draw() {
+  background(20);
+  camera.draw(20, 80, width - 40, height - 100);
+}
+```
+
+In Processing, declare `CameraView camera;`, use `void setup()` / `void draw()`, and replace `createCanvas(...)` with `size(screenWidth, screenHeight)`; the camera calls are identical.
+
+`new CameraView("back")` selects the rear camera; use `"front"` for the selfie camera. The default is `"back"`. Position and size belong in `camera.draw(x, y, width, height)`, so they can change or animate every frame. `camera.setFacing("front")` switches cameras; `camera.stop()` and `camera.start()` control capture manually. Read `camera.status` (`waiting`, `active`, `denied`, `unavailable`, `error`, `paused`, `stopped`) and `camera.message` for custom UI. Earlier sketches that passed a rectangle to the constructor and called `camera.draw()` still work.
+
+CameraView draws into a **2D** sketch canvas, respects transforms and Retina density, and fills its rectangle without stretching the image (edges may be cropped). Draw more graphics afterward to overlay them. Loading and permission/device errors appear inside the rectangle automatically. Capture uses WebRTC's `getUserMedia()` with no audio, server, recording, or video upload.
+
+The bundled selfie example selects `"front"` and mirrors the preview in sketch code: `push(); translate(width, 0); scale(-1, 1); camera.draw(20, 80, width - 40, height - 100); pop();`. In Processing, use `pushMatrix()` / `popMatrix()` instead of `push()` / `pop()`. The transform affects only the camera drawing, so titles and other graphics stay readable. CameraView does not mirror the input automatically; omit the transform for an unmirrored preview.
+
+CameraView pauses in the background, resumes on return, and releases its tracks when the runner closes or fails. Denied access does not repeatedly prompt; after allowing access in Settings, run the sketch again or call `camera.start()`. All camera and microphone capture also stops natively when the runner closes or enters the background. Use a physical iPhone or iPad to test real camera frames and sensor values.
+
+Both new samples are installed once on upgrades as well as fresh installations. The original camera sample is upgraded to CameraView only if its contents are unchanged; edited projects are preserved. Deleting a sample does not cause it to reappear.
+
+Use **Import → Import sample projects…** to choose which bundled examples to restore. Nothing is selected by default; check one or more samples and tap **Import**. Only the selected samples are imported. Missing samples are restored, edited projects are kept alongside a fresh numbered copy, and unchanged samples are not duplicated on repeated imports.
+
 ## Sketch diagnostics
 
 Sketches run from a saved source snapshot, with the project-named file first and other files sorted by name. Failed reads and saves stop execution instead of silently using incomplete or outdated code.
@@ -54,4 +122,4 @@ The suite executes real Processing and P5.js sketches in WKWebView, covering sou
 
 [Processing](https://processing.org/) provides a simple, powerful language for visualizations, animations, and games.
 
-[Download Processing for iOS on the App Store](https://itunes.apple.com/us/app/processing-icompiler/id648955851?mt=8).
+[Download Processing on the App Store](https://itunes.apple.com/us/app/processing-icompiler/id648955851?mt=8).

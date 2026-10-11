@@ -160,14 +160,17 @@ enum CodeCompletionEngine {
         "beginShape()", "endShape()", "vertex(x, y)", "curveVertex(x, y)", "bezierVertex(cx1, cy1, cx2, cy2, x, y)",
         "translate(x, y)", "rotate(angle)", "scale(amount)", "resetMatrix()",
         "text(value, x, y)", "textSize(size)", "textAlign(horizontal, vertical)", "textFont(font)", "textWidth(value)",
-        "image(img, x, y)", "imageMode(mode)", "loadImage(path)", "loadFont(path)",
+        "image(img, x, y)", "imageMode(mode)", "loadImage(path)", "loadFont(path)", "CameraView(facing)",
         "loadPixels()", "updatePixels()", "get(x, y)", "set(x, y, color)", "filter(kind)",
         "random(max)", "randomSeed(seed)", "noise(x)", "noiseSeed(seed)", "map(value, start1, stop1, start2, stop2)",
         "constrain(value, low, high)", "dist(x1, y1, x2, y2)", "lerp(start, stop, amount)",
         "sin(angle)", "cos(angle)", "tan(angle)", "atan2(y, x)", "radians(degrees)", "degrees(radians)",
         "abs(value)", "ceil(value)", "floor(value)", "round(value)", "sqrt(value)", "pow(value, exponent)", "min(a, b)", "max(a, b)",
         "frameRate(rate)", "noLoop()", "loop()", "redraw()", "millis()", "second()", "minute()", "hour()",
-        "setup()", "draw()", "mouseClicked()", "mouseDragged()", "mouseMoved()", "mouseReleased()", "keyTyped()", "keyReleased()"
+        "setup()", "draw()", "mouseClicked()", "mouseDragged()", "mouseMoved()", "mouseReleased()", "keyTyped()", "keyReleased()",
+        "accelerometerUpdated(x, y, z)", "gyroscopeUpdated(x, y, z)", "orientationUpdated(roll, pitch, yaw)",
+        "gravityUpdated(x, y, z)", "userAccelerationUpdated(x, y, z)", "rotationRateUpdated(x, y, z)",
+        "magnetometerUpdated(x, y, z)", "altimeterUpdated(relativeAltitude, pressure)", "sensorStatusUpdated(sensor, status)"
     ]
     private static let pdeFunctions = ["size(width, height)", "smooth()", "noSmooth()", "pushMatrix()", "popMatrix()", "pushStyle()", "popStyle()", "println(value)", "print(value)", "saveFrame(filename)", "createImage(width, height, format)"]
     private static let jsFunctions = ["createCanvas(width, height)", "resizeCanvas(width, height)", "createVector(x, y)", "push()", "pop()", "clear()", "pixelDensity(density)", "loadJSON(path)", "loadStrings(path)", "loadSound(path)", "saveCanvas(filename)", "preload()", "windowResized()", "mousePressed()", "keyPressed()", "touchStarted()", "touchMoved()", "touchEnded()"]
@@ -179,7 +182,9 @@ enum CodeCompletionEngine {
         let keywords = "if else for while do switch case break continue return class new true false"
             + (language == "js" ? " function let const var null undefined async await" : " void int float double boolean char String color byte long final public private import null")
         let functionItems = functions.map {
-            CodeCompletion(name: String($0.prefix { $0 != "(" }), detail: $0, isFunction: true)
+            let name = String($0.prefix { $0 != "(" })
+            // Processing also uses the constructor name in type declarations.
+            return CodeCompletion(name: name, detail: $0, isFunction: language == "js" || name != "CameraView")
         }
         let functionNames = Set(functionItems.map(\.name))
         return functionItems + Set((variables + " " + keywords).split(separator: " ").map(String.init)).filter { !functionNames.contains($0) }.map {

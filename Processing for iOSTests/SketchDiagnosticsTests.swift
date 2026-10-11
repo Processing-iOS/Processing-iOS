@@ -22,6 +22,395 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test(arguments: ["NotAllowedError", "NotFoundError", "cancelBeforePermissionCompletes"])
+    func cameraExampleRequestsPermissionAutomaticallyAndHandlesFailure(outcome: String) async throws {
+        let example = try #require(Bundle.main.url(forResource: "Example_Camera", withExtension: "js"))
+        let fixture = try SketchFixture(language: "js", main: String(contentsOf: example, encoding: .utf8))
+        defer { fixture.remove() }
+        let browser = RuntimeProbe()
+        defer { browser.close() }
+        // Substitute only the browser capture boundary: the actual bundled sketch
+        // and runtime must initiate access automatically and own cleanup.
+        let setup = """
+        window.cameraRequests = [];
+        window.cameraSupported = typeof navigator.mediaDevices?.getUserMedia === 'function';
+        if (cameraSupported) navigator.mediaDevices.getUserMedia = constraints => {
+          cameraRequests.push(constraints);
+          return new Promise((resolve, reject) => { window.finishCapture = resolve; window.denyCapture = reject; });
+        };
+        """
+        browser.webView.configuration.userContentController.addUserScript(WKUserScript(
+            source: setup, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "ready")
+        let result = try await browser.webView.callAsyncJavaScript("""
+        if (!cameraSupported || cameraRequests.length !== 1) return {supported:cameraSupported, count:cameraRequests.length};
+        if (outcome === 'cancelBeforePermissionCompletes') {
+          const source = document.createElement('canvas');
+          source.width = source.height = 20;
+          source.getContext('2d').fillRect(0,0,20,20);
+          const stream = source.captureStream();
+          SketchRuntime.stop();
+          finishCapture(stream);
+          await new Promise(resolve => setTimeout(resolve, 0));
+          return {supported:true, count:cameraRequests.length, audio:cameraRequests[0].audio,
+            stopped:stream.getTracks().every(t => t.readyState === 'ended'), videos:document.querySelectorAll('video').length};
+        }
+        denyCapture(new DOMException('Test capture response', outcome));
+        await new Promise(resolve => setTimeout(resolve, 0));
+        return {supported:true, count:cameraRequests.length, audio:cameraRequests[0].audio,
+          message:document.querySelector('[role=status]').textContent};
+        """, arguments: ["outcome": outcome], in: nil, contentWorld: .page) as? [String: Any]
+        #expect(result?["supported"] as? Bool == true)
+        #expect(result?["count"] as? Int == 1)
+        #expect(result?["audio"] as? Bool == false)
+        if outcome == "cancelBeforePermissionCompletes" {
+            #expect(result?["stopped"] as? Bool == true)
+            #expect(result?["videos"] as? Int == 0)
+        } else {
+            #expect((result?["message"] as? String)?.contains(outcome == "NotAllowedError" ? "denied" : "No camera") == true)
+        }
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test(arguments: ["pde", "js"])
+    func cameraViewDrawsAtAssignedBoundsAndManagesCaptureLifecycle(language: String) async throws {
+        let code = language == "pde" ? """
+        CameraView camera;
+        float cameraX = 10, cameraY = 10, cameraWidth = 30, cameraHeight = 30;
+        void setup() { size(80,60); camera = new CameraView("back"); }
+        void draw() {
+          background(255); pushMatrix(); translate(5,0); camera.draw(cameraX,cameraY,cameraWidth,cameraHeight); popMatrix();
+          noStroke(); fill(255,0,0); rect(20,20,5,5);
+        }
+        String captureStatus() { return camera.status; }
+        void switchCamera() { camera.setFacing("front"); }
+        void retryCamera() { camera.start(); }
+        void resizeCamera() { cameraX = 40; cameraY = 20; cameraWidth = 20; cameraHeight = 20; }
+        """ : """
+        let camera;
+        let cameraX = 10, cameraY = 10, cameraWidth = 30, cameraHeight = 30;
+        function setup() { createCanvas(80,60); camera = new CameraView("back"); }
+        function draw() {
+          background(255); push(); translate(5,0); camera.draw(cameraX,cameraY,cameraWidth,cameraHeight); pop();
+          noStroke(); fill(255,0,0); rect(20,20,5,5);
+        }
+        function captureStatus() { return camera.status; }
+        function switchCamera() { camera.setFacing("front"); }
+        function retryCamera() { camera.start(); }
+        function resizeCamera() { cameraX = 40; cameraY = 20; cameraWidth = 20; cameraHeight = 20; }
+        """
+        let fixture = try SketchFixture(language: language, main: code)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: 2)
+        defer { browser.close() }
+        browser.webView.configuration.userContentController.addUserScript(WKUserScript(source: """
+        window.captureRequests = []; window.captureStreams = [];
+        navigator.mediaDevices.getUserMedia = constraints => {
+          captureRequests.push(constraints);
+          const source = document.createElement('canvas'); source.width = 100; source.height = 20;
+          const ctx = source.getContext('2d'); ctx.fillStyle = '#00ff00'; ctx.fillRect(0,0,100,20);
+          ctx.fillStyle = '#0000ff'; ctx.fillRect(35,0,30,20);
+          const stream = source.captureStream(30); captureStreams.push(stream);
+          // Supply a live frame source; a one-time paint before capture begins
+          // need not produce any frames in WebKit's captureStream implementation.
+          const frames = setInterval(() => {
+            if (stream.getVideoTracks()[0].readyState === 'ended') { clearInterval(frames); return; }
+            ctx.fillStyle = '#00ff00'; ctx.fillRect(0,0,100,20);
+            ctx.fillStyle = '#0000ff'; ctx.fillRect(35,0,30,20);
+          }, 33);
+          return Promise.resolve(stream);
+        };
+        """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "ready")
+        let result = try await browser.webView.callAsyncJavaScript("""
+        const sketch = window.Processing ? Processing.getInstanceById('Sketch') : window;
+        const active = async () => {
+          const deadline = Date.now()+5000;
+          while (sketch.captureStatus() !== 'active') {
+            if (Date.now() > deadline) throw new Error('Camera never became active: '+sketch.captureStatus()+', request '+captureRequests.length);
+            await new Promise(resolve => setTimeout(resolve, 20));
+          }
+          sketch.draw();
+        };
+        await active();
+        const canvas = document.querySelector('canvas'), ctx = canvas.getContext('2d');
+        const pixel = (x,y) => Array.from(CanvasRenderingContext2D.prototype.getImageData.call(ctx,x*2,y*2,1,1).data);
+        const pixels = [...pixel(5,15), ...pixel(16,15), ...pixel(43,15), ...pixel(47,15), ...pixel(22,22)];
+        sketch.resizeCamera(); sketch.draw();
+        const resized = [...pixel(16,15), ...pixel(46,25), ...pixel(66,25)];
+        sketch.switchCamera();
+        await active();
+        const firstEnded = captureStreams[0].getTracks().every(t => t.readyState === 'ended');
+        SketchRuntime.pauseCameras();
+        const paused = sketch.captureStatus() === 'paused' && captureStreams[1].getTracks().every(t => t.readyState === 'ended');
+        SketchRuntime.resumeCameras();
+        await active();
+        SketchRuntime.stop();
+        sketch.retryCamera();
+        return {pixels, resized, firstEnded, paused, count:captureRequests.length,
+          facing:captureRequests.map(r => r.video.facingMode.ideal),
+          ended:captureStreams.every(s => s.getTracks().every(t => t.readyState === 'ended'))};
+        """, arguments: [:], in: nil, contentWorld: .page) as? [String: Any]
+        #expect(result?["pixels"] as? [Int] == [255,255,255,255, 0,0,255,255, 0,0,255,255, 255,255,255,255, 255,0,0,255])
+        #expect(result?["resized"] as? [Int] == [255,255,255,255, 0,0,255,255, 255,255,255,255])
+        #expect(result?["facing"] as? [String] == ["environment", "user", "user"])
+        #expect(result?["count"] as? Int == 3)
+        #expect(result?["firstEnded"] as? Bool == true)
+        #expect(result?["paused"] as? Bool == true)
+        #expect(result?["ended"] as? Bool == true)
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test(arguments: ["pde", "js"])
+    func sensorInputsReachSketchesWithUnitsAndStopAtTeardown(language: String) async throws {
+        let code = language == "pde" ? """
+        void setup() { size(40,30); noLoop(); background(0); }
+        void gravityUpdated(float x, float y, float z) { background(128+x*100,128+y*100,128+z*100); }
+        void altimeterUpdated(float meters, float kPa) { noStroke(); fill(meters,kPa,0); rect(0,0,5,5); }
+        void sensorStatusUpdated(String sensor, String status) {
+          if (sensor.equals("gravityUpdated") && status.equals("denied")) background(255,0,0);
+        }
+        """ : """
+        function setup() { createCanvas(40,30); noLoop(); background(0); }
+        function gravityUpdated(x,y,z) { background(128+x*100,128+y*100,128+z*100); }
+        function altimeterUpdated(meters,kPa) { noStroke(); fill(meters,kPa,0); rect(0,0,5,5); }
+        function sensorStatusUpdated(sensor,status) {
+          if (sensor === 'gravityUpdated' && status === 'denied') background(255,0,0);
+        }
+        """
+        let fixture = try SketchFixture(language: language, main: code)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: 1)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        let ready = try await browser.message(named: "iosbridge", event: "ready")
+        #expect(Set(ready["sensors"] as? [String] ?? []) == ["gravityUpdated", "altimeterUpdated"])
+        let colors = try await browser.webView.evaluateJavaScript("""
+        (() => {
+          const pixel = (x,y) => Array.from(document.querySelector('canvas').getContext('2d').getImageData(x,y,1,1).data);
+          SketchRuntime.updateSensors({readings:{gravityUpdated:[-0.5,0.25,1],altimeterUpdated:[12,101]}});
+          const result = [...pixel(10,10), ...pixel(2,2)];
+          SketchRuntime.updateSensors({readings:{gravityUpdated:[NaN,0,0],setup:[1,2,3],altimeterUpdated:[1]}});
+          result.push(...pixel(10,10));
+          SketchRuntime.updateSensors({statuses:{gravityUpdated:'denied'}});
+          result.push(...pixel(10,10));
+          SketchRuntime.stop();
+          SketchRuntime.updateSensors({readings:{gravityUpdated:[0,0,0]}});
+          result.push(...pixel(10,10));
+          return result;
+        })()
+        """) as? [Int]
+        #expect(colors == [78,153,228,255, 12,101,0,255, 78,153,228,255, 255,0,0,255, 255,0,0,255])
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test func bundledSensorDashboardCompilesAndReceivesHardwareStatus() async throws {
+        let example = try #require(Bundle.main.url(forResource: "Example_Sensors", withExtension: "pde"))
+        let fixture = try SketchFixture(language: "pde", main: String(contentsOf: example, encoding: .utf8))
+        defer { fixture.remove() }
+        let browser = RuntimeProbe()
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        let ready = try await browser.message(named: "iosbridge", event: "ready")
+        let sensors = try #require(ready["sensors"] as? [String])
+        #expect(sensors.count == 8)
+        _ = try await browser.webView.evaluateJavaScript("""
+        SketchRuntime.updateSensors({statuses:{gravityUpdated:'unavailable',altimeterUpdated:'denied'},
+          readings:{orientationUpdated:[0.1,0.2,0.3],magnetometerUpdated:[12,34,56]}});
+        """)
+        _ = try await browser.message(named: "iosbridge", event: "heartbeat")
+        #expect(browser.errors.isEmpty)
+    }
+
+    // The actual WebKit framebuffer is the contract: a larger CSS canvas or an
+    // upscaled bitmap must not pass as high-density rendering.
+    @Test(arguments: ["pde", "js"], [1, 2, 3])
+    func sketchesRenderAtDisplayDensity(language: String, density: Int) async throws {
+        let code = language == "pde" ? """
+        void setup() { size(40,30); noLoop(); }
+        void draw() {
+          background(255); smooth(); noStroke(); fill(0);
+          rect(10,0,1.0/\(density),height);
+        }
+        """ : """
+        function setup() { createCanvas(40,30); noLoop(); }
+        function draw() {
+          background(255); noStroke(); fill(0);
+          rect(10,0,1/\(density),height);
+        }
+        """
+        let fixture = try SketchFixture(language: language, main: code)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: density)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "heartbeat")
+        let result = try await browser.webView.evaluateJavaScript("""
+        (() => {
+          const c = document.querySelector('canvas'), box = c.getBoundingClientRect();
+          const ctx = c.getContext('2d');
+          const pixels = CanvasRenderingContext2D.prototype.getImageData.call(ctx,10*\(density),5*\(density),2,1).data;
+          return [Number(c.getAttribute('width')), Number(c.getAttribute('height')), box.width, box.height, ...pixels];
+        })()
+        """) as? [Int]
+        #expect(result == [40*density, 30*density, 40, 30, 0, 0, 0, 255, 255, 255, 255, 255])
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test(arguments: ["pde", "js"], [1, 2, 3])
+    func threeDimensionalSketchesKeepTheirLogicalCameraAndFillTheRetinaViewport(language: String, density: Int) async throws {
+        let code = language == "pde" ? """
+        void setup() { size(40,30,P3D); noLoop(); }
+        void draw() { background(255); noStroke(); fill(255,0,0); rect(0,0,width/2,height); }
+        """ : """
+        function setup() { createCanvas(40,30,WEBGL); noLoop(); }
+        function draw() { background(255); noStroke(); fill(255,0,0); translate(-width/2,-height/2); rect(0,0,width/2,height); }
+        """
+        let fixture = try SketchFixture(language: language, main: code)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: density)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "heartbeat")
+        let result = try await browser.webView.evaluateJavaScript("""
+        (() => {
+          const c = document.querySelector('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+          const pixels = new Uint8Array(4);
+          const read = (x) => { WebGLRenderingContext.prototype.readPixels.call(gl,x,15*\(density),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixels); return Array.from(pixels); };
+          return [gl.drawingBufferWidth, gl.drawingBufferHeight, c.getBoundingClientRect().width, ...read(5*\(density)), ...read(35*\(density))];
+        })()
+        """) as? [Int]
+        #expect(result == [40*density, 30*density, 40, 255, 0, 0, 255, 255, 255, 255, 255])
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test(arguments: [1, 2, 3])
+    func processingRetainsLogicalPixelsResizingAndMouseCoordinates(density: Int) async throws {
+        let fixture = try SketchFixture(language: "pde", main: """
+        void setup() { size(8,6); noLoop(); }
+        """)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: density)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "heartbeat")
+        let result = try await browser.webView.evaluateJavaScript("""
+        (() => {
+          const p = Processing.getInstanceById('Sketch'), c = p.externals.canvas;
+          p.size(40,30); p.background(255); p.translate(12,15); p.resetMatrix();
+          p.loadPixels(); p.pixels.setPixel(3*40+2, p.color(10,20,30)); p.updatePixels();
+          const color = p.get(2,3);
+          c.dispatchEvent(new MouseEvent('mousemove', {clientX:12,clientY:15,bubbles:true}));
+          // Processing's first-touch handler rewrites the inline style. Retina
+          // canvases must retain their logical size through that initialization.
+          const touch = new Touch({identifier:1,target:c,clientX:12,clientY:15,pageX:12,pageY:15});
+          c.dispatchEvent(new TouchEvent('touchstart', {touches:[touch],targetTouches:[touch],changedTouches:[touch],bubbles:true}));
+          const pixel = CanvasRenderingContext2D.prototype.getImageData.call(c.getContext('2d'),2*\(density),3*\(density),1,1).data;
+          return [p.width,p.height,p.pixels.getLength(),Number(c.getAttribute('width')),Number(c.getAttribute('height')),
+            c.getBoundingClientRect().width,p.red(color),p.green(color),p.blue(color),p.mouseX,p.mouseY,...pixel];
+        })()
+        """) as? [Int]
+        #expect(result == [40,30,1200,40*density,30*density,40,10,20,30,12,15,10,20,30,255])
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test(arguments: [1, 2, 3], [false, true])
+    func processingOffscreenGraphicsPreserveDrawingAndPixelEdits(density: Int, pixelEdit: Bool) async throws {
+        let fixture = try SketchFixture(language: "pde", main: """
+        PGraphics layer;
+        void setup() {
+          size(40,30); noLoop(); layer = createGraphics(40,30,P2D);
+          layer.beginDraw(); layer.background(255); layer.smooth(); layer.noStroke(); layer.fill(0);
+          \(pixelEdit ? "layer.set(2,3,color(10,20,30));" : "layer.rect(10,0,1.0/\(density),30);")
+          layer.endDraw();
+        }
+        void draw() { image(layer,0,0); }
+        """)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: density)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "heartbeat")
+        let result = try await browser.webView.evaluateJavaScript("""
+        (() => {
+          const ctx = document.querySelector('canvas').getContext('2d');
+          const read = (x,y,w) => Array.from(CanvasRenderingContext2D.prototype.getImageData.call(ctx,x,y,w,1).data);
+          return [...read(10*\(density),5*\(density),2), ...read(2*\(density),3*\(density),1)];
+        })()
+        """) as? [Int]
+        #expect(result == (pixelEdit ? [255,255,255,255,255,255,255,255,10,20,30,255] :
+                            [0,0,0,255,255,255,255,255,255,255,255,255]))
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test(arguments: [1, 3], [false, true])
+    func processingDrawsSeparateStrokesFromTheFirstTouch(density: Int, nativeTouch: Bool) async throws {
+        let example = try #require(Bundle.main.url(forResource: "Example_Draw", withExtension: "pde"))
+        let fixture = try SketchFixture(language: "pde", main: String(contentsOf: example, encoding: .utf8))
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: density)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "ready")
+        let result = try await browser.webView.evaluateJavaScript("""
+        (() => {
+          const p = Processing.getInstanceById('Sketch'), c = p.externals.canvas;
+          p.noLoop();
+          const calls = [], colors = [];
+          if (\(nativeTouch)) {
+            let previous;
+            p.touchStart = (e) => { calls.push('start'); previous = e.changedTouches[0]; };
+            p.touchMove = (e) => {
+              calls.push('move');
+              const next = e.changedTouches[0];
+              p.stroke(255); p.line(previous.offsetX,previous.offsetY,next.offsetX,next.offsetY);
+              previous = next;
+            };
+            p.touchEnd = () => calls.push('end');
+          } else {
+            p.mousePressed = () => calls.push('start');
+            p.mouseDragged = () => calls.push('move');
+            p.mouseReleased = () => calls.push('end');
+          }
+          const send = (type,x,y) => {
+            const box = c.getBoundingClientRect();
+            const touch = new Touch({identifier:1,target:c,clientX:box.left+x,clientY:box.top+y,
+              pageX:box.left+x,pageY:box.top+y});
+            const active = type === 'touchend' ? [] : [touch];
+            c.dispatchEvent(new TouchEvent(type, {touches:active,targetTouches:active,
+              changedTouches:[touch],bubbles:true,cancelable:true}));
+            p.redraw();
+          };
+          for (const y of [10,20]) {
+            send('touchstart',10,y); send('touchmove',30,y); send('touchend',30,y);
+            colors.push(p.red(p.get(20,y)));
+          }
+          // Touch-down must not draw from the origin or the previous stroke.
+          colors.push(p.red(p.get(5,5)), p.red(p.get(20,15)));
+          return {calls: calls.join(','), colors};
+        })()
+        """) as? [String: Any]
+        #expect(result?["calls"] as? String == "start,move,end,start,move,end")
+        #expect(result?["colors"] as? [Int] == [255, 255, 102, 102])
+        #expect(browser.errors.isEmpty)
+    }
+
+    @Test func p5CanStillOptIntoLogicalPixels() async throws {
+        let fixture = try SketchFixture(language: "js", main: """
+        function setup() { pixelDensity(1); createCanvas(40,30); noLoop(); }
+        """)
+        defer { fixture.remove() }
+        let browser = RuntimeProbe(density: 3)
+        defer { browser.close() }
+        try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await browser.message(named: "iosbridge", event: "heartbeat")
+        let result = try await browser.webView.evaluateJavaScript("[document.querySelector('canvas').width, pixelDensity()]") as? [Int]
+        #expect(result == [40, 1])
+        #expect(browser.errors.isEmpty)
+    }
+
     struct FailureCase: Sendable {
         let language: String
         let main: String
@@ -246,6 +635,38 @@ struct SketchRuntimeTests {
         #expect(try String(contentsOfFile: file.filePath) == "background()")
     }
 
+    @Test(arguments: ["pde", "js"])
+    func editorHighlightingEndsStringsAtTheirClosingQuote(language: String) throws {
+        let code = #"""
+        // 🧑🏽‍💻 Quotes must not change the arguments that follow them.
+        camera = new CameraView("back", 20, 80, width - 40, height - 100);
+        text("Camera input", 21, 41);
+        text("An \"escaped\" quote", 22, 42);
+        text("C:\\", 23, 43);
+        text('single quoted', 24, 44);
+        text("first", "second", 25, 45);
+        """#
+        let fixture = try SketchFixture(language: language, main: code)
+        defer { fixture.remove() }
+        let editor = PDEEditorViewController(sourceCodeFile: try #require(fixture.project.sourceCodeFiles.first))!
+        editor.loadViewIfNeeded()
+        let displayed = try #require(editor.editor.attributedText)
+        #expect(displayed.string == code)
+        let stringColor = try #require(displayed.attribute(.foregroundColor, at: (code as NSString).range(of: "back").location, effectiveRange: nil) as? UIColor)
+        #expect(stringColor != UIColor.label)
+        for token in ["Camera input", "escaped", "C:", "single quoted", "first", "second"] {
+            let range = (code as NSString).range(of: token)
+            #expect(displayed.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? UIColor == stringColor)
+        }
+        // Assert the actual editor attributes, not the regex implementation.
+        // These are code arguments, so a preceding string must not dim them.
+        for token in ["20", "80", "width", "height", "100", "21", "22", "23", "24", "25"] {
+            let range = (code as NSString).range(of: token)
+            let color = try #require(displayed.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? UIColor)
+            #expect(color == UIColor.label, "Code after a closing quote was recolored: \(token)")
+        }
+    }
+
     @Test func unreadableAndEmptyProjectsFailBeforeLaunching() throws {
         let fixture = try SketchFixture(language: "js", main: "")
         defer { fixture.remove() }
@@ -286,9 +707,14 @@ private final class RuntimeProbe: NSObject, WKScriptMessageHandler, WKNavigation
     private var receive: ((String, [String: Any]) -> Void)?
     var errors: [[String: Any]] { messages.filter { $0.0 == "error" }.map(\.1) }
 
-    override init() {
+    init(density: Int? = nil) {
         super.init()
         let config = WKWebViewConfiguration()
+        if let density {
+            config.userContentController.addUserScript(WKUserScript(
+                source: "Object.defineProperty(window, 'devicePixelRatio', {value: \(density)});",
+                injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         config.mediaTypesRequiringUserActionForPlayback = []
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         config.userContentController.add(self, name: "error")

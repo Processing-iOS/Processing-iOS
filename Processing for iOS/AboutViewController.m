@@ -18,7 +18,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.title = @"About Processing for iOS";
+    self.title = @"About Processing";
 
     UIBarButtonItem* done = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(done)];
     self.navigationItem.rightBarButtonItem = done;
