@@ -116,6 +116,26 @@
 }
 
 +(void)installAdditionalSamples {
+    // Fix installed multitouch samples (including reimports), but preserve edits.
+    NSURL *samplesRoot = [NSURL fileURLWithPath:[[self documentsDirectory] stringByAppendingPathComponent:@"sketches"] isDirectory:YES];
+    NSArray<NSString*> *sampleFolders = [NSFileManager.defaultManager contentsOfDirectoryAtPath:samplesRoot.path error:nil];
+    NSPredicate *multitouchNames = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", @"Example_Multitouch(_[0-9]+)?"];
+    for (NSString *name in [sampleFolders filteredArrayUsingPredicate:multitouchNames]) {
+        NSURL *source = [[samplesRoot URLByAppendingPathComponent:name isDirectory:YES]
+            URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"pde"]];
+        NSData *existing = [NSData dataWithContentsOfURL:source];
+        if (existing.length != 386) continue;
+        unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+        CC_SHA256(existing.bytes, (CC_LONG)existing.length, digest);
+        NSMutableString *hash = [NSMutableString string];
+        for (NSUInteger i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) [hash appendFormat:@"%02x", digest[i]];
+        if ([hash isEqualToString:@"6157172b70a9dc502d188cfad6a1a9bb24b362841b0c7378d658ae2a4e2c781d"]) {
+            NSURL *bundled = [NSBundle.mainBundle URLForResource:@"Example_Multitouch" withExtension:@"pde"];
+            NSData *replacement = bundled ? [NSData dataWithContentsOfURL:bundled] : nil;
+            if (replacement) [replacement writeToURL:source options:NSDataWritingAtomic error:nil];
+        }
+    }
+
     // Upgrade earlier camera examples only when they are byte-for-byte bundled
     // originals. A user's edits must always win.
     NSURL *cameraURL = [NSURL fileURLWithPath:[[self documentsDirectory] stringByAppendingPathComponent:@"sketches/Example_Camera/Example_Camera.js"]];

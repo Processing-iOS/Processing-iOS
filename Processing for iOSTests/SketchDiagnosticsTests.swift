@@ -749,6 +749,48 @@ struct SketchRuntimeTests {
         #expect(browser.errors.isEmpty)
     }
 
+    @Test func multitouchSampleClearsReleasedAndCancelledTouches() async throws {
+        let example = try #require(Bundle.main.url(forResource: "Example_Multitouch", withExtension: "pde"))
+        let fixture = try SketchFixture(language: "pde", main: String(contentsOf: example, encoding: .utf8))
+        defer { fixture.remove() }
+        for density in [1, 3] {
+            let browser = RuntimeProbe(density: density)
+            defer { browser.close() }
+            try browser.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+            _ = try await browser.message(named: "iosbridge", event: "ready")
+            let result = try await browser.webView.evaluateJavaScript("""
+            (() => {
+              const p = Processing.getInstanceById('Sketch'), c = p.externals.canvas;
+              const box = c.getBoundingClientRect();
+              const touch = (id,x,y) => new Touch({identifier:id,target:c,
+                clientX:box.left+x,clientY:box.top+y,pageX:box.left+x,pageY:box.top+y});
+              const first = touch(1,80,100), second = touch(2,240,100);
+              const moved = touch(2,240,280), frames = [];
+              const send = (type,active,changed) => {
+                c.dispatchEvent(new TouchEvent(type, {touches:active,targetTouches:active,
+                  changedTouches:changed,bubbles:true,cancelable:true}));
+                frames.push([p.red(p.get(80,100)),p.red(p.get(240,100)),p.red(p.get(240,280))]);
+              };
+              send('touchstart',[first],[first]);
+              send('touchstart',[first,second],[second]);
+              send('touchmove',[first,moved],[moved]);
+              send('touchend',[moved],[first]);
+              send('touchend',[],[moved]);
+              send('touchstart',[first,second],[first,second]);
+              send('touchcancel',[second],[first]);
+              send('touchcancel',[],[second]);
+              return frames;
+            })()
+            """) as? [[Int]]
+            #expect(result == [
+                [180, 255, 255], [180, 180, 255], [180, 255, 180],
+                [255, 255, 180], [255, 255, 255], [180, 180, 255],
+                [255, 180, 255], [255, 255, 255]
+            ], "The canvas must show only currently active touches at density \(density).")
+            #expect(browser.errors.isEmpty)
+        }
+    }
+
     @Test func p5CanStillOptIntoLogicalPixels() async throws {
         let fixture = try SketchFixture(language: "js", main: """
         function setup() { pixelDensity(1); createCanvas(40,30); noLoop(); }
