@@ -14,6 +14,57 @@ window.SketchRuntime = (function () {
     };
     var sketchLanguage = "";
     var cameraViews = new Set();
+    var timeouts = new Set(), intervals = new Set(), animationFrames = new Set();
+    var nativeTimeout = window.setTimeout.bind(window), nativeInterval = window.setInterval.bind(window);
+    var nativeClearTimeout = window.clearTimeout.bind(window), nativeClearInterval = window.clearInterval.bind(window);
+    var nativeAnimationFrame = window.requestAnimationFrame.bind(window);
+    var nativeCancelAnimationFrame = window.cancelAnimationFrame.bind(window);
+    var disposedInstances = new WeakSet();
+
+    function trackTimer(native, collection, repeating, callback, delay, args) {
+        if (stopped) return 0;
+        var id = native(function () {
+            if (!repeating) collection.delete(id);
+            if (stopped) return;
+            if (typeof callback === "function") callback.apply(window, args);
+            else (0, eval)(String(callback));
+        }, delay);
+        collection.add(id);
+        return id;
+    }
+    window.setTimeout = function (callback, delay) {
+        return trackTimer(nativeTimeout, timeouts, false, callback, delay, Array.prototype.slice.call(arguments, 2));
+    };
+    window.setInterval = function (callback, delay) {
+        return trackTimer(nativeInterval, intervals, true, callback, delay, Array.prototype.slice.call(arguments, 2));
+    };
+    window.clearTimeout = window.clearInterval = function (id) {
+        timeouts.delete(id); intervals.delete(id);
+        nativeClearTimeout(id); nativeClearInterval(id);
+    };
+    window.requestAnimationFrame = function (callback) {
+        if (stopped) return 0;
+        var id = nativeAnimationFrame(function (time) {
+            animationFrames.delete(id);
+            if (!stopped) callback(time);
+        });
+        animationFrames.add(id);
+        return id;
+    };
+    window.cancelAnimationFrame = function (id) {
+        animationFrames.delete(id); nativeCancelAnimationFrame(id);
+    };
+
+    function disposeInstance(sketch) {
+        if (!sketch || disposedInstances.has(sketch)) return;
+        disposedInstances.add(sketch);
+        try {
+            if (typeof sketch.noLoop === "function") sketch.noLoop();
+            if (typeof sketch.remove === "function") sketch.remove();
+            else if (typeof sketch.exit === "function") sketch.exit();
+            if (sketch.externals && sketch.externals.canvas) sketch.externals.canvas.remove();
+        } catch (_) { /* Teardown must not replace the original sketch error. */ }
+    }
 
     function sketchCallbacks() {
         return sketchLanguage === "pde" ? instance : window;
@@ -31,13 +82,23 @@ window.SketchRuntime = (function () {
         cameraViews.forEach(function (camera) { camera.dispose(); });
         cameraViews.clear();
         try {
-            if (instance && typeof instance.noLoop === "function") instance.noLoop();
-            if (window.p5 && window.p5.instance) window.p5.instance.noLoop();
+            var audio = typeof window.getAudioContext === "function" ? window.getAudioContext() : null;
+            disposeInstance(instance);
+            if (window.p5) disposeInstance(window.p5.instance);
             if (window.Processing) {
                 var sketch = window.Processing.getInstanceById("Sketch");
-                if (sketch) sketch.noLoop();
+                disposeInstance(sketch);
             }
+            document.querySelectorAll("audio,video").forEach(function (media) {
+                media.pause();
+                if (media.srcObject && media.srcObject.getTracks) media.srcObject.getTracks().forEach(function (track) { track.stop(); });
+                media.srcObject = null;
+            });
+            if (audio && audio.state !== "closed") audio.close().catch(function () {});
         } catch (_) { /* Preserve the original failure if teardown also fails. */ }
+        timeouts.forEach(nativeClearTimeout); timeouts.clear();
+        intervals.forEach(nativeClearInterval); intervals.clear();
+        animationFrames.forEach(nativeCancelAnimationFrame); animationFrames.clear();
         scriptURLs.forEach(function (url) { URL.revokeObjectURL(url); });
         scriptURLs = [];
         // Prevent p5's automatic global startup after a failed top-level script.
@@ -459,7 +520,7 @@ window.SketchRuntime = (function () {
             sketchLanguage = program.language;
             for (var library of program.libraries) {
                 await script(library.code, library.name);
-                if (failed) return;
+                if (failed || stopped) return;
             }
             installCameraViews();
             if (program.language === "pde") {
@@ -497,7 +558,7 @@ window.SketchRuntime = (function () {
             } else {
                 installP5AssetDiagnostics();
                 await script(program.code, "sketch-source.js");
-                if (failed) return;
+                if (failed || stopped) return;
                 phase = "runtime";
                 await new Promise(function (resolve) {
                     var setup = window.setup;
@@ -509,7 +570,9 @@ window.SketchRuntime = (function () {
                     instance = new p5();
                 });
             }
-            if (!failed && !stopped) {
+            if (failed || stopped) {
+                disposeInstance(instance);
+            } else {
                 var callbacks = sketchCallbacks();
                 post("iosbridge", { event: "ready", sensors: Object.keys(sensorCallbacks).filter(function (name) {
                     return callbacks && typeof callbacks[name] === "function";

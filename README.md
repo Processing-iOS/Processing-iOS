@@ -44,6 +44,8 @@ Completions include common Processing or P5.js functions, constants, keywords, a
 
 ## Retina rendering
 
+Leaving a run disposes its Processing/p5 instance, cancels timeouts, intervals, and animation callbacks, stops capture and playback, and removes the temporary runtime document. Each run starts with a fresh WebView. A regression check runs 20 successive sketches and verifies release of their controllers, WebViews, and runtime files.
+
 Processing sketches automatically render at the screen's pixel density, including 2D, P3D, and offscreen graphics. Sketch dimensions, touch coordinates, and the legacy `width * height` pixel array remain in logical pixels. Pixel-array operations retain their logical resolution; vector drawing uses the full-resolution canvas.
 
 P5.js retains its built-in Retina support and still honors an explicit `pixelDensity(1)` for pixel-based sketches.

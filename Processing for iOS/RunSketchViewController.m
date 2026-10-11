@@ -378,6 +378,7 @@
     [self pauseSensors];
     [self.sketchWebView evaluateJavaScript:@"SketchRuntime.stop()" completionHandler:nil];
     [self stopMediaCapture];
+    [self.sketchWebView pauseAllMediaPlaybackWithCompletionHandler:nil];
     [self.sketchWebView.configuration.userContentController removeScriptMessageHandlerForName:@"error"];
     [self.sketchWebView.configuration.userContentController removeScriptMessageHandlerForName:@"iosbridge"];
     self.sketchWebView.navigationDelegate = nil;
@@ -385,6 +386,7 @@
     [self.sketchWebView stopLoading];
     [self.sketchWebView removeFromSuperview];
     self.sketchWebView = nil;
+    self.program = nil;
     if (self.runtimeHTMLURL) {
         [NSFileManager.defaultManager removeItemAtURL:self.runtimeHTMLURL error:nil];
         self.runtimeHTMLURL = nil;
@@ -393,6 +395,12 @@
 
 - (void)dealloc {
     [self stopRuntime];
+}
+
+- (void)didMoveToParentViewController:(UIViewController *)parent {
+    [super didMoveToParentViewController:parent];
+    // Also covers a runner removed from an offscreen navigation stack.
+    if (!parent && self.started) [self stopRuntime];
 }
 
 -(void)viewWillLayoutSubviews {

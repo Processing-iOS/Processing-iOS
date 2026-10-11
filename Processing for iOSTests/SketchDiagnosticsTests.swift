@@ -32,6 +32,8 @@ struct SketchRuntimeTests {
         // Substitute only the browser capture boundary: the actual bundled sketch
         // and runtime must initiate access automatically and own cleanup.
         let setup = """
+        // This wait belongs to the test harness, not to the stopped sketch.
+        window.captureTestDelay = window.setTimeout.bind(window);
         window.cameraRequests = [];
         window.cameraSupported = typeof navigator.mediaDevices?.getUserMedia === 'function';
         if (cameraSupported) navigator.mediaDevices.getUserMedia = constraints => {
@@ -52,12 +54,12 @@ struct SketchRuntimeTests {
           const stream = source.captureStream();
           SketchRuntime.stop();
           finishCapture(stream);
-          await new Promise(resolve => setTimeout(resolve, 0));
+          await new Promise(resolve => captureTestDelay(resolve, 0));
           return {supported:true, count:cameraRequests.length, audio:cameraRequests[0].audio,
             stopped:stream.getTracks().every(t => t.readyState === 'ended'), videos:document.querySelectorAll('video').length};
         }
         denyCapture(new DOMException('Test capture response', outcome));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => captureTestDelay(resolve, 0));
         return {supported:true, count:cameraRequests.length, audio:cameraRequests[0].audio,
           message:document.querySelector('[role=status]').textContent};
         """, arguments: ["outcome": outcome], in: nil, contentWorld: .page) as? [String: Any]
@@ -189,7 +191,8 @@ struct SketchRuntimeTests {
         #expect(Set(ready["sensors"] as? [String] ?? []) == ["gravityUpdated", "altimeterUpdated"])
         let colors = try await browser.webView.evaluateJavaScript("""
         (() => {
-          const pixel = (x,y) => Array.from(document.querySelector('canvas').getContext('2d').getImageData(x,y,1,1).data);
+          const canvas = document.querySelector('canvas');
+          const pixel = (x,y) => Array.from(canvas.getContext('2d').getImageData(x,y,1,1).data);
           SketchRuntime.updateSensors({readings:{gravityUpdated:[-0.5,0.25,1],altimeterUpdated:[12,101]}});
           const result = [...pixel(10,10), ...pixel(2,2)];
           SketchRuntime.updateSensors({readings:{gravityUpdated:[NaN,0,0],setup:[1,2,3],altimeterUpdated:[1]}});
@@ -704,6 +707,65 @@ struct SketchRuntimeTests {
             let range = (code as NSString).range(of: token)
             let color = try #require(displayed.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? UIColor)
             #expect(color == UIColor.label, "Code after a closing quote was recolored: \(token)")
+        }
+    }
+
+    @Test func stoppingARuntimeCancelsUserWorkAndRemovesItsCanvas() async throws {
+        let fixture = try SketchFixture(language: "js", main: """
+        window.workCount = 0;
+        function setup() {
+          createCanvas(80, 80);
+          setInterval(function() { window.workCount++; }, 10);
+          setTimeout(function() { window.workCount += 1000; }, 500);
+          function animate() { window.workCount++; requestAnimationFrame(animate); }
+          requestAnimationFrame(animate);
+        }
+        """)
+        defer { fixture.remove() }
+        let probe = RuntimeProbe()
+        defer { probe.close() }
+        try probe.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await probe.message(named: "iosbridge", event: "ready")
+        let count = try await probe.webView.evaluateJavaScript("SketchRuntime.stop(); window.workCount") as? Int
+        try await Task.sleep(nanoseconds: 700_000_000)
+        #expect(try await probe.webView.evaluateJavaScript("window.workCount") as? Int == count)
+        #expect(try await probe.webView.evaluateJavaScript("document.querySelectorAll('canvas').length") as? Int == 0)
+    }
+
+    @Test func repeatedRunsReleaseTheirViewsAndTemporaryFiles() async throws {
+        let pde = try SketchFixture(language: "pde", main: "void setup() { size(40,40); background(255); noLoop(); }")
+        let js = try SketchFixture(language: "js", main: "function setup() { createCanvas(40,40); background(255); noLoop(); }")
+        defer { pde.remove(); js.remove() }
+        let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = try #require(scene.windows.first { $0.isKeyWindow })
+        let previousRoot = window.rootViewController
+        let navigation = UINavigationController(rootViewController: UIViewController())
+        window.rootViewController = navigation
+        defer { window.rootViewController = previousRoot }
+        for iteration in 0..<20 {
+            let fixture = iteration.isMultiple(of: 2) ? pde : js
+            var runner: RunSketchViewController? = RunSketchViewController(simpleTextProject: fixture.project)
+            weak var releasedRunner = runner
+            navigation.pushViewController(try #require(runner), animated: false)
+            let deadline = Date().addingTimeInterval(10)
+            while runner?.completedSuccessfully != true, Date() < deadline {
+                try await Task.sleep(nanoseconds: 50_000_000)
+            }
+            try #require(runner?.completedSuccessfully == true, "Run \(iteration) did not start")
+            weak var releasedWebView = runner?.sketchWebView
+            navigation.popViewController(animated: false)
+            let teardownDeadline = Date().addingTimeInterval(2)
+            while runner?.sketchWebView != nil, Date() < teardownDeadline {
+                try await Task.sleep(nanoseconds: 20_000_000)
+            }
+            #expect(runner?.sketchWebView == nil)
+            #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.project.folder.path).allSatisfy { !$0.hasPrefix("__runtime_") })
+            runner = nil
+            while (releasedRunner != nil || releasedWebView != nil), Date() < teardownDeadline {
+                try await Task.sleep(nanoseconds: 20_000_000)
+            }
+            #expect(releasedRunner == nil)
+            #expect(releasedWebView == nil)
         }
     }
 
