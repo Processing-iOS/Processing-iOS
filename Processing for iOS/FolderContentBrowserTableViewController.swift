@@ -137,6 +137,54 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         return 80
     }
 
+    override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let source = URL(fileURLWithPath: currentPath).appendingPathComponent(contents[indexPath.row])
+        let rename = UIContextualAction(style: .normal, title: "Rename") { [weak self] _, _, done in
+            self?.nameFile(source, duplicate: false); done(true)
+        }
+        let duplicate = UIContextualAction(style: .normal, title: "Duplicate") { [weak self] _, _, done in
+            self?.nameFile(source, duplicate: true); done(true)
+        }
+        rename.backgroundColor = .systemBlue
+        duplicate.backgroundColor = .systemIndigo
+        let actions = UISwipeActionsConfiguration(actions: [rename, duplicate])
+        actions.performsFirstActionWithFullSwipe = false
+        return actions
+    }
+
+    override func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        let source = URL(fileURLWithPath: currentPath).appendingPathComponent(contents[indexPath.row])
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            UIMenu(children: [
+                UIAction(title: "Rename", image: UIImage(systemName: "pencil")) { _ in self?.nameFile(source, duplicate: false) },
+                UIAction(title: "Duplicate", image: UIImage(systemName: "plus.square.on.square")) { _ in self?.nameFile(source, duplicate: true) }
+            ])
+        }
+    }
+
+    private func nameFile(_ source: URL, duplicate: Bool) {
+        let title = duplicate ? "Duplicate File" : "Rename File"
+        let alert = UIAlertController(title: title, message: duplicate && ["js", "pde"].contains(source.pathExtension.lowercased())
+            ? "The copy contains the same code. Give any copied classes or functions unique names before running." : nil, preferredStyle: .alert)
+        alert.addTextField {
+            $0.text = duplicate ? source.deletingPathExtension().lastPathComponent + " Copy" + (source.pathExtension.isEmpty ? "" : "." + source.pathExtension) : source.lastPathComponent
+            $0.autocorrectionType = .no
+        }
+        alert.addAction(UIAlertAction(title: duplicate ? "Duplicate" : "Rename", style: .default) { [weak self] _ in
+            guard let self, let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+            let folder = URL(fileURLWithPath: self.basePath)
+            FileOperationProgress.perform(title: duplicate ? "Duplicating File…" : "Renaming File…", from: self, work: {
+                if duplicate { try ProjectFiles.duplicateFile(source, as: name, projectFolder: folder) }
+                else { try ProjectFiles.renameFile(source, to: name, projectFolder: folder) }
+            }) { error in
+                if let error { self.showError(error) }
+                else { self.reload() }
+            }
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let path = "\(currentPath)/\(contents[indexPath.row])"

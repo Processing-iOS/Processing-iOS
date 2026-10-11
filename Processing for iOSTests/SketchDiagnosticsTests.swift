@@ -22,6 +22,64 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test func projectRenameAndDuplicatePreserveSourcesAssetsAndRecovery() throws {
+        let fixture = try SketchFixture(language: "js", main: "function setup() { createCanvas(20,20); }")
+        let originalFolder = fixture.project.folder
+        let renamed = fixture.project.name + "Renamed", copyName = fixture.project.name + "Copy"
+        let copyFolder = originalFolder.deletingLastPathComponent().appendingPathComponent(copyName)
+        defer { fixture.remove(); try? FileManager.default.removeItem(at: originalFolder); try? FileManager.default.removeItem(at: copyFolder) }
+        let file = try #require(fixture.project.sourceCodeFiles.first)
+        let before = try #require(file.content)
+        #expect(file.save(newContent: before + "\n// revised"))
+        let asset = originalFolder.appendingPathComponent("data/palette.bin")
+        try FileManager.default.createDirectory(at: asset.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data([1,2,3,255]).write(to: asset)
+        try "temporary runtime".write(to: originalFolder.appendingPathComponent("__runtime_ignore.html"), atomically: true, encoding: .utf8)
+        let collision = originalFolder.appendingPathComponent(renamed + ".js")
+        try "// occupied".write(to: collision, atomically: true, encoding: .utf8)
+        #expect(throws: (any Error).self) { try ProjectFiles.renameProject(fixture.project, to: renamed) }
+        #expect(FileManager.default.fileExists(atPath: originalFolder.path))
+        #expect(try String(contentsOf: collision) == "// occupied")
+        try FileManager.default.removeItem(at: collision)
+        try ProjectFiles.renameProject(fixture.project, to: renamed)
+        #expect(!FileManager.default.fileExists(atPath: originalFolder.path))
+        let renamedFile = try #require(fixture.project.sourceCodeFiles.first)
+        #expect(renamedFile.fileName == renamed + ".js")
+        #expect(try renamedFile.history().contains { $0.content == before })
+        try ProjectFiles.duplicateProject(fixture.project, as: copyName)
+        #expect(try Data(contentsOf: copyFolder.appendingPathComponent("data/palette.bin")) == Data([1,2,3,255]))
+        #expect(try String(contentsOf: copyFolder.appendingPathComponent(copyName + ".js")) == before + "\n// revised")
+        #expect(!FileManager.default.fileExists(atPath: copyFolder.appendingPathComponent(".processing-history").path))
+        #expect(!FileManager.default.fileExists(atPath: copyFolder.appendingPathComponent("__runtime_ignore.html").path))
+        #expect(throws: (any Error).self) { try ProjectFiles.renameProject(fixture.project, to: copyName) }
+        #expect(FileManager.default.fileExists(atPath: fixture.project.folder.path))
+    }
+
+    @Test func fileRenamingCarriesHistoryAndCannotReplaceAnotherFile() throws {
+        let fixture = try SketchFixture(language: "pde", main: "void setup() {}")
+        defer { fixture.remove() }
+        let original = try #require(fixture.project.sourceCodeFiles.first)
+        #expect(original.save(newContent: "void setup() { size(30,30); }"))
+        try ProjectFiles.renameFile(URL(fileURLWithPath: original.filePath), to: "Main.pde", projectFolder: fixture.project.folder)
+        let renamed = SourceCodeFile(filePath: fixture.project.folder.appendingPathComponent("Main.pde").path)
+        #expect(try renamed.history().first?.content == "void setup() {}")
+        try ProjectFiles.duplicateFile(URL(fileURLWithPath: renamed.filePath), as: "Copy.pde", projectFolder: fixture.project.folder)
+        #expect(throws: (any Error).self) {
+            try ProjectFiles.renameFile(URL(fileURLWithPath: renamed.filePath), to: "Copy.pde", projectFolder: fixture.project.folder)
+        }
+        #expect(try String(contentsOfFile: renamed.filePath) == "void setup() { size(30,30); }")
+        #expect(throws: (any Error).self) {
+            try ProjectFiles.renameFile(URL(fileURLWithPath: renamed.filePath), to: "Main.js", projectFolder: fixture.project.folder)
+        }
+        var latest = URL(fileURLWithPath: renamed.filePath)
+        for index in 0..<8 {
+            let name = "Version\(index).pde"
+            try ProjectFiles.renameFile(latest, to: name, projectFolder: fixture.project.folder)
+            latest = fixture.project.folder.appendingPathComponent(name)
+        }
+        #expect(try SourceCodeFile(filePath: latest.path).history().first?.content == "void setup() {}")
+    }
+
     @Test func typingANewlineBetweenBracesIndentsAndKeepsTheClosingBrace() throws {
         let code = "function setup() {}"
         let fixture = try SketchFixture(language: "js", main: code)

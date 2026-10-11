@@ -120,6 +120,8 @@ Use **Import → Import sample projects…** to choose which bundled examples to
 
 ## Sketch diagnostics
 
+Swipe right or long-press a project or an item in its folder browser for **Rename** and **Duplicate**. Renames keep a source file's recovery history; project renames also update the main source filename. Duplicates include source files and assets but start with fresh history. Existing names are never overwritten. A copied source file keeps its declarations, so rename duplicate functions/classes before running it alongside the original.
+
 The editor's **Tools** menu includes Find and Replace, Undo/Redo, Format Code, and Text Size (saved across launches). The keyboard accessory provides indentation, common code symbols, Undo/Redo, and completion suggestions. Return preserves indentation and splits a pair of braces onto separate lines. Formatting changes code indentation without rewriting multiline strings/comments, and remains undoable. On iOS 16 and later, search uses the native find/replace navigator; iOS 15 provides Find Next and Replace All.
 
 The **Console** button in a running sketch displays Processing `print()`/`println()` and p5.js `print()`/JavaScript `console.log()`, `info()`, `warn()`, and `error()`. Return to **Tools → Console** in the editor to read the last run's output and errors. The resizable sheet supports selection, Copy, and Clear. Output is bounded; heavy logging drops earlier messages so it cannot consume unlimited memory.

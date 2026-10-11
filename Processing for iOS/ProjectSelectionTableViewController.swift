@@ -231,16 +231,68 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        if isFiltering() {
-            return false
-        }
         return true
+    }
+
+    override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard let project = (isFiltering() ? filteredProjects : projects)?[indexPath.row] else { return nil }
+        let rename = UIContextualAction(style: .normal, title: "Rename") { [weak self] _, _, done in
+            self?.nameProject(project, duplicate: false); done(true)
+        }
+        let duplicate = UIContextualAction(style: .normal, title: "Duplicate") { [weak self] _, _, done in
+            self?.nameProject(project, duplicate: true); done(true)
+        }
+        rename.backgroundColor = .systemBlue
+        duplicate.backgroundColor = .systemIndigo
+        let actions = UISwipeActionsConfiguration(actions: [rename, duplicate])
+        actions.performsFirstActionWithFullSwipe = false
+        return actions
+    }
+
+    override func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        guard let project = (isFiltering() ? filteredProjects : projects)?[indexPath.row] else { return nil }
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            UIMenu(children: [
+                UIAction(title: "Rename", image: UIImage(systemName: "pencil")) { _ in self?.nameProject(project, duplicate: false) },
+                UIAction(title: "Duplicate", image: UIImage(systemName: "plus.square.on.square")) { _ in self?.nameProject(project, duplicate: true) }
+            ])
+        }
+    }
+
+    private func nameProject(_ project: SimpleTextProject, duplicate: Bool) {
+        let title = duplicate ? "Duplicate Project" : "Rename Project"
+        let alert = UIAlertController(title: title, message: nil, preferredStyle: .alert)
+        alert.addTextField { $0.text = project.name + (duplicate ? " Copy" : ""); $0.autocorrectionType = .no }
+        alert.addAction(UIAlertAction(title: duplicate ? "Duplicate" : "Rename", style: .default) { [weak self] _ in
+            guard let self, let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+            if duplicate {
+                FileOperationProgress.perform(title: "Duplicating Project…", from: self, work: {
+                    try ProjectFiles.duplicateProject(project, as: name)
+                }) { error in
+                    if let error { self.showFileOperationError(title: title, error: error) }
+                    else { self.selectNewSketch(withName: name) }
+                }
+                return
+            }
+            do {
+                try ProjectFiles.renameProject(project, to: name)
+                self.selectNewSketch(withName: name)
+            } catch { self.showFileOperationError(title: title, error: error) }
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    private func showFileOperationError(title: String, error: Error) {
+        let failure = UIAlertController(title: title, message: error.localizedDescription, preferredStyle: .alert)
+        failure.addAction(UIAlertAction(title: "OK", style: .default))
+        present(failure, animated: true)
     }
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle,
                             forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            if let project = projects?[indexPath.row] {
+            if let project = (isFiltering() ? filteredProjects : projects)?[indexPath.row] {
                 
                 let alertController = UIAlertController(
                     title: "Delete Project",
@@ -253,7 +305,7 @@ class ProjectSelectionTableViewController: UITableViewController,
                     
                     SketchController.loadProjects { (projects) in
                         self.projects = projects
-                        self.tableView.deleteRows(at: [indexPath], with: .automatic)
+                        self.filterContentForSearchText(self.searchController.searchBar.text ?? "")
                         self.refreshProjectsCountLabel()
                     }
                 }
@@ -444,7 +496,9 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
 
     private func selectNewSketch(withName name: String) {
-        
+        searchController.isActive = false
+        searchController.searchBar.text = nil
+        filteredProjects = nil
         SketchController.loadProjects { (projects) in
             self.projects = projects
             self.tableView.reloadData()

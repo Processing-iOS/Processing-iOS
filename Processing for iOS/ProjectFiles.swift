@@ -9,6 +9,124 @@ struct ProjectFileError: LocalizedError {
 enum ProjectFiles {
     static let didChange = Notification.Name("ProjectFilesDidChange")
 
+    private static func changed(_ folder: URL) {
+        if Thread.isMainThread { NotificationCenter.default.post(name: didChange, object: folder) }
+        else { DispatchQueue.main.async { NotificationCenter.default.post(name: didChange, object: folder) } }
+    }
+
+    /// Copy only a project's useful files; recovery history and generated runtimes
+    /// belong to the original working copy, not to a duplicate or shared project.
+    static func copyProject(_ source: URL, to destination: URL) throws {
+        let fm = FileManager.default
+        guard !fm.fileExists(atPath: destination.path) else {
+            throw ProjectFileError(message: "The destination already exists. Choose another name.")
+        }
+        try validateTree(source)
+        try fm.createDirectory(at: destination, withIntermediateDirectories: false)
+        do {
+            for item in try fm.contentsOfDirectory(at: source, includingPropertiesForKeys: nil)
+            where item.lastPathComponent != ".processing-history" && !item.lastPathComponent.hasPrefix("__runtime_") {
+                try fm.copyItem(at: item, to: destination.appendingPathComponent(item.lastPathComponent))
+            }
+        } catch {
+            try? fm.removeItem(at: destination)
+            throw error
+        }
+    }
+
+    static func renameFile(_ source: URL, to name: String, projectFolder: URL) throws {
+        try validateName(name)
+        guard name != source.lastPathComponent else { return }
+        let fm = FileManager.default
+        let destination = source.deletingLastPathComponent().appendingPathComponent(name)
+        if ["pde", "js"].contains(source.pathExtension.lowercased()),
+           destination.pathExtension.lowercased() != source.pathExtension.lowercased() {
+            throw ProjectFileError(message: "Keep the .\(source.pathExtension) extension so the file remains part of this project.")
+        }
+        guard !fm.fileExists(atPath: destination.path) else {
+            throw ProjectFileError(message: "“\(name)” already exists. Choose another name; no files were changed.")
+        }
+        let history = projectFolder.appendingPathComponent(".processing-history")
+        let oldHistory = history.appendingPathComponent(source.lastPathComponent)
+        let newHistory = history.appendingPathComponent(name)
+        var copiedHistory: [URL] = []
+        do {
+            if source.deletingLastPathComponent().standardizedFileURL.path == projectFolder.standardizedFileURL.path,
+               fm.fileExists(atPath: oldHistory.path) {
+                try fm.createDirectory(at: newHistory, withIntermediateDirectories: true)
+                for item in try fm.contentsOfDirectory(at: oldHistory, includingPropertiesForKeys: nil) {
+                    let timestamp = (try? JSONDecoder().decode(SourceRevision.self, from: Data(contentsOf: item)))?.date.timeIntervalSince1970 ?? 0
+                    let target = newHistory.appendingPathComponent("\(timestamp)-\(UUID().uuidString).json")
+                    try fm.copyItem(at: item, to: target)
+                    copiedHistory.append(target)
+                }
+            }
+            try fm.moveItem(at: source, to: destination)
+        } catch {
+            for item in copiedHistory { try? fm.removeItem(at: item) }
+            throw error
+        }
+        if !copiedHistory.isEmpty { try? fm.removeItem(at: oldHistory) }
+        changed(projectFolder)
+    }
+
+    static func duplicateFile(_ source: URL, as name: String, projectFolder: URL) throws {
+        try validateName(name)
+        let destination = source.deletingLastPathComponent().appendingPathComponent(name)
+        if ["pde", "js"].contains(source.pathExtension.lowercased()), destination.pathExtension.lowercased() != source.pathExtension.lowercased() {
+            throw ProjectFileError(message: "Keep the .\(source.pathExtension) extension for the copied source file.")
+        }
+        guard !FileManager.default.fileExists(atPath: destination.path) else {
+            throw ProjectFileError(message: "“\(name)” already exists. Choose another name.")
+        }
+        let temporary = source.deletingLastPathComponent().appendingPathComponent(".copy-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: temporary) }
+        try FileManager.default.copyItem(at: source, to: temporary)
+        try FileManager.default.moveItem(at: temporary, to: destination)
+        changed(projectFolder)
+    }
+
+    static func renameProject(_ project: SimpleTextProject, to name: String) throws {
+        try validateName(name)
+        guard name != project.name else { return }
+        let fm = FileManager.default, original = project.folder
+        let destination = original.deletingLastPathComponent().appendingPathComponent(name)
+        guard !fm.fileExists(atPath: destination.path) else {
+            throw ProjectFileError(message: "A project named “\(name)” already exists. Choose another name.")
+        }
+        // Move the complete folder first. If the main-file rename fails, put it
+        // back before exposing the changed model to the project list.
+        try fm.moveItem(at: original, to: destination)
+        do {
+            let oldMain = destination.appendingPathComponent("\(project.name).\(project.sourceCodeExtension)")
+            if fm.fileExists(atPath: oldMain.path) {
+                try renameFile(oldMain, to: "\(name).\(project.sourceCodeExtension)", projectFolder: destination)
+            }
+        } catch {
+            do { try fm.moveItem(at: destination, to: original) }
+            catch { throw ProjectFileError(message: "The project is safe in “\(name)”, but the rename could not finish. Reopen that folder from My Projects.") }
+            throw error
+        }
+        project.name = name
+    }
+
+    static func duplicateProject(_ project: SimpleTextProject, as name: String) throws {
+        try validateName(name)
+        let destination = project.folder.deletingLastPathComponent().appendingPathComponent(name)
+        let stage = project.folder.deletingLastPathComponent().appendingPathComponent(".duplicate-\(UUID().uuidString)")
+        let fm = FileManager.default
+        guard !fm.fileExists(atPath: destination.path) else {
+            throw ProjectFileError(message: "A project named “\(name)” already exists. Choose another name.")
+        }
+        defer { try? fm.removeItem(at: stage) }
+        try copyProject(project.folder, to: stage)
+        let main = stage.appendingPathComponent("\(project.name).\(project.sourceCodeExtension)")
+        if fm.fileExists(atPath: main.path) {
+            try renameFile(main, to: "\(name).\(project.sourceCodeExtension)", projectFolder: stage)
+        }
+        try fm.moveItem(at: stage, to: destination)
+    }
+
     static func validateName(_ name: String) throws {
         guard !name.isEmpty, name != ".", name != "..", !name.hasPrefix("."),
               !name.contains("/"), !name.contains("\\"), !name.contains(":"),
@@ -140,6 +258,6 @@ enum ProjectFiles {
             for url in inserted { try? fm.removeItem(at: url) }
             throw error
         }
-        NotificationCenter.default.post(name: didChange, object: folder)
+        changed(folder)
     }
 }
