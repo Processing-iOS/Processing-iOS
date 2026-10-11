@@ -7,7 +7,10 @@ iOS 3.0 version ID: 8e898e60-c2b0-4c84-8891-678e95afb14a
 English localization ID: 54bc817d-e7b2-46c4-b7a1-6e394ac0c73d
 German localization ID: 6c4a683c-dfa9-4654-ab49-fdb31476d204
 
-The release remains Prepare for Submission. Upload a current 3.0 build before submission; build 43 was uploaded as 4.0 and predates the latest feature changes.
+Processing 3.0 (44) was archived with Xcode 27 and uploaded through Xcode Organizer on 2026-10-11. Apple completed processing, and the build was selected for the iOS 3.0 draft through Helm and verified by reading it back.
+Build ID: 6b091ecb-0988-4ae9-a263-d7bfd7cee86a
+Build status after processing: READY_FOR_BETA_SUBMISSION. The release remains Prepare for Submission; it has not been submitted for review.
+The app declares that it does not use non-exempt encryption. Local archive: build/Release/Processing-3.0-44.xcarchive.
 
 Name: 30-character maximum.
 Subtitle: 30-character maximum.
