@@ -1,0 +1,15 @@
+Processing is completely free, sponsored by one sec.
+
+This update brings:
+• Autosave, code history, and protection against conflicting edits.
+• Faster, more reliable syntax highlighting and offline code completion.
+• Find and replace, undoable formatting, adjustable text size, and editing shortcuts.
+• Complete project imports, selective sample imports, rename, and duplicate.
+• Linked folders in Files and whole-project ZIP or folder sharing.
+• A console for printed output and errors, plus clearer diagnostics and more reliable repeated runs.
+• A searchable offline reference with copyable examples.
+• JavaScript library imports with configurable load order and library-specific error locations.
+• Retina drawing, PNG/JPEG canvas export, more sensor inputs, and a simple CameraView API.
+• Processing compatibility additions, including StringList, circle, and square.
+
+The app is now named Processing. In-app purchases and the obsolete Add to Home Screen flow have been removed.

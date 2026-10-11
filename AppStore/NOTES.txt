@@ -1,0 +1,14 @@
+English App Store copy prepared for the updated app. These files do not publish changes to App Store Connect.
+
+Name: 30-character maximum.
+Subtitle: 30-character maximum.
+Promotional text: 170-character maximum.
+Keywords: 100-byte maximum (UTF-8).
+Description and What's New: 4,000-character maximum each.
+
+Before release, use the new application build with this copy. Remove outdated screenshots or captions advertising Pro, purchases, or Add to Home Screen. Show the current editor, offline reference, camera/sensors, and Files/library workflows.
+
+The compatibility paragraph intentionally names the bundled runtime versions. It does not promise full desktop Processing 4 or p5.js 2 compatibility, custom Dropbox/Git integrations, or export of standalone iOS apps.
+
+Field limits: https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information
+App name/subtitle: https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/

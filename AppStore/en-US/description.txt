@@ -1,0 +1,27 @@
+Turn ideas into drawings, animations, and interactive sketches on your iPhone or iPad.
+
+Processing is completely free and open source, sponsored by one sec. All features are included, with no in-app purchases or subscriptions.
+
+WRITE AND EXPLORE
+Create Processing (.pde) or p5.js (.js) projects with multiple source files. Syntax highlighting, offline code completion, indentation, undo and redo, find and replace, and adjustable text size make editing easier on a touch screen or hardware keyboard.
+
+KEEP YOUR WORK
+Autosave protects your edits, and code history lets you preview and restore earlier versions. Import whole project folders, selected source files, or individual bundled examples. Rename and duplicate projects and files without replacing existing work.
+
+USE FILES
+Work on local copies or link a project folder from a supported location in Files, including iCloud Drive. Conflicting edits from another app are kept for you to resolve. Share a complete project as a ZIP or save its folder through Files.
+
+MAKE IT INTERACTIVE
+Draw at Retina resolution. Add a front or back camera with CameraView, then position and size it in your drawing code. Use motion, gravity, orientation, magnetic-field, and relative-altitude readings on supported devices. Camera access requires your permission; sensor availability varies by device.
+
+LEARN AND DEBUG
+Search the built-in offline reference and copy examples into your sketches. Read printed output and errors in the console. Error messages identify source locations when available, and unresponsive sketches are stopped so you can return to your code.
+
+EXTEND AND SHARE
+Import browser-compatible JavaScript libraries into p5.js projects and choose their load order. Save canvas images as PNG or JPEG in your project's exports folder, including Retina pixels.
+
+COMPATIBILITY
+Processing uses Processing.js 1.6.6 and p5.js 1.4.0. It supports many familiar drawing APIs, with additions for CameraView, device sensors, StringList, and image export. Some desktop Processing and newer p5.js examples need changes. Desktop Java .jar libraries, Node.js/npm packages, and ES modules are not supported directly. Sketches run inside the app.
+
+Open source: https://github.com/Processing-iOS/Processing-iOS
+Sponsored by one sec: https://one-sec.app
