@@ -28,9 +28,13 @@ xcodebuild -workspace "Processing for iOS.xcworkspace" \
   -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
 ```
 
-## Code completion
+## Projects and recovery
+
+Import accepts a project folder or multiple source files. Folder imports detect Processing or p5.js, preserve `data` and other assets, and keep the main file first when the project is renamed. Imports are staged and validated before appearing in My Projects. Existing projects and files are never overwritten; unreadable source, duplicate names, and unavailable Files providers show errors. Importing source files from the folder browser updates the editor tabs immediately.
 
 Edits are saved automatically after a short pause, and while typing continuously at least every two seconds. The editor shows saving status and retains unsaved buffers if a write fails. **History** previews and restores earlier versions of the current file; restoring also keeps the current code. Up to 100 local versions are kept, with checkpoints at most once every 30 seconds during ordinary editing. History is stored in the project's hidden `.processing-history` folder.
+
+## Code completion
 
 Start typing a name in the editor to see completions above the keyboard after two characters. Tap a suggestion, or press **Tab** on a hardware keyboard to accept the first one. **Control-Space** requests completions for a shorter prefix; **Escape** dismisses the suggestions. Swipe the strip to see more matches. The keyboard button ends editing and restores the editor toolbar.
 

@@ -707,6 +707,63 @@ struct SketchRuntimeTests {
         }
     }
 
+    @Test func importingNeverOverwritesAnExistingProject() throws {
+        let fixture = try SketchFixture(language: "js", main: "const original = 1;")
+        defer { fixture.remove() }
+        let incoming = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: incoming, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: incoming) }
+        let file = incoming.appendingPathComponent(fixture.mainName)
+        try "const incoming = 2;".write(to: file, atomically: true, encoding: .utf8)
+        let rejected = P5JSProject(withProjectName: fixture.project.name, importingFiles: [file])
+        #expect(rejected.initializationError != nil)
+        #expect(try String(contentsOf: fixture.project.folder.appendingPathComponent(fixture.mainName)) == "const original = 1;")
+    }
+
+    @Test(arguments: ["pde", "js"])
+    func folderImportPreservesSourcesAssetsAndMainFileOrder(language: String) throws {
+        let incoming = FileManager.default.temporaryDirectory.appendingPathComponent("Incoming folder " + UUID().uuidString)
+        try FileManager.default.createDirectory(at: incoming.appendingPathComponent("data"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: incoming) }
+        let source = language == "js" ? "function setup() {}" : "void setup() {}"
+        try source.write(to: incoming.appendingPathComponent(incoming.lastPathComponent + "." + language), atomically: true, encoding: .utf8)
+        try "// helper 🧑🏽‍💻".write(to: incoming.appendingPathComponent("A_helper." + language), atomically: true, encoding: .utf8)
+        try "Read me".write(to: incoming.appendingPathComponent("README.txt"), atomically: true, encoding: .utf8)
+        let asset = Data([0, 255, 1, 254])
+        try asset.write(to: incoming.appendingPathComponent("data/picture with spaces.bin"))
+        #expect(try ProjectFiles.language(in: [incoming]) == language)
+        let project = SimpleTextProject(with: "Imported_" + UUID().uuidString, sourceCodeExtension: language, importingFiles: [incoming])
+        defer { try? FileManager.default.removeItem(at: project.folder) }
+        #expect(project.initializationError == nil)
+        #expect(try project.sourceFileURLs().map(\.lastPathComponent) == [project.name + "." + language, "A_helper." + language])
+        #expect(try Data(contentsOf: project.folder.appendingPathComponent("data/picture with spaces.bin")) == asset)
+        _ = try project.prepareRuntime()
+
+        // A failed source read must not publish a half-imported project.
+        try Data([0xff, 0xfe, 0xff]).write(to: incoming.appendingPathComponent("broken." + language))
+        let broken = SimpleTextProject(with: "Rejected_" + UUID().uuidString, sourceCodeExtension: language, importingFiles: [incoming])
+        defer { try? FileManager.default.removeItem(at: broken.folder) }
+        #expect(broken.initializationError != nil)
+        #expect(!FileManager.default.fileExists(atPath: broken.folder.path))
+    }
+
+    @Test func aMultiFileImportCollisionLeavesEveryExistingFileUntouched() throws {
+        let fixture = try SketchFixture(language: "js", main: "const original = 1;")
+        defer { fixture.remove() }
+        let incoming = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: incoming, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: incoming) }
+        let helper = incoming.appendingPathComponent("Helper.js")
+        let collision = incoming.appendingPathComponent(fixture.mainName)
+        try "// helper".write(to: helper, atomically: true, encoding: .utf8)
+        try "// replacement".write(to: collision, atomically: true, encoding: .utf8)
+        #expect(throws: (any Error).self) { try ProjectFiles.importFiles([helper, collision], into: fixture.project.folder) }
+        #expect(!FileManager.default.fileExists(atPath: fixture.project.folder.appendingPathComponent("Helper.js").path))
+        #expect(try String(contentsOf: fixture.project.folder.appendingPathComponent(fixture.mainName)) == "const original = 1;")
+        try ProjectFiles.importFiles([helper], into: fixture.project.folder)
+        #expect(try String(contentsOf: fixture.project.folder.appendingPathComponent("Helper.js")) == "// helper")
+    }
+
     @Test func unreadableAndEmptyProjectsFailBeforeLaunching() throws {
         let fixture = try SketchFixture(language: "js", main: "")
         defer { fixture.remove() }

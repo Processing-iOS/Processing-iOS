@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreServices
+import UniformTypeIdentifiers
 
 class FolderContentBrowserTableViewController: UITableViewController, UIDocumentPickerDelegate {
 
@@ -19,9 +20,9 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         self.basePath = basePath
         currentPath = path
         do {
-            contents =  try FileManager.default.contentsOfDirectory(atPath: path)
+            contents = try FileManager.default.contentsOfDirectory(atPath: path).filter { !$0.hasPrefix(".") && !$0.hasPrefix("__runtime_") }.sorted()
         } catch _ {
-            contents = [""]
+            contents = []
         }
 
         super.init(nibName: "FolderContentBrowserTableViewController", bundle: Bundle.main)
@@ -30,9 +31,9 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
 
     private func reload() {
         do {
-            contents =  try FileManager.default.contentsOfDirectory(atPath: currentPath)
+            contents = try FileManager.default.contentsOfDirectory(atPath: currentPath).filter { !$0.hasPrefix(".") && !$0.hasPrefix("__runtime_") }.sorted()
         } catch _ {
-            contents = [""]
+            contents = []
         }
 
         tableView.reloadData()
@@ -95,8 +96,9 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
             UINavigationBar.appearance(whenContainedInInstancesOf: [UIDocumentBrowserViewController.self])
                 .tintColor = nil
         }
-        let filePickerViewController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
+        let filePickerViewController = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
         filePickerViewController.delegate = self
+        filePickerViewController.allowsMultipleSelection = true
         filePickerViewController.popoverPresentationController?.barButtonItem = navigationItem.leftBarButtonItem
         present(filePickerViewController, animated: true, completion: nil)
     }
@@ -138,8 +140,11 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let path = "\(currentPath)/\(contents[indexPath.row])"
-            try? FileManager.default.removeItem(atPath: path)
-            reload()
+            do {
+                try FileManager.default.removeItem(atPath: path)
+                NotificationCenter.default.post(name: ProjectFiles.didChange, object: URL(fileURLWithPath: basePath))
+                reload()
+            } catch { showError(error) }
         }
     }
 
@@ -150,7 +155,7 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         if exists && directory.boolValue {
             // open new folder content
             let dataFolderVC = FolderContentBrowserTableViewController(
-                withPath: URL(string: currentPath)!.appendingPathComponent(contents[indexPath.row]).path,
+                withPath: URL(fileURLWithPath: currentPath).appendingPathComponent(contents[indexPath.row]).path,
                 basePath: basePath)
             navigationController?.pushViewController(dataFolderVC, animated: true)
         } else {
@@ -161,34 +166,23 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         }
     }
 
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
-        var destinationURL = URL(string: basePath)!
-            .appendingPathComponent("data").appendingPathComponent(url.lastPathComponent)
-        
-        var shouldShowDataFolder = true
-        
-        if url.pathExtension == "pde" || url.pathExtension == "js" {
-            destinationURL = URL(string: basePath)!.appendingPathComponent(url.lastPathComponent)
-            shouldShowDataFolder = false
-        }
-        
-        
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         do {
-            FileManager.ensureFolderExists(folderPath: destinationURL.deletingLastPathComponent().path)
-            try FileManager.default.copyItem(atPath: url.path, toPath: destinationURL.path)
-        } catch {
-            print("copy failed")
-        }
-
-        if let lastPathComponent = URL(string: currentPath)?.lastPathComponent {
-            if lastPathComponent != "data" && shouldShowDataFolder {
-                let dataFolderVC = FolderContentBrowserTableViewController(
-                    withPath: URL(string: currentPath)!.appendingPathComponent("data").path,
-                    basePath: basePath)
-                navigationController?.pushViewController(dataFolderVC, animated: true)
+            try ProjectFiles.importFiles(urls, into: URL(fileURLWithPath: basePath))
+            reload()
+            if urls.contains(where: { !["pde", "js"].contains($0.pathExtension.lowercased()) }),
+               URL(fileURLWithPath: currentPath).lastPathComponent != "data" {
+                let data = FolderContentBrowserTableViewController(
+                    withPath: URL(fileURLWithPath: basePath).appendingPathComponent("data").path, basePath: basePath)
+                navigationController?.pushViewController(data, animated: true)
             }
-        }
-        reload()
+        } catch { showError(error) }
+    }
+
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(title: "File Error", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {

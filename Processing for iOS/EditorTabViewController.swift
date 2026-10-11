@@ -107,6 +107,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         let history = UIBarButtonItem(title: "History", style: .plain, target: self, action: #selector(showHistory))
         self.toolbarItems = [formatButton, flexibleSpace, organize, flexibleSpace, history, flexibleSpace, codeReferenceButton]
         NotificationCenter.default.addObserver(self, selector: #selector(updateSaveStatus), name: SourceCodeFile.didChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(projectFilesChanged(_:)), name: ProjectFiles.didChange, object: nil)
         
         NotificationCenter.default.addObserver(
             self,
@@ -315,7 +316,15 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         return currentSaved
     }
 
+    @objc private func projectFilesChanged(_ notification: Notification) {
+        guard let folder = notification.object as? URL, folder.standardizedFileURL == project.folder.standardizedFileURL else { return }
+        let previous = Dictionary(uniqueKeysWithValues: editorFiles.map { ($0.filePath, $0) })
+        editorFiles = project.sourceCodeFiles.map { previous[$0.filePath] ?? $0 }
+        reloadData()
+    }
+
     @objc func showFolderContent() {
+        guard saveCode() else { return }
         let folderContenVC = FolderContentBrowserTableViewController(
             withPath: self.project.folder.path,
             basePath: self.project.folder.path
@@ -392,11 +401,19 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
                     } else {
                         //everything is fine, create new file
                         
-                        let className = newFileName.capitalized
-                        let newClassCode = "class \(className) {\n   \n   \(className)() {\n      \n   }\n}"
-                        self.project.createNewFile(withName: newFileName, content: newClassCode)
-                        self.editorFiles = self.project.sourceCodeFiles
-                        self.reloadData()
+                        let className = newFileName.prefix(1).uppercased() + newFileName.dropFirst()
+                        let validClassName = className.range(of: #"^[A-Za-z_][A-Za-z_0-9]*$"#, options: .regularExpression) != nil
+                        let newClassCode = validClassName
+                            ? (self.project.sourceCodeExtension == "js"
+                                ? "class \(className) {\n   constructor() {\n   }\n}\n"
+                                : "class \(className) {\n   \(className)() {\n   }\n}\n")
+                            : "// Additional project code\n"
+                        do {
+                            try self.project.createNewFile(withName: newFileName, content: newClassCode)
+                            self.projectFilesChanged(Notification(name: ProjectFiles.didChange, object: self.project.folder))
+                        } catch {
+                            self.addNewFileName(withErrorMessage: error.localizedDescription, predefinedFileName: newFileName)
+                        }
                     }
                 }
             }

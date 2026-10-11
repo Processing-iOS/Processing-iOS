@@ -13,42 +13,25 @@ import Foundation
     @objc var name: String
     @objc var sourceCodeExtension: String
     
+    @objc private(set) var initializationError: NSError?
+
     @objc init(with name: String, sourceCodeExtension: String, importingFiles: [URL] = []) {
-        
         self.name = name
         self.sourceCodeExtension = sourceCodeExtension
-        
         super.init()
-        
-        if !FileManager.default.fileExists(atPath: folder.path) {
-            try? FileManager.default.createDirectory(atPath: folder.path, withIntermediateDirectories: true, attributes: nil)
-            
-            if importingFiles.isEmpty {
-                let startFile = SourceCodeFile(filePath: folder.appendingPathComponent("\(name).\(sourceCodeExtension)").path)
-                startFile.save(newContent: self.emptyFile)
+        do {
+            try ProjectFiles.validateName(name)
+            if !importingFiles.isEmpty {
+                try ProjectFiles.importProject(importingFiles, to: folder, language: sourceCodeExtension)
+            } else if !FileManager.default.fileExists(atPath: folder.path) {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                try emptyFile.write(to: folder.appendingPathComponent("\(name).\(sourceCodeExtension)"), atomically: true, encoding: .utf8)
             }
-            
-        } else {
-            print("already exists: \(folder.lastPathComponent)")
-        }
-        
-        
-        importingFiles.forEach { (url) in
-            url.startAccessingSecurityScopedResource()
-            
-            if url.isDirectory {
-                try! FileManager.default.removeItem(at: folder)
-                try! FileManager.default.copyItem(at: url, to: folder)
-            } else {
-                let content = try? String(contentsOf: url)
-                let startFile = SourceCodeFile(filePath: folder.appendingPathComponent(url.lastPathComponent).path)
-                startFile.save(newContent: content)
-            }
-            
-            url.stopAccessingSecurityScopedResource()
+        } catch {
+            initializationError = error as NSError
         }
     }
-    
+
     @objc var folder: URL {
         let docDir = URL(fileURLWithPath: SketchController.documentsDirectory())
         let sketchPath = docDir.appendingPathComponent("sketches/\(self.name)")
@@ -58,7 +41,7 @@ import Foundation
     func sourceFileURLs() throws -> [URL] {
         let files = try FileManager.default.contentsOfDirectory(
             at: folder, includingPropertiesForKeys: [.isRegularFileKey]
-        ).filter { $0.pathExtension == sourceCodeExtension }
+        ).filter { try $0.pathExtension.lowercased() == sourceCodeExtension && $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true }
         let mainName = "\(name).\(sourceCodeExtension)"
         return files.sorted {
             if $0.lastPathComponent == mainName && $1.lastPathComponent != mainName { return true }
@@ -81,21 +64,21 @@ import Foundation
     
     var creationDate: Date {
         if let fileAttrs = try? FileManager.default.attributesOfItem(atPath: folder.path) {
-            return fileAttrs[FileAttributeKey.creationDate] as! Date
+            return fileAttrs[FileAttributeKey.creationDate] as? Date ?? Date()
         } else {
             return Date()
         }
     }
     
-    func createNewFile(withName name: String, content: String? = nil) {
-        let newFile = SourceCodeFile(filePath: folder.appendingPathComponent("\(name).\(sourceCodeExtension)").path)
-        if let content = content {
-            newFile.save(newContent: content)
-        } else {
-            newFile.save(newContent: emptyFile)
+    func createNewFile(withName name: String, content: String? = nil) throws {
+        try ProjectFiles.validateName(name)
+        let url = folder.appendingPathComponent("\(name).\(sourceCodeExtension)")
+        guard !FileManager.default.fileExists(atPath: url.path) else {
+            throw ProjectFileError(message: "A file with this name already exists.")
         }
-        
+        try (content ?? emptyFile).write(to: url, atomically: true, encoding: .utf8)
     }
+
     
 }
 

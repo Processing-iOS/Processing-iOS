@@ -9,6 +9,7 @@
 import UIKit
 import CoreServices
 import MobileCoreServices
+import UniformTypeIdentifiers
 
 class ProjectSelectionTableViewController: UITableViewController,
                                            UIViewControllerPreviewingDelegate,
@@ -77,15 +78,16 @@ class ProjectSelectionTableViewController: UITableViewController,
         actionSheet.popoverPresentationController?.barButtonItem = sender
         
         let singleFile = UIAlertAction(title: "Import individual file…", style: .default) { _ in
-            let documentBrowser = UIDocumentPickerViewController(documentTypes: ["public.txt", "public.js", "io.frogg.processing.pde", ], in: .open)
+            let documentBrowser = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: false)
             documentBrowser.delegate = self
+            documentBrowser.allowsMultipleSelection = true
             self.present(documentBrowser, animated: true)
         }
         
         let projectFolder = UIAlertAction(title: "Import project folder…", style: .default) { _ in
             
             
-            let documentBrowser = UIDocumentPickerViewController(documentTypes: [kUTTypeFolder as String], in: .open)
+            let documentBrowser = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
             documentBrowser.navigationController?.navigationBar.tintColor = UIColor.processing()
             documentBrowser.delegate = self
             self.present(documentBrowser, animated: true)
@@ -354,12 +356,18 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     func importProjectFolder(folder: URL) {
-        // todo import js as well
-        let fileType = "pde"
-        let fileName = folder.lastPathComponent
-        showCreateAlert(title: "Import Project", name: fileName, type: fileType, importingFiles: [folder])
+        importSources([folder])
     }
-    
+
+    private func importSources(_ urls: [URL]) {
+        guard let first = urls.first else { return }
+        do {
+            let language = try ProjectFiles.language(in: urls)
+            let name = try ProjectFiles.read(first) { $0.isDirectory ? $0.lastPathComponent : $0.deletingPathExtension().lastPathComponent }
+            showCreateAlert(title: "Import Project", name: name.replacingOccurrences(of: " ", with: "_"), type: language, importingFiles: urls)
+        } catch { showImportError(error: error.localizedDescription) }
+    }
+
     func showCreateAlert(title: String, name: String, type: String = "pde", importingFiles: [URL] = []) {
         
         let alertController = UIAlertController(title: title, message: "", preferredStyle: .alert)
@@ -412,17 +420,29 @@ class ProjectSelectionTableViewController: UITableViewController,
     }
     
     private func createNewProcessingProject(name: String, importingFiles: [URL]) {
-        // filename is correct
-        let newProject = PDEProject(withProjectName: name, importingFiles: importingFiles)
-        selectNewSketch(withName: newProject.name)
+        createProject(name: name, language: "pde", importingFiles: importingFiles)
     }
-    
+
     private func createNewP5JSProject(name: String, importingFiles: [URL]) {
-        // filename is correct
-        let newProject = P5JSProject(withProjectName: name, importingFiles: importingFiles)
-        selectNewSketch(withName: newProject.name)
+        createProject(name: name, language: "js", importingFiles: importingFiles)
     }
-    
+
+    private func createProject(name: String, language: String, importingFiles: [URL]) {
+        let progress = UIAlertController(title: importingFiles.isEmpty ? "Creating Project…" : "Importing Project…",
+            message: "Preparing your files.", preferredStyle: .alert)
+        present(progress, animated: true)
+        DispatchQueue.global(qos: .userInitiated).async {
+            let project = language == "pde" ? PDEProject(withProjectName: name, importingFiles: importingFiles)
+                : P5JSProject(withProjectName: name, importingFiles: importingFiles)
+            DispatchQueue.main.async {
+                progress.dismiss(animated: true) {
+                    if let error = project.initializationError { self.showImportError(error: error.localizedDescription) }
+                    else { self.selectNewSketch(withName: project.name) }
+                }
+            }
+        }
+    }
+
     private func selectNewSketch(withName name: String) {
         
         SketchController.loadProjects { (projects) in
@@ -453,7 +473,7 @@ class ProjectSelectionTableViewController: UITableViewController,
     
     
     private func nameAlreadyExists(name: String) -> Bool {
-        for project in projects! where project.name == name {
+        for project in projects ?? [] where project.name == name {
             return true
         }
         return false
@@ -516,19 +536,6 @@ extension ProjectSelectionTableViewController: UISearchResultsUpdating {
 
 extension ProjectSelectionTableViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        
-        
-        if let selectedUrl = urls.first {
-            selectedUrl.startAccessingSecurityScopedResource()
-            if selectedUrl.isDirectory {
-                self.importProjectFolder(folder: selectedUrl)
-                selectedUrl.stopAccessingSecurityScopedResource()
-                return
-            } else {
-                self.importSingleFile(file: selectedUrl)
-                selectedUrl.stopAccessingSecurityScopedResource()
-            }
-            
-        }
+        importSources(urls)
     }
 }

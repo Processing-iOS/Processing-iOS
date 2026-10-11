@@ -202,29 +202,23 @@
         
         NSString* projectName = [projectFolder lastPathComponent];
         
-        if (![projectName isEqualToString:@".DS_Store"]) {
+        BOOL isDirectory = NO;
+        NSString *projectPath = [[[self documentsDirectory] stringByAppendingPathComponent:@"sketches"] stringByAppendingPathComponent:projectFolder];
+        if (![projectName hasPrefix:@"."] && [[NSFileManager defaultManager] fileExistsAtPath:projectPath isDirectory:&isDirectory] && isDirectory) {
             
             NSMutableArray* projectFiles = [NSMutableArray arrayWithArray: [[NSFileManager defaultManager] contentsOfDirectoryAtPath: [[SketchController documentsDirectory] stringByAppendingPathComponent:[NSString stringWithFormat:@"sketches/%@", projectFolder]]  error:nil]];
             
-            NSString* fileFormat;
-            
-            for (NSString* projectFile in projectFiles) {
-                
-                NSString* extension = [projectFile pathExtension];
-                
-                if ([extension isEqualToString:@"pde"]) {
-                    fileFormat = @"pde";
-                }
-                
-                if ([extension isEqualToString:@"js"]) {
-                    fileFormat = @"js";
-                }
-                
-                if ([extension isEqualToString:@"txt"]) {
-                    fileFormat = @"txt";
+            NSMutableSet<NSString *> *extensions = [NSMutableSet set];
+            for (NSString *projectFile in projectFiles) {
+                BOOL isSubdirectory = NO;
+                if ([[NSFileManager defaultManager] fileExistsAtPath:[projectPath stringByAppendingPathComponent:projectFile] isDirectory:&isSubdirectory] && !isSubdirectory) {
+                    [extensions addObject:projectFile.pathExtension.lowercaseString];
                 }
             }
-            
+            // Deterministic precedence: README text and JS assets must not change a PDE project's language.
+            NSString *fileFormat = [extensions containsObject:@"pde"] ? @"pde" :
+                ([extensions containsObject:@"js"] ? @"js" : ([extensions containsObject:@"txt"] ? @"txt" : nil));
+
             if ([fileFormat isEqualToString:@"pde"]) {
                 PDEProject* project = [[PDEProject alloc] initWithProjectName:projectFolder importingFiles:@[]];
                 [projects addObject:project];

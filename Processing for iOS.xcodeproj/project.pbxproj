@@ -78,6 +78,7 @@
 		867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */; };
 		867A8787307B7CE3009C23A0 /* SourceHistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */; };
 		867A8789307B7F5B009C23A0 /* CodeHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */; };
+		867A878B307B8031009C23A0 /* ProjectFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A878A307B8030009C23A0 /* ProjectFiles.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -194,6 +195,7 @@
 		867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleProjectPickerViewController.swift; sourceTree = "<group>"; };
 		867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHistoryViewController.swift; sourceTree = "<group>"; };
 		867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlighter.swift; sourceTree = "<group>"; };
+		867A878A307B8030009C23A0 /* ProjectFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFiles.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -385,6 +387,7 @@
 				867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */,
 				867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */,
 				867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */,
+				867A878A307B8030009C23A0 /* ProjectFiles.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -646,6 +649,7 @@
 				513CADDF1FCD712100B9A6F1 /* FirstStart.m in Sources */,
 				860DBA451E5736300022C90F /* AboutViewController.m in Sources */,
 				517EAA7D24926E900069EAD1 /* FredKitTimeInterval.swift in Sources */,
+				867A878B307B8031009C23A0 /* ProjectFiles.swift in Sources */,
 				867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */,
 				51CEE4791B3EA6FC0031D1BE /* RunSketchViewController.m in Sources */,
 				51CD5DD3249788D9008F2343 /* SimpleTextProject.swift in Sources */,

@@ -98,7 +98,7 @@ struct SourceRevision: Codable {
     }
     
     @objc var fileExtension: String {
-        return URL(fileURLWithPath: filePath).pathExtension
+        return URL(fileURLWithPath: filePath).pathExtension.lowercased()
     }
     
     @discardableResult
