@@ -86,6 +86,17 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         
         let formatButton = UIBarButtonItem(title: "Tools", menu: UIMenu(children: [
             UIAction(title: "Format Code", image: UIImage(systemName: "text.alignleft")) { [weak self] _ in self?.formatCode() },
+            UIAction(title: "Find and Replace", image: UIImage(systemName: "magnifyingglass")) { [weak self] _ in self?.findCode() },
+            UIAction(title: "Undo", image: UIImage(systemName: "arrow.uturn.backward")) { [weak self] _ in
+                (self?.currentViewController as? PDEEditorViewController)?.undoCode()
+            },
+            UIAction(title: "Redo", image: UIImage(systemName: "arrow.uturn.forward")) { [weak self] _ in
+                (self?.currentViewController as? PDEEditorViewController)?.redoCode()
+            },
+            UIMenu(title: "Text Size", image: UIImage(systemName: "textformat.size"), children: [
+                UIAction(title: "Larger") { [weak self] _ in (self?.currentViewController as? PDEEditorViewController)?.changeFontSize(2) },
+                UIAction(title: "Smaller") { [weak self] _ in (self?.currentViewController as? PDEEditorViewController)?.changeFontSize(-2) }
+            ]),
             UIAction(title: "Console", image: UIImage(systemName: "terminal")) { [weak self] _ in
                 guard let self else { return }
                 self.view.endEditing(true)
@@ -151,6 +162,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     
     override var keyCommands: [UIKeyCommand]? {
         return [
+            UIKeyCommand(input: "f", modifierFlags: .command, action: #selector(findCode), discoverabilityTitle: "Find and Replace"),
             UIKeyCommand(
                 input: "t",
                 modifierFlags: .command,
@@ -296,6 +308,10 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     @objc func formatCode() {
         let pdeFileViewController = currentViewController as? PDEEditorViewController
         pdeFileViewController?.formatCode()
+    }
+
+    @objc func findCode() {
+        (currentViewController as? PDEEditorViewController)?.findCode()
     }
     
     @discardableResult

@@ -18,6 +18,7 @@
 @property(nonatomic,strong) CodeCompletionController *completionController;
 @property(nonatomic,copy) NSString *lastObservedText;
 @property(nonatomic,strong) CodeHighlighter *highlighter;
+@property(nonatomic,strong) CodeEditorTools *toolsController;
 @end
 
 @implementation PDEEditorViewController
@@ -44,10 +45,12 @@
     
     self.editor.text = self.sourceCodeFile.content;
     self.lastObservedText = self.editor.text;
-    self.editor.font = [UIFont fontWithName:@"SourceCodePro-Regular" size:18];
+    self.editor.font = [UIFont fontWithName:@"SourceCodePro-Regular" size:CodeEditorTools.fontSize];
     self.highlighter = [[CodeHighlighter alloc] initWithTextView:self.editor language:self.sourceCodeFile.fileExtension];
     self.completionController = [[CodeCompletionController alloc] initWithTextView:self.editor file:self.sourceCodeFile projectFiles:self.completionFiles ?: @[]];
     __weak typeof(self) weakSelf = self;
+    self.toolsController = [[CodeEditorTools alloc] initWithTextView:self.editor language:self.sourceCodeFile.fileExtension];
+    self.toolsController.didChange = ^{ [weakSelf textViewDidChange:weakSelf.editor]; };
     self.completionController.didComplete = ^{ [weakSelf textViewDidChange:weakSelf.editor]; };
     
     [self highlightCode];
@@ -86,79 +89,18 @@
     self.bugToHighlight = nil;
     self.suggestionSource = nil;
     
-    NSArray *codeLines = [self.editor.text componentsSeparatedByString:@"\n"];
-    
-    NSInteger codeLevel[codeLines.count];
-    
-    int currentCodeLevel = 0;
-    int currentLine = 0;
-    
-    for(NSString *lineOfCode in codeLines) {
-        NSRange range = [lineOfCode rangeOfString:@"^\\s*" options:NSRegularExpressionSearch];
-        NSString *result = [lineOfCode stringByReplacingCharactersInRange:range withString:@""];
-        
-        range = [result rangeOfString:@"\\s*$" options:NSRegularExpressionSearch];
-        result = [result stringByReplacingCharactersInRange:range withString:@""];
-        
-        if(result.length>0) {
-            NSString *firstChar = [result substringToIndex:1];
-            NSString *lastChar = [result substringFromIndex:result.length-1];
-            
-            
-            if([firstChar isEqualToString:@"}"] && [lastChar isEqualToString:@"{"]) {
-                codeLevel[currentLine] = currentCodeLevel-1;
-            } else if([firstChar isEqualToString:@"{"] || [lastChar isEqualToString:@"{"]) {
-                codeLevel[currentLine] = currentCodeLevel;
-                currentCodeLevel++;
-            } else if([firstChar isEqualToString:@"}"]) {
-                currentCodeLevel--;
-                codeLevel[currentLine] = currentCodeLevel;
-            } else {
-                codeLevel[currentLine] = currentCodeLevel;
-            }
-        } else {
-            codeLevel[currentLine] = currentCodeLevel;
-        }
-        
-        currentLine++;
-    }
-    
-    currentLine = 0;
-    
-    NSMutableArray *resultCodeLines = [[NSMutableArray alloc] init];
-    
-    for(NSString *lineOfCode in codeLines) {
-        NSRange range = [lineOfCode rangeOfString:@"^\\s*" options:NSRegularExpressionSearch];
-        NSString *result = [lineOfCode stringByReplacingCharactersInRange:range withString:@""];
-        
-        NSString *whitespaces = @"";
-        
-        for(int i=0; i < codeLevel[currentLine]; i++) {
-            whitespaces = [NSString stringWithFormat:@"%@   ",whitespaces];
-        }
-        
-        result = [NSString stringWithFormat:@"%@%@",whitespaces,result];
-        [resultCodeLines addObject:result];
-        
-        currentLine++;
-    }
-    
-    NSString *autoFormattedCode = [resultCodeLines componentsJoinedByString:@"\n"];
-    
-    CGPoint contentOffset = self.editor.contentOffset;
-    self.editor.scrollEnabled=NO;
-    NSRange currentCurserPosition = self.editor.selectedRange;
-    
-    self.editor.text=autoFormattedCode;
-    
-    self.editor.selectedRange = currentCurserPosition;
-    self.editor.scrollEnabled=YES;
-    [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
-        [self.editor setContentOffset: contentOffset animated:NO];
-    }];
-    
+    [self.toolsController format];
     [self highlightCode];
     [self saveCode];
+}
+
+- (void)findCode { [self.toolsController findFrom:self]; }
+- (void)undoCode { [self.editor.undoManager undo]; [self textViewDidChange:self.editor]; }
+- (void)redoCode { [self.editor.undoManager redo]; [self textViewDidChange:self.editor]; }
+- (void)changeFontSize:(CGFloat)delta { [self.toolsController changeFontSize:delta]; [self highlightCode]; }
+
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    return ![self.toolsController handleChangeIn:range replacement:text];
 }
 
 -(void)highlightCode {
@@ -333,7 +275,9 @@
         range.location == NSNotFound || range.location > currentText.length || range.length > currentText.length - range.location) return;
     self.bugToHighlight = nil;
     self.suggestionSource = nil;
-    self.editor.text = [currentText stringByReplacingCharactersInRange:range withString:string];
+    self.editor.selectedRange = range;
+    [self.editor insertText:string];
+    [self textViewDidChange:self.editor];
     [self highlightCode];
     [self saveCode];
 }
@@ -417,6 +361,8 @@
 
 -(void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    self.editor.font = [UIFont fontWithName:@"SourceCodePro-Regular" size:CodeEditorTools.fontSize];
+    [self highlightCode];
     [self.navigationController setToolbarHidden:self.editor.isFirstResponder animated:YES];
 }
 

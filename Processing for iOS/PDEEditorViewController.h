@@ -25,6 +25,10 @@
 -(instancetype)initWithSourceCodeFile:(SourceCodeFile*)sourceCodeFile;
 -(BOOL)saveCode;
 -(void)formatCode;
+-(void)findCode;
+-(void)undoCode;
+-(void)redoCode;
+-(void)changeFontSize:(CGFloat)delta;
 - (void)highlightCompilerErrorOfCode: (DetectedBug*)detectedBug;
 
 @property(nonatomic,strong) SourceCodeFile* sourceCodeFile;

@@ -120,6 +120,8 @@ Use **Import → Import sample projects…** to choose which bundled examples to
 
 ## Sketch diagnostics
 
+The editor's **Tools** menu includes Find and Replace, Undo/Redo, Format Code, and Text Size (saved across launches). The keyboard accessory provides indentation, common code symbols, Undo/Redo, and completion suggestions. Return preserves indentation and splits a pair of braces onto separate lines. Formatting changes code indentation without rewriting multiline strings/comments, and remains undoable. On iOS 16 and later, search uses the native find/replace navigator; iOS 15 provides Find Next and Replace All.
+
 The **Console** button in a running sketch displays Processing `print()`/`println()` and p5.js `print()`/JavaScript `console.log()`, `info()`, `warn()`, and `error()`. Return to **Tools → Console** in the editor to read the last run's output and errors. The resizable sheet supports selection, Copy, and Clear. Output is bounded; heavy logging drops earlier messages so it cannot consume unlimited memory.
 
 Sketches run from a saved source snapshot, with the project-named file first and other files sorted by name. Failed reads and saves stop execution instead of silently using incomplete or outdated code.

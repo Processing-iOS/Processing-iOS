@@ -22,6 +22,60 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test func typingANewlineBetweenBracesIndentsAndKeepsTheClosingBrace() throws {
+        let code = "function setup() {}"
+        let fixture = try SketchFixture(language: "js", main: code)
+        defer { fixture.remove() }
+        let editor = PDEEditorViewController(sourceCodeFile: try #require(fixture.project.sourceCodeFiles.first))!
+        let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = try #require(scene.windows.first { $0.isKeyWindow })
+        let previousRoot = window.rootViewController
+        window.rootViewController = editor
+        defer { editor.editor.resignFirstResponder(); window.rootViewController = previousRoot }
+        editor.loadViewIfNeeded()
+        editor.editor.becomeFirstResponder()
+        editor.editor.selectedRange = (code as NSString).range(of: "}")
+        editor.editor.selectedRange.length = 0
+        // Simulate UIKit's delegate callback before committing keyboard text.
+        // Programmatic insertText alone deliberately bypasses shouldChangeText.
+        func type(_ text: String) {
+            let input = editor.editor!
+            if input.delegate?.textView?(input, shouldChangeTextIn: input.selectedRange, replacementText: text) != false {
+                input.insertText(text)
+                input.delegate?.textViewDidChange?(input)
+            }
+        }
+        type("\n")
+        #expect(editor.editor.text == "function setup() {\n   \n}")
+        type("\n")
+        #expect(editor.editor.text == "function setup() {\n   \n   \n}")
+        type("background(0);")
+        #expect(editor.editor.text == "function setup() {\n   \n   background(0);\n}")
+        #expect(editor.saveCode())
+        #expect(try String(contentsOfFile: editor.sourceCodeFile.filePath) == editor.editor.text)
+    }
+
+    @Test func formattingPreservesLiteralContentsAndSupportsUndo() throws {
+        let code = "function setup() {\nconst message = `first\n     untouched { line\nlast`;\nif (true) {\nbackground(0);\n}\n}"
+        let fixture = try SketchFixture(language: "js", main: code)
+        defer { fixture.remove() }
+        let editor = PDEEditorViewController(sourceCodeFile: try #require(fixture.project.sourceCodeFiles.first))!
+        let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = try #require(scene.windows.first { $0.isKeyWindow })
+        let previousRoot = window.rootViewController
+        window.rootViewController = editor
+        defer { editor.editor.resignFirstResponder(); window.rootViewController = previousRoot }
+        editor.loadViewIfNeeded()
+        editor.editor.becomeFirstResponder()
+        editor.formatCode()
+        #expect(editor.editor.text.contains("`first\n     untouched { line\nlast`"))
+        #expect(editor.editor.text.contains("\n      background(0);"))
+        let undo = try #require(editor.editor.undoManager)
+        #expect(undo.canUndo)
+        undo.undo()
+        #expect(editor.editor.text == code)
+    }
+
     @Test func printedOutputReachesTheConsoleInBothLanguages() async throws {
         for language in ["pde", "js"] {
             let code = language == "pde"

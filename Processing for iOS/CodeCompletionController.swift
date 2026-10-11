@@ -29,6 +29,15 @@ import UIKit
             self?.textView?.resignFirstResponder()
         }
         strip.onSelect = { [weak self] index in self?.accept(at: index) }
+        strip.onInsert = { [weak self] text in
+            guard let textView = self?.textView else { return }
+            if textView.delegate?.textView?(textView, shouldChangeTextIn: textView.selectedRange, replacementText: text) != false {
+                textView.insertText(text)
+            }
+            self?.didComplete?()
+        }
+        strip.onUndo = { [weak self] in self?.textView?.undoManager?.undo(); self?.didComplete?() }
+        strip.onRedo = { [weak self] in self?.textView?.undoManager?.redo(); self?.didComplete?() }
     }
 
     @objc func scheduleUpdate() {
@@ -96,13 +105,16 @@ import UIKit
 private final class CompletionStrip: UIInputView {
     var onSelect: ((Int) -> Void)?
     var onDismiss: (() -> Void)?
+    var onInsert: ((String) -> Void)?
+    var onUndo: (() -> Void)?
+    var onRedo: (() -> Void)?
     private let scroll = UIScrollView()
     private let stack = UIStackView()
     private let hint = UILabel()
     private let dismissButton = UIButton(type: .system)
 
     init() {
-        super.init(frame: CGRect(x: 0, y: 0, width: 320, height: 60), inputViewStyle: .keyboard)
+        super.init(frame: CGRect(x: 0, y: 0, width: 320, height: 104), inputViewStyle: .keyboard)
         autoresizingMask = [.flexibleWidth]
         allowsSelfSizing = true
         backgroundColor = .secondarySystemBackground
@@ -121,24 +133,55 @@ private final class CompletionStrip: UIInputView {
         [scroll, hint, dismissButton].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; addSubview($0) }
         stack.translatesAutoresizingMaskIntoConstraints = false
         scroll.addSubview(stack)
+        let symbols = UIScrollView()
+        symbols.showsHorizontalScrollIndicator = false
+        let symbolStack = UIStackView()
+        symbolStack.axis = .horizontal
+        symbolStack.spacing = 2
+        for (title, insertion) in [("↶", "undo"), ("↷", "redo"), ("Tab", "   "), ("{", "{"), ("}", "}"), ("(", "("), (")", ")"), ("[", "["), ("]", "]"), (";", ";"), ("\"", "\"")] {
+            let button = UIButton(type: .system)
+            button.setTitle(title, for: .normal)
+            button.titleLabel?.font = .monospacedSystemFont(ofSize: 18, weight: .medium)
+            button.accessibilityLabel = insertion == "undo" ? "Undo" : insertion == "redo" ? "Redo" : title == "Tab" ? "Insert indentation" : "Insert \(title)"
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: 42).isActive = true
+            button.addAction(UIAction { [weak self] _ in
+                if insertion == "undo" { self?.onUndo?() }
+                else if insertion == "redo" { self?.onRedo?() }
+                else { self?.onInsert?(insertion) }
+            }, for: .touchUpInside)
+            symbolStack.addArrangedSubview(button)
+        }
+        symbols.translatesAutoresizingMaskIntoConstraints = false
+        symbolStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(symbols)
+        symbols.addSubview(symbolStack)
         NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 60),
+            heightAnchor.constraint(equalToConstant: 104),
             scroll.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 8),
             scroll.trailingAnchor.constraint(equalTo: dismissButton.leadingAnchor, constant: -4),
             scroll.topAnchor.constraint(equalTo: topAnchor, constant: 4),
-            scroll.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4),
+            scroll.heightAnchor.constraint(equalToConstant: 52),
             dismissButton.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
-            dismissButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            dismissButton.centerYAnchor.constraint(equalTo: scroll.centerYAnchor),
             dismissButton.widthAnchor.constraint(equalToConstant: 44),
             dismissButton.heightAnchor.constraint(equalToConstant: 44),
             hint.leadingAnchor.constraint(equalTo: scroll.leadingAnchor, constant: 8),
             hint.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
-            hint.centerYAnchor.constraint(equalTo: centerYAnchor),
+            hint.centerYAnchor.constraint(equalTo: scroll.centerYAnchor),
             stack.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
             stack.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
             stack.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
-            stack.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor)
+            stack.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
+            symbols.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 4),
+            symbols.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -4),
+            symbols.topAnchor.constraint(equalTo: topAnchor, constant: 60),
+            symbols.bottomAnchor.constraint(equalTo: bottomAnchor),
+            symbolStack.leadingAnchor.constraint(equalTo: symbols.contentLayoutGuide.leadingAnchor),
+            symbolStack.trailingAnchor.constraint(equalTo: symbols.contentLayoutGuide.trailingAnchor),
+            symbolStack.topAnchor.constraint(equalTo: symbols.contentLayoutGuide.topAnchor),
+            symbolStack.bottomAnchor.constraint(equalTo: symbols.contentLayoutGuide.bottomAnchor),
+            symbolStack.heightAnchor.constraint(equalTo: symbols.frameLayoutGuide.heightAnchor)
         ])
     }
 
