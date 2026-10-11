@@ -22,6 +22,28 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test func offlineReferenceExamplesRunInTheirDocumentedLanguage() async throws {
+        for language in ["pde", "js"] {
+            #expect(OfflineReference.search(" GRAVITYupdated ", language: language).map(\.id) == ["sensors"])
+            #expect(OfflineReference.search("zzzz_no_such_api", language: language).isEmpty)
+            let examples = OfflineReference.topics(language: language).filter {
+                !$0.example.isEmpty && !["camera", "sensors", "images", "export"].contains($0.id)
+            }
+            for topic in examples {
+                let fixture = try SketchFixture(language: language, main: topic.example)
+                defer { fixture.remove() }
+                let probe = RuntimeProbe()
+                defer { probe.close() }
+                let program = try fixture.project.prepareRuntime()
+                try #require(program.preflightBug == nil, "\(language): \(topic.title)")
+                try probe.load(program, in: fixture.project.folder)
+                _ = try await probe.message(named: "iosbridge", event: "ready")
+                #expect(probe.errors.isEmpty, "\(language): \(topic.title)")
+                #expect(try await probe.webView.evaluateJavaScript("document.querySelector('canvas').width > 0") as? Bool == true)
+            }
+        }
+    }
+
     @Test func linkedFoldersRetainAccessAndRunFromDisposableSnapshots() async throws {
         let defaults = UserDefaults.standard, key = "linkedProjectFolders"
         let previous = defaults.data(forKey: key)

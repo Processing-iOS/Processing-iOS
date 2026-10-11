@@ -250,8 +250,9 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     }
     
     @objc func showCodeReference() {
-        let safariVC = SFSafariViewController(url: URL(string: "https://processing.org/reference/")!)
-        present(safariVC, animated: true, completion: nil)
+        view.endEditing(true)
+        let reference = OfflineReferenceViewController(language: project.sourceCodeExtension)
+        present(UINavigationController(rootViewController: reference), animated: true)
     }
     
     @objc func share(sender: UIBarButtonItem) {

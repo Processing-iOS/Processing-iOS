@@ -87,6 +87,7 @@
 		867A881C307B8B45009C23A0 /* ProjectSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881B307B8B45009C23A0 /* ProjectSharing.swift */; };
 		867A881E307B8B70009C23A0 /* LinkedProjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881D307B8B70009C23A0 /* LinkedProjects.swift */; };
 		867A8820307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */; };
+		867A8822307B8E5A009C23A0 /* OfflineReference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8821307B8E5A009C23A0 /* OfflineReference.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -212,6 +213,7 @@
 		867A881B307B8B45009C23A0 /* ProjectSharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSharing.swift; sourceTree = "<group>"; };
 		867A881D307B8B70009C23A0 /* LinkedProjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedProjects.swift; sourceTree = "<group>"; };
 		867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRuntimeSnapshot.swift; sourceTree = "<group>"; };
+		867A8821307B8E5A009C23A0 /* OfflineReference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineReference.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -412,6 +414,7 @@
 				867A881B307B8B45009C23A0 /* ProjectSharing.swift */,
 				867A881D307B8B70009C23A0 /* LinkedProjects.swift */,
 				867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */,
+				867A8821307B8E5A009C23A0 /* OfflineReference.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -689,6 +692,7 @@
 				867A8818307B8778009C23A0 /* CodeEditorTools.swift in Sources */,
 				51CC558F251E3769003ACFF5 /* ExternalScreenViewController.swift in Sources */,
 				510F51A220AB618E0082B979 /* ProjectSelectionTableViewController.swift in Sources */,
+				867A8822307B8E5A009C23A0 /* OfflineReference.swift in Sources */,
 				867A881A307B8948009C23A0 /* FileOperationProgress.swift in Sources */,
 				5192E55620A8AFFB00354BC8 /* ProcessingNavigationViewController.swift in Sources */,
 				51CEE4491B3E9A240031D1BE /* main.m in Sources */,

@@ -42,6 +42,8 @@ The share button exports the whole project as a ZIP or a folder through Files, i
 
 ## Code completion
 
+**Reference** opens a bundled, searchable guide for the current project's language, with 18 topics and copyable examples for drawing, transforms, touch, pixels, camera, sensors, and image export. Reading and searching work offline. The optional Online button opens Processing's reference or the p5.js v1 reference; newer online APIs may differ from the bundled runtimes.
+
 Start typing a name in the editor to see completions above the keyboard after two characters. Tap a suggestion, or press **Tab** on a hardware keyboard to accept the first one. **Control-Space** requests completions for a shorter prefix; **Escape** dismisses the suggestions. Swipe the strip to see more matches. The keyboard button ends editing and restores the editor toolbar.
 
 Syntax coloring scans comments and literals together so URLs, escaped quotes, and separate block comments cannot recolor neighboring code. Typing schedules coloring off the main thread and applies only attributes to the current text snapshot, preserving the caret, scrolling, marked text, and native undo history.
