@@ -974,7 +974,7 @@ struct SketchRuntimeTests {
         #expect(try String(contentsOfFile: file.filePath) == "const edited = 2; // 🐻‍❄️")
     }
 
-    @Test func restoringHistoryPreservesBothVersionsAcrossReopening() throws {
+    @Test func autosaveKeepsRecoveryCheckpointAcrossReopening() throws {
         let fixture = try SketchFixture(language: "js", main: "const original = 1;")
         defer { fixture.remove() }
         let file = try #require(fixture.project.sourceCodeFiles.first)
@@ -982,12 +982,7 @@ struct SketchRuntimeTests {
         let reopened = SourceCodeFile(filePath: file.filePath)
         let original = try #require(reopened.history().first)
         #expect(original.content == "const original = 1;")
-        try reopened.restore(original)
-        #expect(try String(contentsOfFile: file.filePath) == "const original = 1;")
-        #expect(try SourceCodeFile(filePath: file.filePath).history().contains { $0.content == "const revised = 2;" })
-        // An old model with no edits must also leave restored files untouched.
-        #expect(file.save())
-        #expect(try String(contentsOfFile: file.filePath) == "const original = 1;")
+        #expect(reopened.content == "const revised = 2;")
     }
 
     @Test func editorCompletionSupportsTypingUndoAndSaving() async throws {

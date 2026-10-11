@@ -49,7 +49,7 @@ final class ProjectSharing: NSObject, UIDocumentPickerDelegate {
 
     func present(from sender: UIBarButtonItem) {
         guard let presenter else { return }
-        let choices = UIAlertController(title: "Export \(name)", message: "Includes all source files, assets, and project libraries. Recovery history is excluded from exports.", preferredStyle: .actionSheet)
+        let choices = UIAlertController(title: "Export \(name)", message: "Includes all source files, assets, and project libraries.", preferredStyle: .actionSheet)
         choices.addAction(UIAlertAction(title: "Share Project ZIP", style: .default) { [weak self] _ in self?.prepare(zip: true, sender: sender) })
         choices.addAction(UIAlertAction(title: "Save Project Folder to Files", style: .default) { [weak self] _ in self?.prepare(zip: false, sender: sender) })
         choices.addAction(UIAlertAction(title: "Cancel", style: .cancel))

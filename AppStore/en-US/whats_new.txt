@@ -7,7 +7,7 @@ A better place to create
 
 More comfortable coding
 • Write with improved syntax highlighting, code completion, find and replace, undo and redo, and adjustable text size.
-• Keep your work protected with autosave, code history, and help resolving conflicting edits.
+• Keep your work protected with autosave and help resolving conflicting edits.
 • Find problems faster with clearer error messages and a console for printed output.
 • Run your sketches repeatedly with improved reliability.
 

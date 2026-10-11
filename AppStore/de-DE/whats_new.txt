@@ -7,7 +7,7 @@ Mehr Möglichkeiten für deine Ideen
 
 Angenehmer programmieren
 • Verbesserte Syntaxhervorhebung, Codevervollständigung, Suchen und Ersetzen, Rückgängig und Wiederholen sowie eine einstellbare Textgröße.
-• Automatisches Speichern, ein Codeverlauf und Hilfe beim Auflösen von Bearbeitungskonflikten schützen deine Arbeit.
+• Automatisches Speichern und Hilfe beim Auflösen von Bearbeitungskonflikten schützen deine Arbeit.
 • Klarere Fehlermeldungen und eine Konsole für Textausgaben helfen dir bei der Fehlersuche.
 • Sketche lassen sich zuverlässiger wiederholt ausführen.
 

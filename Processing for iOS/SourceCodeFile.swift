@@ -75,7 +75,7 @@ struct SourceRevision: Codable {
         let previous = latestCheckpoint
         guard previous?.content != text else { return }
         // Keep the beginning of each editing interval, rather than filling the
-        // history with every keystroke. Explicit restores always preserve a copy.
+        // recovery folder with every keystroke. Conflict resolution always keeps a copy.
         if !force, let previous, Date().timeIntervalSince(previous.date) < 30 { return }
         try FileManager.default.createDirectory(at: historyFolder, withIntermediateDirectories: true)
         let revision = SourceRevision(date: Date(), content: text)
@@ -87,12 +87,6 @@ struct SourceRevision: Codable {
         for old in files.dropFirst(100) { try? FileManager.default.removeItem(at: old) }
     }
 
-    func restore(_ revision: SourceRevision) throws {
-        guard save() else { throw saveError! }
-        if let content { try checkpoint(content, force: true) }
-        guard save(newContent: revision.content) else { throw saveError! }
-    }
-    
     @objc var fileName: String {
         return URL(fileURLWithPath: filePath).lastPathComponent
     }

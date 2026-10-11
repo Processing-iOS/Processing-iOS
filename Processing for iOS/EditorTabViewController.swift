@@ -23,6 +23,8 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     private var pendingReviewAfterSuccessfulRun = false
     private static let firstSuccessfulRunReviewKey = "requestedReviewAfterFirstSuccessfulRun"
     private let saveStatusLabel = UILabel()
+    private lazy var undoButton = UIBarButtonItem(barButtonSystemItem: .undo, target: self, action: #selector(undoCode))
+    private lazy var redoButton = UIBarButtonItem(barButtonSystemItem: .redo, target: self, action: #selector(redoCode))
     
     init(withProject project: SimpleTextProject) {
         self.project = project
@@ -94,12 +96,6 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
             },
             UIAction(title: "Format Code", image: UIImage(systemName: "text.alignleft")) { [weak self] _ in self?.formatCode() },
             UIAction(title: "Find and Replace", image: UIImage(systemName: "magnifyingglass")) { [weak self] _ in self?.findCode() },
-            UIAction(title: "Undo", image: UIImage(systemName: "arrow.uturn.backward")) { [weak self] _ in
-                (self?.currentViewController as? PDEEditorViewController)?.undoCode()
-            },
-            UIAction(title: "Redo", image: UIImage(systemName: "arrow.uturn.forward")) { [weak self] _ in
-                (self?.currentViewController as? PDEEditorViewController)?.redoCode()
-            },
             UIMenu(title: "Text Size", image: UIImage(systemName: "textformat.size"), children: [
                 UIAction(title: "Larger") { [weak self] _ in (self?.currentViewController as? PDEEditorViewController)?.changeFontSize(2) },
                 UIAction(title: "Smaller") { [weak self] _ in (self?.currentViewController as? PDEEditorViewController)?.changeFontSize(-2) }
@@ -112,11 +108,12 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         ]))
         
         let codeReferenceButton = UIBarButtonItem(
-            title: NSLocalizedString("Reference", comment: ""),
+            image: UIImage(systemName: "book"),
             style: .plain,
             target: self,
             action: #selector(EditorTabViewController.showCodeReference)
         )
+        codeReferenceButton.accessibilityLabel = NSLocalizedString("Reference", comment: "")
         
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let organize = UIBarButtonItem(
@@ -125,8 +122,14 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
             action: #selector(EditorTabViewController.showFolderContent)
         )
         
-        let history = UIBarButtonItem(title: "History", style: .plain, target: self, action: #selector(showHistory))
-        self.toolbarItems = [formatButton, flexibleSpace, organize, flexibleSpace, history, flexibleSpace, codeReferenceButton]
+        undoButton.accessibilityLabel = "Undo"
+        redoButton.accessibilityLabel = "Redo"
+        self.toolbarItems = [formatButton, flexibleSpace, organize, undoButton, redoButton, flexibleSpace, codeReferenceButton]
+        updateUndoRedo()
+        for name in [Notification.Name.NSUndoManagerDidCloseUndoGroup, .NSUndoManagerDidUndoChange,
+                     .NSUndoManagerDidRedoChange, UITextView.textDidChangeNotification] {
+            NotificationCenter.default.addObserver(self, selector: #selector(updateUndoRedo), name: name, object: nil)
+        }
         NotificationCenter.default.addObserver(self, selector: #selector(updateSaveStatus), name: SourceCodeFile.didChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(projectFilesChanged(_:)), name: ProjectFiles.didChange, object: nil)
         
@@ -165,6 +168,36 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     
     func defaultPage(for pageboyViewController: PageboyViewController) -> PageboyViewController.Page? {
         return .first
+    }
+
+    override func pageboyViewController(_ pageboyViewController: PageboyViewController,
+                                       didScrollToPageAt index: PageIndex,
+                                       direction: NavigationDirection, animated: Bool) {
+        super.pageboyViewController(pageboyViewController, didScrollToPageAt: index, direction: direction, animated: animated)
+        updateUndoRedo()
+    }
+
+    override func pageboyViewController(_ pageboyViewController: PageboyViewController,
+                                       didReloadWith currentViewController: UIViewController,
+                                       currentPageIndex: PageIndex) {
+        super.pageboyViewController(pageboyViewController, didReloadWith: currentViewController, currentPageIndex: currentPageIndex)
+        updateUndoRedo()
+    }
+
+    @objc private func updateUndoRedo() {
+        let manager = (currentViewController as? PDEEditorViewController)?.editor?.undoManager
+        undoButton.isEnabled = manager?.canUndo == true
+        redoButton.isEnabled = manager?.canRedo == true
+    }
+
+    @objc private func undoCode() {
+        (currentViewController as? PDEEditorViewController)?.undoCode()
+        updateUndoRedo()
+    }
+
+    @objc private func redoCode() {
+        (currentViewController as? PDEEditorViewController)?.redoCode()
+        updateUndoRedo()
     }
     
     override var keyCommands: [UIKeyCommand]? {
@@ -237,23 +270,13 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     @objc private func updateSaveStatus() {
         if editorFiles.contains(where: { $0.saveError != nil || $0.readError != nil }) {
             saveStatusLabel.text = "Not saved"
-            saveStatusLabel.accessibilityHint = "Your edits are still open. Tap History to retry saving and see the error."
+            saveStatusLabel.accessibilityHint = "Your edits are still open. Run or close the project to retry saving and see the error."
         } else {
             saveStatusLabel.text = editorFiles.contains(where: { $0.hasUnsavedChanges }) ? "Saving…" : "Saved"
             saveStatusLabel.accessibilityHint = nil
         }
     }
 
-    @objc private func showHistory() {
-        guard saveCode(), let editor = currentViewController as? PDEEditorViewController else { return }
-        let history = SourceHistoryViewController(file: editor.sourceCodeFile) { [weak editor] in
-            guard let editor else { return }
-            editor.editor.text = editor.sourceCodeFile.content
-            editor.textViewDidChange(editor.editor)
-        }
-        present(UINavigationController(rootViewController: history), animated: true)
-    }
-    
     @objc func showCodeReference() {
         view.endEditing(true)
         let reference = OfflineReferenceViewController(language: project.sourceCodeExtension)
@@ -503,6 +526,7 @@ extension EditorTabViewController: RunSketchViewControllerDelegate {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        updateUndoRedo()
         didReturnFromSketch()
         requestPendingReviewIfPossible()
         guard let bug = pendingBug else { return }

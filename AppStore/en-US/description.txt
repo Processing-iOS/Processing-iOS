@@ -6,7 +6,7 @@ WRITE AND EXPLORE
 Create Processing (.pde) or p5.js (.js) projects with multiple source files. Syntax highlighting, offline code completion, indentation, undo and redo, find and replace, and adjustable text size make editing easier on a touch screen or hardware keyboard.
 
 KEEP YOUR WORK
-Autosave protects your edits, and code history lets you preview and restore earlier versions. Import whole project folders, selected source files, or individual bundled examples. Rename and duplicate projects and files without replacing existing work.
+Autosave protects your edits, and native undo and redo let you reverse changes as you work. Import whole project folders, selected source files, or individual bundled examples. Rename and duplicate projects and files without replacing existing work.
 
 USE FILES
 Work on local copies or link a project folder from a supported location in Files, including iCloud Drive. Conflicting edits from another app are kept for you to resolve. Share a complete project as a ZIP or save its folder through Files.

@@ -36,8 +36,6 @@ import UIKit
             }
             self?.didComplete?()
         }
-        strip.onUndo = { [weak self] in self?.textView?.undoManager?.undo(); self?.didComplete?() }
-        strip.onRedo = { [weak self] in self?.textView?.undoManager?.redo(); self?.didComplete?() }
     }
 
     @objc func scheduleUpdate() {
@@ -106,8 +104,6 @@ private final class CompletionStrip: UIInputView {
     var onSelect: ((Int) -> Void)?
     var onDismiss: (() -> Void)?
     var onInsert: ((String) -> Void)?
-    var onUndo: (() -> Void)?
-    var onRedo: (() -> Void)?
     private let scroll = UIScrollView()
     private let stack = UIStackView()
     private let hint = UILabel()
@@ -138,16 +134,14 @@ private final class CompletionStrip: UIInputView {
         let symbolStack = UIStackView()
         symbolStack.axis = .horizontal
         symbolStack.spacing = 2
-        for (title, insertion) in [("↶", "undo"), ("↷", "redo"), ("Tab", "   "), ("{", "{"), ("}", "}"), ("(", "("), (")", ")"), ("[", "["), ("]", "]"), (";", ";"), ("\"", "\"")] {
+        for (title, insertion) in [("Tab", "   "), ("{", "{"), ("}", "}"), ("(", "("), (")", ")"), ("[", "["), ("]", "]"), (";", ";"), ("\"", "\"")] {
             let button = UIButton(type: .system)
             button.setTitle(title, for: .normal)
             button.titleLabel?.font = .monospacedSystemFont(ofSize: 18, weight: .medium)
-            button.accessibilityLabel = insertion == "undo" ? "Undo" : insertion == "redo" ? "Redo" : title == "Tab" ? "Insert indentation" : "Insert \(title)"
+            button.accessibilityLabel = title == "Tab" ? "Insert indentation" : "Insert \(title)"
             button.widthAnchor.constraint(greaterThanOrEqualToConstant: 42).isActive = true
             button.addAction(UIAction { [weak self] _ in
-                if insertion == "undo" { self?.onUndo?() }
-                else if insertion == "redo" { self?.onRedo?() }
-                else { self?.onInsert?(insertion) }
+                self?.onInsert?(insertion)
             }, for: .touchUpInside)
             symbolStack.addArrangedSubview(button)
         }
