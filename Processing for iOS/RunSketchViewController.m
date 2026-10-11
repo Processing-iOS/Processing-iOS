@@ -24,6 +24,8 @@
 @interface RunSketchViewController () <WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate>
 @property(nonatomic,strong) NSURL *runtimeHTMLURL;
 @property(nonatomic,strong) SketchProgram *program;
+@property(nonatomic,strong) LinkedRuntimeSnapshot *linkedSnapshot;
+@property(nonatomic,assign) BOOL runtimeStopped;
 @property(nonatomic,strong) DetectedBug *pendingBug;
 @property(nonatomic,strong) NSTimer *watchdog;
 @property(nonatomic,assign) NSTimeInterval lastRuntimeActivity;
@@ -64,8 +66,35 @@
 - (void)startSketch {
     self.started = YES;
     self.view.backgroundColor = UIColor.blackColor;
+    if (self.project.isLinked) {
+        UIActivityIndicatorView *loading = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+        loading.center = self.view.center;
+        loading.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
+        loading.accessibilityLabel = @"Preparing files from linked folder";
+        [self.view addSubview:loading];
+        [loading startAnimating];
+        SimpleTextProject *project = self.project;
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            NSError *error = nil;
+            LinkedRuntimeSnapshot *snapshot = [LinkedRuntimeSnapshot prepare:project error:&error];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [loading removeFromSuperview];
+                typeof(self) self = weakSelf;
+                if (!self || self.runtimeStopped) return;
+                if (!snapshot) { [self reportError:error.localizedDescription]; return; }
+                self.linkedSnapshot = snapshot;
+                [self loadSketch:snapshot.project];
+            });
+        });
+    } else {
+        [self loadSketch:self.project];
+    }
+}
+
+- (void)loadSketch:(SimpleTextProject *)runtimeProject {
     NSError *error = nil;
-    self.program = [self.project prepareRuntimeAndReturnError:&error];
+    self.program = [runtimeProject prepareRuntimeAndReturnError:&error];
     if (!self.program) {
         [self reportError:error.localizedDescription ?: @"Cannot read this project."];
         return;
@@ -93,7 +122,7 @@
     self.sketchWebView.scrollView.bounces = NO;
     [self.view addSubview:self.sketchWebView];
 
-    NSURL *projectURL = self.project.folder;
+    NSURL *projectURL = runtimeProject.folder;
     NSURL *dataURL = [projectURL URLByAppendingPathComponent:@"data" isDirectory:YES];
     NSFileManager *files = NSFileManager.defaultManager;
     if (![files createDirectoryAtURL:dataURL withIntermediateDirectories:YES attributes:nil error:&error]) {
@@ -185,11 +214,11 @@
         return;
     }
     ++self.pendingImageExports;
-    NSURL *folder = self.project.folder;
+    SimpleTextProject *project = self.project;
     __weak typeof(self) weakSelf = self;
     dispatch_async(self.imageExportQueue, ^{
         NSError *error = nil;
-        NSString *savedPath = [SketchImageExport save:payload in:folder error:&error];
+        NSString *savedPath = [SketchImageExport save:payload in:project.folder error:&error];
         dispatch_async(dispatch_get_main_queue(), ^{
             typeof(self) self = weakSelf;
             if (!self) return;
@@ -424,6 +453,7 @@
 }
 
 - (void)stopRuntime {
+    self.runtimeStopped = YES;
     self.runtimeReady = NO;
     [self.watchdog invalidate];
     self.watchdog = nil;
@@ -447,6 +477,7 @@
         [NSFileManager.defaultManager removeItemAtURL:self.runtimeHTMLURL error:nil];
         self.runtimeHTMLURL = nil;
     }
+    self.linkedSnapshot = nil;
 }
 
 - (void)dealloc {

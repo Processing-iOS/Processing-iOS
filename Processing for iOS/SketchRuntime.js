@@ -608,6 +608,19 @@ window.SketchRuntime = (function () {
     async function start(program) {
         try {
             sketchLanguage = program.language;
+            // WebKit successfully reads file URLs with status 0. p5's data
+            // loaders require Response.ok, so normalize only successful local
+            // fetches; missing files still reject and HTTP errors stay intact.
+            var nativeFetch = window.fetch;
+            window.fetch = function (input, options) {
+                var url = new URL(typeof input === "string" || input instanceof URL ? input : input.url, document.baseURI);
+                return nativeFetch.call(window, input, options).then(function (response) {
+                    if (url.protocol === "file:" && response.status === 0) {
+                        return new Response(response.body, { status: 200, headers: response.headers });
+                    }
+                    return response;
+                });
+            };
             for (var library of program.libraries) {
                 await script(library.code, library.name);
                 if (failed || stopped) return;

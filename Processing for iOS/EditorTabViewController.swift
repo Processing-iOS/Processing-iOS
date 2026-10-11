@@ -19,6 +19,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     private var pendingBug: DetectedBug?
     private var runningSketch: RunSketchViewController?
     private var lastConsole = SketchConsole()
+    private var projectSharing: ProjectSharing?
     private var pendingReviewAfterSuccessfulRun = false
     private static let firstSuccessfulRunReviewKey = "requestedReviewAfterFirstSuccessfulRun"
     private let saveStatusLabel = UILabel()
@@ -46,6 +47,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
             self, selector: #selector(requestPendingReviewIfPossible),
             name: UIScene.didActivateNotification, object: nil
         )
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshProjectFromFiles), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         self.title = self.project.name
         let projectTitle = UILabel()
@@ -228,7 +230,7 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     }
 
     @objc private func updateSaveStatus() {
-        if editorFiles.contains(where: { $0.saveError != nil }) {
+        if editorFiles.contains(where: { $0.saveError != nil || $0.readError != nil }) {
             saveStatusLabel.text = "Not saved"
             saveStatusLabel.accessibilityHint = "Your edits are still open. Tap History to retry saving and see the error."
         } else {
@@ -254,15 +256,8 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
     
     @objc func share(sender: UIBarButtonItem) {
         guard saveCode() else { return }
-        let sourceCodeURLs = project.sourceCodeFiles.map {
-            URL(fileURLWithPath: $0.filePath)
-        }
-        let activityViewController = UIActivityViewController(
-            activityItems: sourceCodeURLs,
-            applicationActivities: nil
-        )
-        activityViewController.popoverPresentationController?.barButtonItem = sender
-        present(activityViewController, animated: true)
+        projectSharing = ProjectSharing(folder: project.folder, name: project.name, presenter: self)
+        projectSharing?.present(from: sender)
     }
 
     @objc func runSketch() {
@@ -322,7 +317,12 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         for file in editorFiles where file.saveError != nil || file.hasUnsavedChanges {
             file.save()
         }
+        refreshProjectFromFiles()
         if let file = editorFiles.first(where: { $0.saveError != nil || $0.readError != nil }) {
+            if file.hasExternalConflict {
+                presentConflict(for: file)
+                return false
+            }
             let error = file.saveError ?? file.readError
             if viewIfLoaded?.window != nil && presentedViewController == nil {
                 let alert = UIAlertController(title: "Cannot Save Code",
@@ -336,10 +336,52 @@ class EditorTabViewController: TabmanViewController, PageboyViewControllerDataSo
         return currentSaved
     }
 
+    @objc private func refreshProjectFromFiles() {
+        guard navigationController?.topViewController === self else { return }
+        for file in editorFiles { file.refreshFromDisk() }
+        (currentViewController as? PDEEditorViewController)?.refreshExternalChanges()
+        // Reflect files added or renamed through Files without replacing dirty buffers.
+        projectFilesChanged(Notification(name: ProjectFiles.didChange, object: project.folder))
+    }
+
+    private func presentConflict(for file: SourceCodeFile) {
+        guard presentedViewController == nil, viewIfLoaded?.window != nil else { return }
+        let alert = UIAlertController(title: "File Changed Elsewhere", message: file.saveError?.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Keep My Changes", style: .default) { [weak self] _ in
+            do {
+                try file.keepMyChanges()
+                (self?.currentViewController as? PDEEditorViewController)?.refreshExternalChanges()
+            } catch { self?.showConflictError(error) }
+        })
+        alert.addAction(UIAlertAction(title: "Save My Copy and Load Files Version", style: .default) { [weak self] _ in
+            do {
+                let copy = try file.saveConflictCopyAndReload()
+                (self?.currentViewController as? PDEEditorViewController)?.refreshExternalChanges()
+                let saved = UIAlertController(title: "Both Versions Saved", message: "Your editor version is in Conflicts/\(copy.lastPathComponent). The editor now shows the version from Files.", preferredStyle: .alert)
+                saved.addAction(UIAlertAction(title: "OK", style: .default))
+                self?.present(saved, animated: true)
+            } catch { self?.showConflictError(error) }
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
+    }
+
+    private func showConflictError(_ error: Error) {
+        let alert = UIAlertController(title: "Cannot Resolve File", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
     @objc private func projectFilesChanged(_ notification: Notification) {
-        guard let folder = notification.object as? URL, folder.standardizedFileURL == project.folder.standardizedFileURL else { return }
+        guard let folder = notification.object as? URL, folder.standardizedFileURL.path == project.folder.standardizedFileURL.path,
+              let urls = try? project.sourceFileURLs() else { return }
+        var paths = urls.map(\.path)
+        for file in editorFiles where (file.hasUnsavedChanges || file.saveError != nil) && !paths.contains(file.filePath) {
+            paths.append(file.filePath)
+        }
+        guard paths != editorFiles.map(\.filePath) else { return }
         let previous = Dictionary(uniqueKeysWithValues: editorFiles.map { ($0.filePath, $0) })
-        editorFiles = project.sourceCodeFiles.map { previous[$0.filePath] ?? $0 }
+        editorFiles = paths.map { previous[$0] ?? SourceCodeFile(filePath: $0) }
         reloadData()
     }
 

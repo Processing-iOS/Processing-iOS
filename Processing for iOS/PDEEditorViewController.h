@@ -29,6 +29,7 @@
 -(void)undoCode;
 -(void)redoCode;
 -(void)changeFontSize:(CGFloat)delta;
+-(void)refreshExternalChanges;
 - (void)highlightCompilerErrorOfCode: (DetectedBug*)detectedBug;
 
 @property(nonatomic,strong) SourceCodeFile* sourceCodeFile;

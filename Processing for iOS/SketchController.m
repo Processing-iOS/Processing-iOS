@@ -235,6 +235,7 @@
         }
     }
     
+    [projects addObjectsFromArray:[LinkedProjects projects]];
     NSArray* sortedArray = [projects sortedArrayUsingComparator:^NSComparisonResult(SimpleTextProject* project1, SimpleTextProject* project2) {
         return [project1.name.lowercaseString compare: project2.name.lowercaseString];
     }];

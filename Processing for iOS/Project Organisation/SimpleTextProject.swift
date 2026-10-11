@@ -14,6 +14,23 @@ import Foundation
     @objc var sourceCodeExtension: String
     
     @objc private(set) var initializationError: NSError?
+    private var folderOverride: URL?
+    private var accessingFolder = false
+    var linkedIdentifier: String?
+    var preferredMainFileName: String?
+    @objc var isLinked: Bool { linkedIdentifier != nil }
+
+    init(folder: URL, name: String, language: String, linkedIdentifier: String? = nil, accessError: NSError? = nil) {
+        self.name = name
+        sourceCodeExtension = language
+        folderOverride = folder
+        self.linkedIdentifier = linkedIdentifier
+        initializationError = accessError
+        super.init()
+        if linkedIdentifier != nil, accessError == nil { accessingFolder = folder.startAccessingSecurityScopedResource() }
+    }
+
+    deinit { if accessingFolder { folderOverride?.stopAccessingSecurityScopedResource() } }
 
     @objc init(with name: String, sourceCodeExtension: String, importingFiles: [URL] = []) {
         self.name = name
@@ -33,16 +50,19 @@ import Foundation
     }
 
     @objc var folder: URL {
+        if let folderOverride { return folderOverride }
         let docDir = URL(fileURLWithPath: SketchController.documentsDirectory())
         let sketchPath = docDir.appendingPathComponent("sketches/\(self.name)")
         return sketchPath
     }
     
     func sourceFileURLs() throws -> [URL] {
-        let files = try FileManager.default.contentsOfDirectory(
-            at: folder, includingPropertiesForKeys: [.isRegularFileKey]
-        ).filter { try $0.pathExtension.lowercased() == sourceCodeExtension && $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true }
-        let mainName = "\(name).\(sourceCodeExtension)"
+        if let initializationError { throw initializationError }
+        let files = try ProjectFiles.read(folder) { local in
+            try FileManager.default.contentsOfDirectory(at: local, includingPropertiesForKeys: [.isRegularFileKey])
+                .filter { try $0.pathExtension.lowercased() == sourceCodeExtension && $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true }
+        }
+        let mainName = preferredMainFileName ?? "\(name).\(sourceCodeExtension)"
         return files.sorted {
             if $0.lastPathComponent == mainName && $1.lastPathComponent != mainName { return true }
             if $1.lastPathComponent == mainName { return false }
@@ -73,10 +93,12 @@ import Foundation
     func createNewFile(withName name: String, content: String? = nil) throws {
         try ProjectFiles.validateName(name)
         let url = folder.appendingPathComponent("\(name).\(sourceCodeExtension)")
-        guard !FileManager.default.fileExists(atPath: url.path) else {
-            throw ProjectFileError(message: "A file with this name already exists.")
+        try ProjectFiles.write(folder, options: []) { _ in
+            guard !FileManager.default.fileExists(atPath: url.path) else {
+                throw ProjectFileError(message: "A file with this name already exists.")
+            }
+            try (content ?? emptyFile).write(to: url, atomically: true, encoding: .utf8)
         }
-        try (content ?? emptyFile).write(to: url, atomically: true, encoding: .utf8)
     }
 
     

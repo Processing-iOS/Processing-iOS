@@ -15,6 +15,7 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
     var contents: [String]
     let basePath: String
     let currentPath: String
+    private var projectSharing: ProjectSharing?
 
     init(withPath path: String, basePath: String) {
         self.basePath = basePath
@@ -76,15 +77,20 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         let exportToolbarItem = UIBarButtonItem(
             barButtonSystemItem: .action,
             target: self,
-            action: #selector(FolderContentBrowserTableViewController.importFiles)
+            action: #selector(shareFolder(_:))
         )
-        exportToolbarItem.isEnabled = false
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         self.toolbarItems = [importToolbarItem, flexibleSpace, exportToolbarItem, flexibleSpace, editToolbarItem]
     }
 
     @objc func done() {
         self.dismiss(animated: true, completion: nil)
+    }
+
+    @objc private func shareFolder(_ sender: UIBarButtonItem) {
+        let folder = URL(fileURLWithPath: currentPath)
+        projectSharing = ProjectSharing(folder: folder, name: folder.lastPathComponent, presenter: self)
+        projectSharing?.present(from: sender)
     }
 
     @objc func toggleEdit() {
@@ -189,7 +195,9 @@ class FolderContentBrowserTableViewController: UITableViewController, UIDocument
         if editingStyle == .delete {
             let path = "\(currentPath)/\(contents[indexPath.row])"
             do {
-                try FileManager.default.removeItem(atPath: path)
+                try ProjectFiles.write(URL(fileURLWithPath: basePath), options: []) { _ in
+                    try FileManager.default.removeItem(atPath: path)
+                }
                 NotificationCenter.default.post(name: ProjectFiles.didChange, object: URL(fileURLWithPath: basePath))
                 reload()
             } catch { showError(error) }

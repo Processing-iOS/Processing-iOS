@@ -22,6 +22,94 @@ import WebKit
 @Suite(.serialized)
 @MainActor
 struct SketchRuntimeTests {
+    @Test func linkedFoldersRetainAccessAndRunFromDisposableSnapshots() async throws {
+        let defaults = UserDefaults.standard, key = "linkedProjectFolders"
+        let previous = defaults.data(forKey: key)
+        defaults.removeObject(forKey: key)
+        let fixture = try SketchFixture(language: "js", main: """
+        let palette;
+        function preload() { palette = loadJSON('data/palette.json'); }
+        function setup() { createCanvas(30,20); background(palette.red,0,0); noLoop(); saveCanvas('linked','png'); }
+        """)
+        defer { fixture.remove(); defaults.set(previous, forKey: key) }
+        let asset = fixture.project.folder.appendingPathComponent("data/palette.json")
+        try FileManager.default.createDirectory(at: asset.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try "{\"red\":255}".write(to: asset, atomically: true, encoding: .utf8)
+        let linked = try LinkedProjects.open(fixture.project.folder)
+        _ = try LinkedProjects.open(fixture.project.folder)
+        let restored = try #require(LinkedProjects.projects().first)
+        #expect(LinkedProjects.projects().count == 1)
+        #expect(restored.isLinked)
+        #expect(try restored.sourceFileURLs().first?.lastPathComponent == fixture.mainName)
+        let window = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.windows.first { $0.isKeyWindow })
+        let previousRoot = window.rootViewController
+        let navigation = UINavigationController(rootViewController: UIViewController())
+        window.rootViewController = navigation
+        defer { navigation.popViewController(animated: false); window.rootViewController = previousRoot }
+        let runner = try #require(RunSketchViewController(simpleTextProject: restored))
+        navigation.pushViewController(runner, animated: false)
+        let output = restored.folder.appendingPathComponent("exports/linked.png")
+        let deadline = Date().addingTimeInterval(10)
+        while !FileManager.default.fileExists(atPath: output.path), Date() < deadline { try await Task.sleep(nanoseconds: 50_000_000) }
+        #expect(runner.completedSuccessfully, "\(runner.console.text)")
+        #expect(UIImage(contentsOfFile: output.path) != nil)
+        let runtimeURL = try #require(runner.sketchWebView?.url)
+        #expect(!runtimeURL.path.hasPrefix(restored.folder.path + "/"))
+        #expect(try FileManager.default.contentsOfDirectory(atPath: restored.folder.path).allSatisfy { !$0.hasPrefix("__runtime_") })
+        navigation.popViewController(animated: false)
+        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(!FileManager.default.fileExists(atPath: runtimeURL.deletingLastPathComponent().path))
+        try LinkedProjects.remove(linked)
+        #expect(LinkedProjects.projects().isEmpty)
+        #expect(try String(contentsOf: asset) == "{\"red\":255}")
+    }
+
+    @Test func sharingExportsACompleteProjectWithoutRecoveryOrRuntimeFiles() throws {
+        let fixture = try SketchFixture(language: "js", main: "function setup() {}", helper: ["Helper.js": "let value = 42;"])
+        defer { fixture.remove() }
+        let folder = fixture.project.folder
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("libraries"), withIntermediateDirectories: true)
+        try "window.answer=42;".write(to: folder.appendingPathComponent("libraries/test.js"), atomically: true, encoding: .utf8)
+        try "[\"libraries/test.js\"]".write(to: folder.appendingPathComponent(".processing-libraries.json"), atomically: true, encoding: .utf8)
+        let file = try #require(fixture.project.sourceCodeFiles.first)
+        #expect(file.save(newContent: "function setup() { noLoop(); }"))
+        try "temporary".write(to: folder.appendingPathComponent("__runtime_skip.html"), atomically: true, encoding: .utf8)
+        let export = try ProjectExport.prepare(folder: folder, name: "SharedProject", zip: false)
+        defer { export.remove() }
+        #expect(try String(contentsOf: export.url.appendingPathComponent("Helper.js")) == "let value = 42;")
+        #expect(try String(contentsOf: export.url.appendingPathComponent("libraries/test.js")) == "window.answer=42;")
+        #expect(try String(contentsOf: export.url.appendingPathComponent(".processing-libraries.json")) == "[\"libraries/test.js\"]")
+        #expect(!FileManager.default.fileExists(atPath: export.url.appendingPathComponent(".processing-history").path))
+        #expect(!FileManager.default.fileExists(atPath: export.url.appendingPathComponent("__runtime_skip.html").path))
+        let archive = try ProjectExport.prepare(folder: folder, name: "SharedProject", zip: true)
+        defer { archive.remove() }
+        #expect(try Data(contentsOf: archive.url).prefix(4) == Data([0x50,0x4b,0x03,0x04]))
+    }
+
+    @Test func anExternalEditCannotBeOverwrittenByAutosave() throws {
+        let fixture = try SketchFixture(language: "js", main: "const value = 'original';")
+        defer { fixture.remove() }
+        let file = try #require(fixture.project.sourceCodeFiles.first)
+        try "const value = 'from Files';".write(toFile: file.filePath, atomically: true, encoding: .utf8)
+        #expect(!file.save(newContent: "const value = 'my editor';"))
+        #expect(try String(contentsOfFile: file.filePath) == "const value = 'from Files';")
+        #expect(file.content == "const value = 'my editor';")
+        #expect(file.saveError != nil)
+        #expect(file.hasExternalConflict)
+        let copy = try file.saveConflictCopyAndReload()
+        #expect(try String(contentsOf: copy) == "const value = 'my editor';")
+        #expect(copy.deletingLastPathComponent().lastPathComponent == "Conflicts")
+        #expect(file.content == "const value = 'from Files';")
+        try "const value = 'external again';".write(toFile: file.filePath, atomically: true, encoding: .utf8)
+        #expect(!file.save(newContent: "const value = 'keep mine';"))
+        try file.keepMyChanges()
+        #expect(try String(contentsOfFile: file.filePath) == "const value = 'keep mine';")
+        #expect(try file.history().contains { $0.content == "const value = 'external again';" })
+        try "const value = 'clean reload';".write(toFile: file.filePath, atomically: true, encoding: .utf8)
+        #expect(file.refreshFromDisk())
+        #expect(file.content == "const value = 'clean reload';")
+    }
+
     @Test func projectRenameAndDuplicatePreserveSourcesAssetsAndRecovery() throws {
         let fixture = try SketchFixture(language: "js", main: "function setup() { createCanvas(20,20); }")
         let originalFolder = fixture.project.folder

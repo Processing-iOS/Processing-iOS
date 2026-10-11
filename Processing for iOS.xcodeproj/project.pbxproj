@@ -84,6 +84,9 @@
 		867A8816307B8591009C23A0 /* SketchConsole.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8815307B8591009C23A0 /* SketchConsole.swift */; };
 		867A8818307B8778009C23A0 /* CodeEditorTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8817307B8778009C23A0 /* CodeEditorTools.swift */; };
 		867A881A307B8948009C23A0 /* FileOperationProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8819307B8948009C23A0 /* FileOperationProgress.swift */; };
+		867A881C307B8B45009C23A0 /* ProjectSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881B307B8B45009C23A0 /* ProjectSharing.swift */; };
+		867A881E307B8B70009C23A0 /* LinkedProjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881D307B8B70009C23A0 /* LinkedProjects.swift */; };
+		867A8820307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -206,6 +209,9 @@
 		867A8815307B8591009C23A0 /* SketchConsole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchConsole.swift; sourceTree = "<group>"; };
 		867A8817307B8778009C23A0 /* CodeEditorTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeEditorTools.swift; sourceTree = "<group>"; };
 		867A8819307B8948009C23A0 /* FileOperationProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOperationProgress.swift; sourceTree = "<group>"; };
+		867A881B307B8B45009C23A0 /* ProjectSharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSharing.swift; sourceTree = "<group>"; };
+		867A881D307B8B70009C23A0 /* LinkedProjects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedProjects.swift; sourceTree = "<group>"; };
+		867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRuntimeSnapshot.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -403,6 +409,9 @@
 				867A8815307B8591009C23A0 /* SketchConsole.swift */,
 				867A8817307B8778009C23A0 /* CodeEditorTools.swift */,
 				867A8819307B8948009C23A0 /* FileOperationProgress.swift */,
+				867A881B307B8B45009C23A0 /* ProjectSharing.swift */,
+				867A881D307B8B70009C23A0 /* LinkedProjects.swift */,
+				867A881F307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -641,6 +650,7 @@
 			files = (
 				5106B9C91C933F5600AE74CC /* UIColor+ProcessingColor.m in Sources */,
 				5192E54D20A8A15E00354BC8 /* FolderContentBrowserTableViewController.swift in Sources */,
+				867A881C307B8B45009C23A0 /* ProjectSharing.swift in Sources */,
 				51CEE46E1B3E9D5E0031D1BE /* PDEFile.m in Sources */,
 				51CD5DD824978D5E008F2343 /* P5JSProject.swift in Sources */,
 				867A5982307ACE78009C23A0 /* Processing for iOS/CodeCompletion.swift in Sources */,
@@ -651,6 +661,7 @@
 				510F51B020ACB12C0082B979 /* EditorTabViewController.swift in Sources */,
 				5165FF9F2496E46400A6B137 /* FRFileManager.m in Sources */,
 				867A8814307B83D3009C23A0 /* SketchImageExport.swift in Sources */,
+				867A8820307B8BC3009C23A0 /* LinkedRuntimeSnapshot.swift in Sources */,
 				510926FC1FA0CE1E00C255D1 /* SketchController.m in Sources */,
 				510926FF1FA0D72A00C255D1 /* PDESketch.m in Sources */,
 				515230FA1B74B3D1003497F9 /* SettingsViewController.m in Sources */,
@@ -670,6 +681,7 @@
 				867A878B307B8031009C23A0 /* ProjectFiles.swift in Sources */,
 				867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */,
 				51CEE4791B3EA6FC0031D1BE /* RunSketchViewController.m in Sources */,
+				867A881E307B8B70009C23A0 /* LinkedProjects.swift in Sources */,
 				51CD5DD3249788D9008F2343 /* SimpleTextProject.swift in Sources */,
 				867A597C307AC9BD009C23A0 /* SketchProgram.swift in Sources */,
 				867A5986307ACEA8009C23A0 /* Processing for iOS/CodeCompletionController.swift in Sources */,

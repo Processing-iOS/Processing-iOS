@@ -30,7 +30,7 @@ struct SourceRevision: Codable {
     init(filePath: String) {
         self.filePath = filePath
         do {
-            self.content = try String(contentsOfFile: filePath, encoding: .utf8)
+            self.content = try ProjectFiles.read(URL(fileURLWithPath: filePath)) { try String(contentsOf: $0, encoding: .utf8) }
             self.lastSavedContent = self.content
         } catch {
             self.readError = error as NSError
@@ -100,6 +100,57 @@ struct SourceRevision: Codable {
     @objc var fileExtension: String {
         return URL(fileURLWithPath: filePath).pathExtension.lowercased()
     }
+
+    @objc var hasExternalConflict: Bool { saveError?.domain == "SketchSourceConflict" }
+
+    /// Reload a clean buffer when Files or another app changed it. Unsaved local
+    /// edits are never replaced by this refresh.
+    @objc @discardableResult func refreshFromDisk() -> Bool {
+        guard !hasUnsavedChanges, saveError == nil else { return false }
+        do {
+            let stored = try ProjectFiles.read(URL(fileURLWithPath: filePath)) { try String(contentsOf: $0, encoding: .utf8) }
+            readError = nil
+            guard stored != content else { return false }
+            content = stored
+            lastSavedContent = stored
+            NotificationCenter.default.post(name: Self.didChange, object: self)
+            return true
+        } catch {
+            readError = error as NSError
+            NotificationCenter.default.post(name: Self.didChange, object: self)
+            return false
+        }
+    }
+
+    func keepMyChanges() throws {
+        guard persist(allowExternalReplacement: true) else { throw saveError! }
+    }
+
+    /// Resolve by keeping the external file and a separate, visible copy of the
+    /// editor buffer. The copy lives below the source root so it is not executed.
+    func saveConflictCopyAndReload() throws -> URL {
+        guard let content else { throw ProjectFileError(message: "There is no editor content to recover.") }
+        let source = URL(fileURLWithPath: filePath)
+        let folder = source.deletingLastPathComponent().appendingPathComponent("Conflicts", isDirectory: true)
+        guard folder.resolvingSymlinksInPath().path.hasPrefix(source.deletingLastPathComponent().resolvingSymlinksInPath().path + "/") else {
+            throw ProjectFileError(message: "The Conflicts folder must be inside this project.")
+        }
+        let copy = folder.appendingPathComponent(source.deletingPathExtension().lastPathComponent + "-" + UUID().uuidString + "." + fileExtension)
+        try ProjectFiles.write(source.deletingLastPathComponent(), options: []) { _ in
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try content.write(to: copy, atomically: true, encoding: .utf8)
+        }
+        let stored = try ProjectFiles.read(source) { try String(contentsOf: $0, encoding: .utf8) }
+        pendingSave?.cancel()
+        pendingSave = nil
+        self.content = stored
+        lastSavedContent = stored
+        hasUnsavedChanges = false
+        saveError = nil
+        readError = nil
+        NotificationCenter.default.post(name: Self.didChange, object: self)
+        return copy
+    }
     
     @discardableResult
     @objc func save(newContent: String? = nil) -> Bool {
@@ -109,6 +160,12 @@ struct SourceRevision: Codable {
             hasUnsavedChanges = hasUnsavedChanges || content != newContent
             self.content = newContent
         }
+        return persist(allowExternalReplacement: false)
+    }
+
+    private func persist(allowExternalReplacement: Bool) -> Bool {
+        pendingSave?.cancel()
+        pendingSave = nil
         defer { NotificationCenter.default.post(name: Self.didChange, object: self) }
         if !hasUnsavedChanges, saveError == nil, readError == nil, content == lastSavedContent { return true }
         do {
@@ -116,11 +173,18 @@ struct SourceRevision: Codable {
                 throw readError ?? NSError(domain: "SketchSource", code: 1,
                     userInfo: [NSLocalizedDescriptionKey: "Cannot read \(fileName)."])
             }
-            let exists = FileManager.default.fileExists(atPath: filePath)
-            let stored = exists ? try String(contentsOfFile: filePath, encoding: .utf8) : nil
-            if stored != content {
-                if let stored { try checkpoint(stored) }
-                try content.write(toFile: filePath, atomically: true, encoding: .utf8)
+            try ProjectFiles.write(URL(fileURLWithPath: filePath)) { url in
+                let exists = FileManager.default.fileExists(atPath: url.path)
+                let stored = exists ? try String(contentsOf: url, encoding: .utf8) : nil
+                if !allowExternalReplacement, stored != lastSavedContent, stored != content {
+                    try? checkpoint(content, force: true)
+                    throw NSError(domain: "SketchSourceConflict", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                        "\(fileName) changed in Files or another app while you were editing. Your edits are still in the editor; choose which version to use."])
+                }
+                if stored != content {
+                    if let stored { try checkpoint(stored, force: allowExternalReplacement) }
+                    try content.write(to: url, atomically: true, encoding: .utf8)
+                }
             }
             lastSavedContent = content
             lastSaveDate = Date()

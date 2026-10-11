@@ -328,6 +328,20 @@
     return [self.sourceCodeFile saveWithNewContent:nil];
 }
 
+- (void)refreshExternalChanges {
+    if (![self.editor.text isEqualToString:self.lastObservedText]) return;
+    [self.sourceCodeFile refreshFromDisk];
+    if (!self.sourceCodeFile.hasUnsavedChanges && self.sourceCodeFile.content &&
+        ![self.editor.text isEqualToString:self.sourceCodeFile.content]) {
+        NSRange selection = self.editor.selectedRange;
+        self.editor.text = self.sourceCodeFile.content;
+        self.lastObservedText = self.editor.text;
+        self.editor.selectedRange = NSMakeRange(MIN(selection.location, self.editor.text.length), 0);
+        self.bugToHighlight = nil;
+        [self highlightCode];
+    }
+}
+
 -(void)textViewDidChange:(UITextView *) textView {
     self.lastObservedText = self.editor.text;
     [self.sourceCodeFile updateContent:self.editor.text];
@@ -361,6 +375,7 @@
 
 -(void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self refreshExternalChanges];
     self.editor.font = [UIFont fontWithName:@"SourceCodePro-Regular" size:CodeEditorTools.fontSize];
     [self highlightCode];
     [self.navigationController setToolbarHidden:self.editor.isFirstResponder animated:YES];

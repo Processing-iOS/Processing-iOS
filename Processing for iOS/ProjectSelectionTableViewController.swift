@@ -21,6 +21,7 @@ class ProjectSelectionTableViewController: UITableViewController,
     var projects: [SimpleTextProject]?
     var filteredProjects: [SimpleTextProject]?
     let searchController = UISearchController(searchResultsController: nil)
+    private var openingLinkedFolder = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -68,6 +69,21 @@ class ProjectSelectionTableViewController: UITableViewController,
         projectsCountLabel.customView = projectCountView
         refreshProjectsCountLabel()
         registerForPreviewing(with: self, sourceView: tableView)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshVisibleProjects), name: UIApplication.didBecomeActiveNotification, object: nil)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        refreshVisibleProjects()
+    }
+
+    @objc private func refreshVisibleProjects() {
+        guard navigationController?.topViewController === self else { return }
+        SketchController.loadProjects { projects in
+            self.projects = projects
+            self.filterContentForSearchText(self.searchController.searchBar.text ?? "")
+            self.refreshProjectsCountLabel()
+        }
     }
     
     
@@ -78,6 +94,7 @@ class ProjectSelectionTableViewController: UITableViewController,
         actionSheet.popoverPresentationController?.barButtonItem = sender
         
         let singleFile = UIAlertAction(title: "Import individual file…", style: .default) { _ in
+            self.openingLinkedFolder = false
             let documentBrowser = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: false)
             documentBrowser.delegate = self
             documentBrowser.allowsMultipleSelection = true
@@ -85,6 +102,7 @@ class ProjectSelectionTableViewController: UITableViewController,
         }
         
         let projectFolder = UIAlertAction(title: "Import project folder…", style: .default) { _ in
+            self.openingLinkedFolder = false
             
             
             let documentBrowser = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
@@ -99,6 +117,12 @@ class ProjectSelectionTableViewController: UITableViewController,
         
         actionSheet.addAction(singleFile)
         actionSheet.addAction(projectFolder)
+        actionSheet.addAction(UIAlertAction(title: "Open Folder from Files…", style: .default) { _ in
+            self.openingLinkedFolder = true
+            let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
+            picker.delegate = self
+            self.present(picker, animated: true)
+        })
         actionSheet.addAction(UIAlertAction(title: "Import sample projects…", style: .default) { [weak self] _ in
             self?.showSampleProjectPicker()
         })
@@ -202,21 +226,14 @@ class ProjectSelectionTableViewController: UITableViewController,
                     fatalError("Misconfigured cell type!")
                 }
         
-        if isFiltering() {
-            if let project = filteredProjects?[indexPath.row] {
-                cell.projectNameLabel.text = project.name
-            }
-            return cell
-        }
-        
-        if let project = projects?[indexPath.row] {
+        if let project = (isFiltering() ? filteredProjects : projects)?[indexPath.row] {
             cell.projectNameLabel.text = project.name
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateStyle = .medium
             dateFormatter.timeStyle = .medium
             
-            cell.creationDateLabel.text = "Created: \(dateFormatter.string(from: project.creationDate))"
+            cell.creationDateLabel.text = project.isLinked ? "Linked folder in Files" : "Created: \(dateFormatter.string(from: project.creationDate))"
         }
         
         return cell
@@ -295,13 +312,16 @@ class ProjectSelectionTableViewController: UITableViewController,
             if let project = (isFiltering() ? filteredProjects : projects)?[indexPath.row] {
                 
                 let alertController = UIAlertController(
-                    title: "Delete Project",
-                    message: "Are you sure that you want to delete the project \"\(project.name)\"? " +
-                    "This cannot be undone.",
+                    title: project.isLinked ? "Remove Folder Link" : "Delete Project",
+                    message: project.isLinked ? "Remove “\(project.name)” from My Projects? The folder and its files stay in Files."
+                        : "Are you sure that you want to delete the project \"\(project.name)\"? This cannot be undone.",
                     preferredStyle: .alert)
                 
-                let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { (_) in
-                    SketchController.deleteSketch(withName: project.name)
+                let deleteAction = UIAlertAction(title: project.isLinked ? "Remove Link" : "Delete", style: .destructive) { (_) in
+                    if project.isLinked {
+                        do { try LinkedProjects.remove(project) }
+                        catch { self.showFileOperationError(title: "Cannot Remove Link", error: error); return }
+                    } else { SketchController.deleteSketch(withName: project.name) }
                     
                     SketchController.loadProjects { (projects) in
                         self.projects = projects
@@ -332,9 +352,23 @@ class ProjectSelectionTableViewController: UITableViewController,
         }
         
         if let project = currentProjects?[indexPath.row] {
-            let editor = EditorTabViewController(withProject: project)
-            //            let editor = PDEEditorViewController(pdeSketch: project)!
-            navigationController?.pushViewController(editor, animated: true)
+            openProject(project)
+        }
+    }
+
+    private func openProject(_ project: SimpleTextProject) {
+        if let error = project.initializationError { showFileOperationError(title: "Cannot Open Folder", error: error); return }
+        if project.isLinked {
+            FileOperationProgress.perform(title: "Opening Folder…", from: self, work: {
+                let urls = try project.sourceFileURLs()
+                guard !urls.isEmpty else { throw ProjectFileError(message: "This folder has no .\(project.sourceCodeExtension) source files. Download it in Files and try again.") }
+                for url in urls { _ = try ProjectFiles.read(url) { try String(contentsOf: $0, encoding: .utf8) } }
+            }) { error in
+                if let error { self.showFileOperationError(title: "Cannot Open Folder", error: error) }
+                else { self.navigationController?.pushViewController(EditorTabViewController(withProject: project), animated: true) }
+            }
+        } else {
+            navigationController?.pushViewController(EditorTabViewController(withProject: project), animated: true)
         }
     }
     
@@ -547,6 +581,7 @@ class ProjectSelectionTableViewController: UITableViewController,
             } else {
                 project = projects![indexPath.row]
             }
+            guard !project.isLinked, project.initializationError == nil else { return nil }
             let editor = EditorTabViewController(withProject: project)
             return editor
         }
@@ -590,6 +625,20 @@ extension ProjectSelectionTableViewController: UISearchResultsUpdating {
 
 extension ProjectSelectionTableViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        importSources(urls)
+        guard openingLinkedFolder else { importSources(urls); return }
+        openingLinkedFolder = false
+        guard let folder = urls.first else { return }
+        var linked: SimpleTextProject?
+        FileOperationProgress.perform(title: "Opening Folder…", from: self, work: {
+            linked = try LinkedProjects.open(folder)
+        }) { error in
+            if let error { self.showFileOperationError(title: "Cannot Open Folder", error: error) }
+            else if let linked {
+                self.selectNewSketch(withName: linked.name)
+                self.openProject(linked)
+            }
+        }
     }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) { openingLinkedFolder = false }
 }

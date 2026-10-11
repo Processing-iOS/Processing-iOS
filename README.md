@@ -34,6 +34,12 @@ Import accepts a project folder or multiple source files. Folder imports detect 
 
 Edits are saved automatically after a short pause, and while typing continuously at least every two seconds. The editor shows saving status and retains unsaved buffers if a write fails. **History** previews and restores earlier versions of the current file; restoring also keeps the current code. Up to 100 local versions are kept, with checkpoints at most once every 30 seconds during ordinary editing. History is stored in the project's hidden `.processing-history` folder.
 
+**Import → Open Folder from Files…** links a folder for editing in place. A permission-bearing bookmark remembers it across launches. This works with locations that support folder access in Files, including iCloud Drive; provider availability and downloads still depend on Files. Remove Link removes the entry from My Projects without deleting the external folder. Duplicate makes a separate local copy. Rename linked folders in Files.
+
+Clean editor buffers refresh when returning from another app. If an external edit conflicts with unsaved code, saving stops and offers **Keep My Changes** (preserving the external version in History) or **Save My Copy and Load Files Version** (putting the local code in a visible `Conflicts` subfolder). Runs use a coordinated temporary snapshot of linked projects, while image exports go to the original folder. Local p5.js JSON/text data loads are adapted to WebKit's file responses.
+
+The share button exports the whole project as a ZIP or a folder through Files, including all source files, assets, and project libraries. Hidden recovery history and generated runtime documents are excluded. ZIPs can be expanded in Files before importing their project folder.
+
 ## Code completion
 
 Start typing a name in the editor to see completions above the keyboard after two characters. Tap a suggestion, or press **Tab** on a hardware keyboard to accept the first one. **Control-Space** requests completions for a shorter prefix; **Escape** dismisses the suggestions. Swipe the strip to see more matches. The keyboard button ends editing and restores the editor toolbar.

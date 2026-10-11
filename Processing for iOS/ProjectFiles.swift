@@ -35,6 +35,12 @@ enum ProjectFiles {
     }
 
     static func renameFile(_ source: URL, to name: String, projectFolder: URL) throws {
+        try write(projectFolder, options: []) { _ in
+            try renameFileCoordinated(source, to: name, projectFolder: projectFolder)
+        }
+    }
+
+    private static func renameFileCoordinated(_ source: URL, to name: String, projectFolder: URL) throws {
         try validateName(name)
         guard name != source.lastPathComponent else { return }
         let fm = FileManager.default
@@ -71,6 +77,12 @@ enum ProjectFiles {
     }
 
     static func duplicateFile(_ source: URL, as name: String, projectFolder: URL) throws {
+        try write(projectFolder, options: []) { _ in
+            try duplicateFileCoordinated(source, as: name, projectFolder: projectFolder)
+        }
+    }
+
+    private static func duplicateFileCoordinated(_ source: URL, as name: String, projectFolder: URL) throws {
         try validateName(name)
         let destination = source.deletingLastPathComponent().appendingPathComponent(name)
         if ["pde", "js"].contains(source.pathExtension.lowercased()), destination.pathExtension.lowercased() != source.pathExtension.lowercased() {
@@ -87,6 +99,9 @@ enum ProjectFiles {
     }
 
     static func renameProject(_ project: SimpleTextProject, to name: String) throws {
+        guard !project.isLinked else {
+            throw ProjectFileError(message: "Rename this linked folder in Files. Its bookmark will follow the folder when the provider supports it.")
+        }
         try validateName(name)
         guard name != project.name else { return }
         let fm = FileManager.default, original = project.folder
@@ -112,15 +127,17 @@ enum ProjectFiles {
 
     static func duplicateProject(_ project: SimpleTextProject, as name: String) throws {
         try validateName(name)
-        let destination = project.folder.deletingLastPathComponent().appendingPathComponent(name)
-        let stage = project.folder.deletingLastPathComponent().appendingPathComponent(".duplicate-\(UUID().uuidString)")
+        let root = URL(fileURLWithPath: SketchController.documentsDirectory()).appendingPathComponent("sketches", isDirectory: true)
+        let destination = root.appendingPathComponent(name)
+        let stage = root.appendingPathComponent(".duplicate-\(UUID().uuidString)")
         let fm = FileManager.default
         guard !fm.fileExists(atPath: destination.path) else {
             throw ProjectFileError(message: "A project named “\(name)” already exists. Choose another name.")
         }
         defer { try? fm.removeItem(at: stage) }
-        try copyProject(project.folder, to: stage)
-        let main = stage.appendingPathComponent("\(project.name).\(project.sourceCodeExtension)")
+        try fm.createDirectory(at: root, withIntermediateDirectories: true)
+        try read(project.folder) { try copyProject($0, to: stage) }
+        let main = stage.appendingPathComponent(project.preferredMainFileName ?? "\(project.name).\(project.sourceCodeExtension)")
         if fm.fileExists(atPath: main.path) {
             try renameFile(main, to: "\(name).\(project.sourceCodeExtension)", projectFolder: stage)
         }
@@ -145,6 +162,19 @@ enum ProjectFiles {
         }
         if let coordinationError { throw coordinationError }
         guard let result else { throw ProjectFileError(message: "The selected file is unavailable. Download it in Files and try again.") }
+        return try result.get()
+    }
+
+    static func write<T>(_ url: URL, options: NSFileCoordinator.WritingOptions = .forReplacing, _ body: (URL) throws -> T) throws -> T {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        var coordinationError: NSError?
+        var result: Result<T, Error>?
+        NSFileCoordinator().coordinate(writingItemAt: url, options: options, error: &coordinationError) { coordinatedURL in
+            result = Result { try body(coordinatedURL) }
+        }
+        if let coordinationError { throw coordinationError }
+        guard let result else { throw ProjectFileError(message: "This file is unavailable. Download it in Files and try again.") }
         return try result.get()
     }
 
@@ -249,10 +279,13 @@ enum ProjectFiles {
         }
         var inserted: [URL] = []
         do {
-            for item in items {
-                try fm.createDirectory(at: item.to.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try fm.moveItem(at: item.from, to: item.to)
-                inserted.append(item.to)
+            try write(folder, options: []) { _ in
+                for item in items {
+                    guard !fm.fileExists(atPath: item.to.path) else { throw ProjectFileError(message: "A file with this name appeared while importing. Nothing was overwritten.") }
+                    try fm.createDirectory(at: item.to.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try fm.moveItem(at: item.from, to: item.to)
+                    inserted.append(item.to)
+                }
             }
         } catch {
             for url in inserted { try? fm.removeItem(at: url) }

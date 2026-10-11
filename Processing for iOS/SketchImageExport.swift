@@ -21,8 +21,10 @@ import ImageIO
         guard exports.resolvingSymlinksInPath().path.hasPrefix(folder.resolvingSymlinksInPath().path + "/") else {
             throw ProjectFileError(message: "The exports folder must be inside this project.")
         }
-        try FileManager.default.createDirectory(at: exports, withIntermediateDirectories: true)
-        try data.write(to: exports.appendingPathComponent(name), options: .atomic)
+        try ProjectFiles.write(folder, options: []) { _ in
+            try FileManager.default.createDirectory(at: exports, withIntermediateDirectories: true)
+            try data.write(to: exports.appendingPathComponent(name), options: .atomic)
+        }
         return "exports/" + name
     }
 }
