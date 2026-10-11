@@ -50,6 +50,14 @@ Processing sketches automatically render at the screen's pixel density, includin
 
 P5.js retains its built-in Retina support and still honors an explicit `pixelDensity(1)` for pixel-based sketches.
 
+## Processing compatibility and image export
+
+The bundled runtimes are Processing.js 1.6.6 and p5.js 1.4.0. PDE sketches support the Processing.js API, with additions for `circle`, `square`, `displayWidth`, `displayHeight`, `fullScreen`, and `StringList`. The list supports append/get/set/remove, size/clear, hasValue, sort/sortReverse/reverse/shuffle, upper/lower, copy, join, array/toArray, and iteration. Parameterized functions, PVector math, map, and ellipse modes are covered by runtime regression checks.
+
+`saveFrame("frame-####.png")` in Processing and `saveCanvas("frame", "png")` in p5.js write images into the project's **exports** folder, available through the folder browser and Files. PNG and JPEG are supported, including Retina pixels and numbered Processing filenames. Use simple filenames without folder paths. Image limits are 16 million pixels, 8192 pixels per side, and 18 MB encoded image data. A busy export queue reports an error instead of accumulating unbounded images; lower `frameRate()` for image sequences.
+
+Desktop Java `.jar` libraries and packages such as `processing.video` cannot run in the browser runtime. Unsupported imports explain this at their source location; use `CameraView` for camera input. Core imports and built-in collection imports are accepted. These additions do not provide full desktop Processing 4 compatibility.
+
 The bundled Processing.js copies also contain touch fixes: the first touch is delivered immediately, old mouse/initialization listeners are removed correctly so gestures do not accumulate duplicate callbacks, and each new contact resets previous mouse coordinates so separate strokes do not get connected. Keep these fixes when updating the library.
 
 ## Sensor inputs

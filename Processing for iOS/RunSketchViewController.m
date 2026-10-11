@@ -39,6 +39,8 @@
 @property(nonatomic,strong) NSMutableDictionary *lastSensorStatuses;
 @property(nonatomic,assign) NSUInteger sensorGeneration;
 @property(nonatomic,assign) BOOL sensorDeliveryInFlight;
+@property(nonatomic,assign) NSUInteger pendingImageExports;
+@property(nonatomic,strong) dispatch_queue_t imageExportQueue;
 @property(nonatomic,assign) BOOL previousInteractivePopGestureEnabled;
 @property(nonatomic,assign) BOOL previousInteractiveContentPopGestureEnabled;
 @property(nonatomic,weak) id<UIGestureRecognizerDelegate> previousInteractivePopGestureDelegate;
@@ -51,6 +53,7 @@
     if (self) {
         self.project = project;
         self.title = project.name;
+        self.imageExportQueue = dispatch_queue_create("Processing.image-export", DISPATCH_QUEUE_SERIAL);
     }
     return self;
 }
@@ -135,6 +138,10 @@
         if (bug) [self reportBug:bug];
     } else if ([message.name isEqualToString:@"iosbridge"] && [message.body isKindOfClass:NSDictionary.class]) {
         id event = message.body[@"event"];
+        if ([event isEqual:@"saveImage"]) {
+            [self saveImage:message.body];
+            return;
+        }
         if ([event isEqual:@"heartbeat"] || [event isEqual:@"ready"]) {
             [self resetWatchdog];
             if ([event isEqual:@"ready"] && !self.runtimeReady) {
@@ -152,6 +159,28 @@
             }
         }
     }
+}
+
+- (void)saveImage:(NSDictionary *)payload {
+    if (self.pendingImageExports >= 3) {
+        [self reportError:@"Too many images are waiting to be saved. Lower frameRate() or save from a touch event."];
+        return;
+    }
+    ++self.pendingImageExports;
+    NSURL *folder = self.project.folder;
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(self.imageExportQueue, ^{
+        NSError *error = nil;
+        [SketchImageExport save:payload in:folder error:&error];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            typeof(self) self = weakSelf;
+            if (!self) return;
+            if (self.pendingImageExports > 0) --self.pendingImageExports;
+            if (!self.sketchWebView || self.failed) return;
+            if (error) [self reportError:[NSString stringWithFormat:@"Cannot save image: %@", error.localizedDescription]];
+            else [self.sketchWebView evaluateJavaScript:@"SketchRuntime.imageSaved()" completionHandler:nil];
+        });
+    });
 }
 
 - (void)reportError:(NSString *)message {

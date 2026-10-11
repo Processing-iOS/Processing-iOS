@@ -79,6 +79,8 @@
 		867A8787307B7CE3009C23A0 /* SourceHistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */; };
 		867A8789307B7F5B009C23A0 /* CodeHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */; };
 		867A878B307B8031009C23A0 /* ProjectFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A878A307B8030009C23A0 /* ProjectFiles.swift */; };
+		867A8812307B83D1009C23A0 /* ProcessingCompatibility.js in Resources */ = {isa = PBXBuildFile; fileRef = 867A8811307B83D1009C23A0 /* ProcessingCompatibility.js */; };
+		867A8814307B83D3009C23A0 /* SketchImageExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8813307B83D3009C23A0 /* SketchImageExport.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -196,6 +198,8 @@
 		867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHistoryViewController.swift; sourceTree = "<group>"; };
 		867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlighter.swift; sourceTree = "<group>"; };
 		867A878A307B8030009C23A0 /* ProjectFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectFiles.swift; sourceTree = "<group>"; };
+		867A8811307B83D1009C23A0 /* ProcessingCompatibility.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ProcessingCompatibility.js; sourceTree = "<group>"; };
+		867A8813307B83D3009C23A0 /* SketchImageExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchImageExport.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -388,6 +392,8 @@
 				867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */,
 				867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */,
 				867A878A307B8030009C23A0 /* ProjectFiles.swift */,
+				867A8811307B83D1009C23A0 /* ProcessingCompatibility.js */,
+				867A8813307B83D3009C23A0 /* SketchImageExport.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -526,6 +532,7 @@
 				511A4BF81B6D13FF00B03259 /* Example_Multitouch.pde in Resources */,
 				5192E54E20A8A15E00354BC8 /* FolderContentBrowserTableViewController.xib in Resources */,
 				510F51B120ACB12C0082B979 /* EditorTabViewController.xib in Resources */,
+				867A8812307B83D1009C23A0 /* ProcessingCompatibility.js in Resources */,
 				5192E55420A8A67300354BC8 /* FileContentTableViewCell.xib in Resources */,
 				513BF2AD24A029A700825346 /* CodeFixSuggestionTableViewCell.xib in Resources */,
 				867A7523307B6841009C23A0 /* Example_Camera.js in Resources */,
@@ -634,6 +641,7 @@
 				867A8787307B7CE3009C23A0 /* SourceHistoryViewController.swift in Sources */,
 				510F51B020ACB12C0082B979 /* EditorTabViewController.swift in Sources */,
 				5165FF9F2496E46400A6B137 /* FRFileManager.m in Sources */,
+				867A8814307B83D3009C23A0 /* SketchImageExport.swift in Sources */,
 				510926FC1FA0CE1E00C255D1 /* SketchController.m in Sources */,
 				510926FF1FA0D72A00C255D1 /* PDESketch.m in Sources */,
 				515230FA1B74B3D1003497F9 /* SettingsViewController.m in Sources */,

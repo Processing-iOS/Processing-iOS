@@ -710,6 +710,74 @@ struct SketchRuntimeTests {
         }
     }
 
+    @Test func processingCompatibilityHelpersRenderAndKeepDesktopMathSemantics() async throws {
+        let fixture = try SketchFixture(language: "pde", main: """
+        StringList words = new StringList();
+        void paintAt(float x, float y, float extent) { square(x, y, extent); }
+        void setup() {
+          size(100,100); noLoop(); background(0); noStroke();
+          words.append("beta"); words.append("alpha"); words.sort();
+          PVector v = new PVector(3,4); v.normalize();
+          if (words.get(0).equals("alpha") && words.size() == 2 && abs(v.mag()-1) < 0.001) fill(255,0,0);
+          else fill(0);
+          paintAt(0,0,map(5,0,10,0,40));
+          fill(0,255,0); circle(50,50,20);
+          ellipseMode(CORNERS); fill(0,0,255); ellipse(70,70,90,90);
+        }
+        """)
+        defer { fixture.remove() }
+        let probe = RuntimeProbe(density: 1)
+        defer { probe.close() }
+        try probe.load(fixture.project.prepareRuntime(), in: fixture.project.folder)
+        _ = try await probe.message(named: "iosbridge", event: "ready")
+        let pixels = try await probe.webView.evaluateJavaScript("""
+        (() => { const ctx = document.querySelector('canvas').getContext('2d');
+        return [10,50,80].flatMap(n => Array.from(ctx.getImageData(n,n,1,1).data)); })()
+        """) as? [Int]
+        #expect(pixels == [255,0,0,255, 0,255,0,255, 0,0,255,255])
+    }
+
+    @Test func savingACanvasCreatesAnImageInBothLanguages() async throws {
+        for language in ["pde", "js"] {
+            let code = language == "pde"
+                ? "void setup() { size(40,30); background(255,0,0); noLoop(); saveFrame(\"review.png\"); }"
+                : "function setup() { createCanvas(40,30); background(255,0,0); noLoop(); saveCanvas('review','png'); }"
+            let fixture = try SketchFixture(language: language, main: code)
+            defer { fixture.remove() }
+            let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+            let window = try #require(scene.windows.first { $0.isKeyWindow })
+            let previousRoot = window.rootViewController
+            let navigation = UINavigationController(rootViewController: UIViewController())
+            window.rootViewController = navigation
+            defer { navigation.popViewController(animated: false); window.rootViewController = previousRoot }
+            let runner = try #require(RunSketchViewController(simpleTextProject: fixture.project))
+            navigation.pushViewController(runner, animated: false)
+            let output = fixture.project.folder.appendingPathComponent("exports/review.png")
+            let deadline = Date().addingTimeInterval(5)
+            while !FileManager.default.fileExists(atPath: output.path), Date() < deadline {
+                try await Task.sleep(nanoseconds: 50_000_000)
+            }
+            let image = try #require(UIImage(contentsOfFile: output.path))
+            let bitmap = try #require(image.cgImage)
+            let density = Int(ceil(window.screen.scale))
+            #expect(bitmap.width == 40 * density && bitmap.height == 30 * density)
+            var pixel = [UInt8](repeating: 0, count: 4)
+            let context = try #require(CGContext(data: &pixel, width: 1, height: 1, bitsPerComponent: 8,
+                bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.draw(bitmap, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            #expect(pixel == [255, 0, 0, 255])
+        }
+    }
+
+    @Test func desktopLibraryImportsExplainTheSupportedAlternative() throws {
+        let fixture = try SketchFixture(language: "pde", main: "// import fake.example.*;\nimport processing.video.*;\nvoid setup() {}")
+        defer { fixture.remove() }
+        let bug = try #require(fixture.project.prepareRuntime().preflightBug)
+        #expect(bug.line == 2)
+        #expect(bug.message.contains("CameraView"))
+        #expect(bug.message.contains("processing.video"))
+    }
+
     @Test func stoppingARuntimeCancelsUserWorkAndRemovesItsCanvas() async throws {
         let fixture = try SketchFixture(language: "js", main: """
         window.workCount = 0;

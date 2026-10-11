@@ -20,6 +20,39 @@ window.SketchRuntime = (function () {
     var nativeAnimationFrame = window.requestAnimationFrame.bind(window);
     var nativeCancelAnimationFrame = window.cancelAnimationFrame.bind(window);
     var disposedInstances = new WeakSet();
+    var pendingImages = 0;
+
+    function saveImage(canvas, filename) {
+        if (stopped) return;
+        if (!canvas || typeof canvas.toDataURL !== "function") throw new Error("There is no canvas to save yet.");
+        var name = String(filename || "canvas.png");
+        if (!/\.[a-z0-9]+$/i.test(name)) name += ".png";
+        if (!/\.(png|jpe?g)$/i.test(name) || /[\\/:]/.test(name) || name[0] === ".") {
+            throw new Error("Save a PNG or JPEG filename without a folder path. Images go in the project's exports folder.");
+        }
+        if (canvas.width * canvas.height > 16777216 || canvas.width > 8192 || canvas.height > 8192) {
+            throw new Error("The canvas is too large to export. Use at most 16 million pixels.");
+        }
+        if (pendingImages >= 3) throw new Error("Images are being saved faster than storage can write them. Lower frameRate() or save from a touch event.");
+        var url = canvas.toDataURL(/\.png$/i.test(name) ? "image/png" : "image/jpeg", 0.95);
+        var data = url.substring(url.indexOf(",") + 1);
+        if (data.length > 24000000) throw new Error("The saved image is too large (maximum 18 MB). Use a smaller canvas.");
+        pendingImages++;
+        post("iosbridge", { event: "saveImage", name: name, data: data });
+    }
+
+    function imageSaved() { pendingImages = Math.max(0, pendingImages - 1); }
+
+    function installP5ImageSaving() {
+        p5.prototype.saveCanvas = function (canvas, filename, extension) {
+            if (typeof canvas === "string" || canvas == null) {
+                extension = filename; filename = canvas; canvas = this.canvas;
+            } else if (canvas.elt) canvas = canvas.elt;
+            filename = String(filename || "canvas");
+            if (!/\.(png|jpe?g)$/i.test(filename)) filename += "." + (extension || "png");
+            saveImage(canvas, filename);
+        };
+    }
 
     function trackTimer(native, collection, repeating, callback, delay, args) {
         if (stopped) return 0;
@@ -557,6 +590,7 @@ window.SketchRuntime = (function () {
                 });
             } else {
                 installP5AssetDiagnostics();
+                installP5ImageSaving();
                 await script(program.code, "sketch-source.js");
                 if (failed || stopped) return;
                 phase = "runtime";
@@ -618,5 +652,6 @@ window.SketchRuntime = (function () {
     }
 
     return { start: start, stop: stop, motion: motion, updateSensors: updateSensors,
-        pauseCameras: pauseCameras, resumeCameras: resumeCameras };
+        pauseCameras: pauseCameras, resumeCameras: resumeCameras,
+        saveImage: saveImage, imageSaved: imageSaved };
 }());

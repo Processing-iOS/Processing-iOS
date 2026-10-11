@@ -50,7 +50,7 @@ import UIKit
         let result = NSMutableAttributedString(string: source, attributes: baseAttributes(size: size))
         let lexical = CodeCompletionEngine.codeOnly(source, language: language)
         let code = lexical.text as NSString
-        let types = Set((language == "js" ? "let const var class JSON" : "int String boolean bool float double char color byte long PImage PFont PVector CameraView").split(separator: " ").map(String.init))
+        let types = Set((language == "js" ? "let const var class JSON" : "int String boolean bool float double char color byte long PImage PFont PVector StringList CameraView").split(separator: " ").map(String.init))
         let keywords = Set("new void function if else for while do switch case break continue return true false null undefined async await import public private final".split(separator: " ").map(String.init))
         let parameters = Set("mouseX mouseY pmouseX pmouseY movedX movedY winMouseX winMouseY pwinMouseX pwinMouseY mouseButton touches mousePressed screenHeight screenWidth windowWidth windowHeight CENTER CORNER CORNERS RADIUS RIGHT LEFT HALF_PI PI QUARTER_PI TAU TWO_PI DEGREES RADIANS".split(separator: " ").map(String.init))
         let orange = UIColor(red: 228/255, green: 102/255, blue: 0, alpha: 1)

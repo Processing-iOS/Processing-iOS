@@ -214,14 +214,14 @@
         @"displaywidth": @[
                 @{
                     @"suggestion": @"screenWidth",
-                    @"explanation_subtitle": @"“displayWidth” is not available on iOS. Use “screenWidth“ instead.",
+                    @"explanation_subtitle": @"Use “screenWidth” for the sketch viewport width.",
                     @"explanation": @"Replace with “screenWidth”"
                 }
         ],
         @"displayheight": @[
                 @{
                     @"suggestion": @"screenHeight",
-                    @"explanation_subtitle": @"“displayHeight” is not available on iOS. Use “screenHeight“ instead.",
+                    @"explanation_subtitle": @"Use “screenHeight” for the sketch viewport height.",
                     @"explanation": @"Replace with “screenHeight”"
                 }
         ],

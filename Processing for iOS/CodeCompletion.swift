@@ -155,7 +155,7 @@ enum CodeCompletionEngine {
 
     private static let commonFunctions = [
         "background(color)", "fill(color)", "noFill()", "stroke(color)", "noStroke()", "strokeWeight(weight)",
-        "rect(x, y, width, height)", "ellipse(x, y, width, height)", "line(x1, y1, x2, y2)",
+        "rect(x, y, width, height)", "ellipse(x, y, width, height)", "circle(x, y, diameter)", "square(x, y, size)", "line(x1, y1, x2, y2)",
         "point(x, y)", "triangle(x1, y1, x2, y2, x3, y3)", "quad(x1, y1, x2, y2, x3, y3, x4, y4)",
         "arc(x, y, width, height, start, stop)", "bezier(x1, y1, cx1, cy1, cx2, cy2, x2, y2)",
         "rectMode(mode)", "ellipseMode(mode)", "colorMode(mode)", "color(value)", "lerpColor(from, to, amount)",
@@ -174,13 +174,13 @@ enum CodeCompletionEngine {
         "gravityUpdated(x, y, z)", "userAccelerationUpdated(x, y, z)", "rotationRateUpdated(x, y, z)",
         "magnetometerUpdated(x, y, z)", "altimeterUpdated(relativeAltitude, pressure)", "sensorStatusUpdated(sensor, status)"
     ]
-    private static let pdeFunctions = ["size(width, height)", "smooth()", "noSmooth()", "pushMatrix()", "popMatrix()", "pushStyle()", "popStyle()", "println(value)", "print(value)", "saveFrame(filename)", "createImage(width, height, format)"]
+    private static let pdeFunctions = ["size(width, height)", "fullScreen(renderer)", "smooth()", "noSmooth()", "pushMatrix()", "popMatrix()", "pushStyle()", "popStyle()", "println(value)", "print(value)", "saveFrame(filename)", "createImage(width, height, format)"]
     private static let jsFunctions = ["createCanvas(width, height)", "resizeCanvas(width, height)", "createVector(x, y)", "push()", "pop()", "clear()", "pixelDensity(density)", "loadJSON(path)", "loadStrings(path)", "loadSound(path)", "saveCanvas(filename)", "preload()", "windowResized()", "mousePressed()", "keyPressed()", "touchStarted()", "touchMoved()", "touchEnded()"]
 
     static func catalog(language: String) -> [CodeCompletion] {
         let functions = commonFunctions + (language == "js" ? jsFunctions : pdeFunctions)
         let variables = "width height mouseX mouseY pmouseX pmouseY mouseButton key keyCode frameCount pixels PI TWO_PI HALF_PI QUARTER_PI CENTER CORNER CORNERS RADIUS LEFT RIGHT TOP BOTTOM RGB HSB CLOSE POINTS LINES TRIANGLES TRIANGLE_STRIP TRIANGLE_FAN QUADS QUAD_STRIP"
-            + (language == "js" ? " windowWidth windowHeight deltaTime touches mouseIsPressed keyIsPressed DEGREES RADIANS" : " screenWidth screenHeight mousePressed keyPressed PImage PFont PVector")
+            + (language == "js" ? " windowWidth windowHeight deltaTime touches mouseIsPressed keyIsPressed DEGREES RADIANS" : " screenWidth screenHeight displayWidth displayHeight mousePressed keyPressed PImage PFont PVector StringList P2D P3D")
         let keywords = "if else for while do switch case break continue return class new true false"
             + (language == "js" ? " function let const var null undefined async await" : " void int float double boolean char String color byte long final public private import null")
         let functionItems = functions.map {

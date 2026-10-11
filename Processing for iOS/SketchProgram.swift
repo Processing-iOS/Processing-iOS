@@ -57,7 +57,8 @@ struct SketchSource {
             throw Self.failure("This project contains no .\(language) source files.")
         }
         let code = sources.map { SketchSource.normalized($0.content) + "\n" }.joined()
-        if language == "pde", let issue = ProcessingSourceScanner.scan(code).issue {
+        let scanned = language == "pde" ? ProcessingSourceScanner.scan(code) : nil
+        if let issue = scanned?.issue ?? scanned.flatMap({ Self.unsupportedImport(in: $0.code) }) {
             let bug = DetectedBug(bugType: .syntaxError, message: issue.message)
             let prefix = (code as NSString).substring(to: issue.offset)
             let lines = prefix.components(separatedBy: "\n")
@@ -70,7 +71,7 @@ struct SketchSource {
         } else {
             preflightBug = nil
         }
-        let libraryNames = language == "pde" ? ["processing.min"] : ["p5.min", "p5.sound.min"]
+        let libraryNames = language == "pde" ? ["processing.min", "ProcessingCompatibility"] : ["p5.min", "p5.sound.min"]
         let libraries = try libraryNames.map { ["name": $0 + ".js", "code": try Self.resource($0, extension: "js")] }
         let payload: [String: Any] = ["language": language, "code": code, "libraries": libraries]
         let data = try JSONSerialization.data(withJSONObject: payload)
@@ -144,6 +145,22 @@ struct SketchSource {
         let n = number.doubleValue
         guard n.isFinite, n > 0, n < Double(Int32.max), n.rounded() == n else { return 0 }
         return Int(n)
+    }
+
+    private static func unsupportedImport(in code: String) -> ProcessingSourceScanner.Issue? {
+        let pattern = #"\bimport\s+(?:static\s+)?([\w.*]+)\s*;"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let allowed = ["processing.core.*", "processing.data.*", "processing.data.StringList",
+                       "java.util.ArrayList", "java.util.HashMap", "java.util.Iterator", "java.util.*"]
+        for match in regex.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+            let name = (code as NSString).substring(with: match.range(at: 1))
+            if allowed.contains(name) || name.hasPrefix("processing.core.") { continue }
+            let help = name.hasPrefix("processing.video.")
+                ? "Use CameraView(\"back\") or CameraView(\"front\") for camera input."
+                : "Use the built-in APIs or a p5.js project with browser-compatible JavaScript libraries."
+            return ProcessingSourceScanner.Issue(message: "Desktop Java package “\(name)” cannot run in Processing.js on iOS. \(help)", offset: match.range.location)
+        }
+        return nil
     }
 
     private static func resource(_ name: String, extension ext: String) throws -> String {
