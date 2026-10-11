@@ -1,7 +1,7 @@
-Processing 3.0 is completely free for everyone! All features are included, with no in-app purchases or subscriptions. Sponsored by one sec: https://one-sec.app
+Processing 3.0 is now completely free for everyone! All features are included, with no in-app purchases or subscriptions.
 
 A better place to create
-• Enjoy sharper Retina drawing and a simpler app name: Processing.
+• Sharper rendering (retina quality!).
 • Add a front or back camera to your sketches with CameraView, and explore more device sensors.
 • Save your drawings as PNG or JPEG images.
 
@@ -21,4 +21,4 @@ Learn and explore
 • Add compatible JavaScript libraries to p5.js projects and choose their load order.
 • Enjoy expanded Processing compatibility, including StringList, circle, and square.
 
-The old Add to Home Screen feature has been removed because it no longer works reliably.
+The old Add to Home Screen feature has been removed because it no longer works reliably unfortunately.

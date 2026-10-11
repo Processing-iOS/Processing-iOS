@@ -1,5 +1,7 @@
 App Store copy for Processing 3.0. The English (US) and German What's New text was saved to the iOS 3.0 draft through Helm on 2026-10-11 and verified by reading it back. Other metadata files remain prepared copy; they have not been applied to App Store Connect.
 
+The English What's New file contains the user's revised Helm text and is the source for translations. The German release notes were updated to match it on 2026-10-11.
+
 App ID: 648955851
 iOS 3.0 version ID: 8e898e60-c2b0-4c84-8891-678e95afb14a
 English localization ID: 54bc817d-e7b2-46c4-b7a1-6e394ac0c73d
