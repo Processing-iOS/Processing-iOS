@@ -638,7 +638,7 @@ struct SketchRuntimeTests {
         #expect(try String(contentsOfFile: file.filePath) == "const original = 1;")
     }
 
-    @Test func editorCompletionSupportsTypingUndoAndSaving() throws {
+    @Test func editorCompletionSupportsTypingUndoAndSaving() async throws {
         let fixture = try SketchFixture(language: "js", main: "bac")
         defer { fixture.remove() }
         let file = try #require(fixture.project.sourceCodeFiles.first)
@@ -659,6 +659,8 @@ struct SketchRuntimeTests {
         #expect(UIApplication.shared.sendAction(acceptAction, to: editor, from: accept, for: nil))
         #expect(editor.editor.text == "background()")
         #expect(editor.editor.selectedRange.location == 11)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        #expect(editor.editor.selectedRange == NSRange(location: 11, length: 0))
         let undo = try #require(editor.editor.undoManager)
         #expect(undo.canUndo)
         undo.undo()
@@ -679,6 +681,10 @@ struct SketchRuntimeTests {
         text("C:\\", 23, 43);
         text('single quoted', 24, 44);
         text("first", "second", 25, 45);
+        text("https://example.com", 26, 46);
+        /* first comment */ text("between comments", 27, 47); /* second comment */
+        boolean enabled = true;
+        interfaceCount = 28; classify = 29;
         """#
         let fixture = try SketchFixture(language: language, main: code)
         defer { fixture.remove() }
@@ -688,13 +694,13 @@ struct SketchRuntimeTests {
         #expect(displayed.string == code)
         let stringColor = try #require(displayed.attribute(.foregroundColor, at: (code as NSString).range(of: "back").location, effectiveRange: nil) as? UIColor)
         #expect(stringColor != UIColor.label)
-        for token in ["Camera input", "escaped", "C:", "single quoted", "first", "second"] {
+        for token in ["Camera input", "escaped", "C:", "single quoted", "first", "second", "example.com", "between comments"] {
             let range = (code as NSString).range(of: token)
             #expect(displayed.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? UIColor == stringColor)
         }
         // Assert the actual editor attributes, not the regex implementation.
         // These are code arguments, so a preceding string must not dim them.
-        for token in ["20", "80", "width", "height", "100", "21", "22", "23", "24", "25"] {
+        for token in ["20", "80", "width", "height", "100", "21", "22", "23", "24", "25", "26", "27", "interfaceCount", "classify"] {
             let range = (code as NSString).range(of: token)
             let color = try #require(displayed.attribute(.foregroundColor, at: range.location, effectiveRange: nil) as? UIColor)
             #expect(color == UIColor.label, "Code after a closing quote was recolored: \(token)")

@@ -87,14 +87,16 @@ enum CodeCompletionEngine {
     }
 
     /// Preserve UTF-16 offsets while masking comments, strings, templates and JS regex literals.
-    private static func codeOnly(_ source: String, language: String) -> (text: String, codePositions: [Bool]) {
+    static func codeOnly(_ source: String, language: String) -> (text: String, codePositions: [Bool], spans: [(range: NSRange, comment: Bool)]) {
         let units = Array(source.utf16)
         var masked = units
         var positions = Array(repeating: true, count: units.count + 1)
         var i = 0
         var allowsRegex = true
-        func hide(_ start: Int, _ end: Int, closed: Bool) {
-            for j in start..<end { masked[j] = 32 }
+        var spans: [(range: NSRange, comment: Bool)] = []
+        func hide(_ start: Int, _ end: Int, closed: Bool, comment: Bool = false) {
+            spans.append((NSRange(location: start, length: end - start), comment))
+            for j in start..<end where units[j] != 10 && units[j] != 13 { masked[j] = 32 }
             if end > start {
                 for j in (start + 1)...end { positions[j] = false }
             }
@@ -105,7 +107,7 @@ enum CodeCompletionEngine {
             if c == 47 && next == 47 {
                 let start = i
                 while i < units.count && units[i] != 10 && units[i] != 13 { i += 1 }
-                hide(start, i, closed: false)
+                hide(start, i, closed: false, comment: true)
                 continue
             }
             if c == 47 && next == 42 {
@@ -114,7 +116,7 @@ enum CodeCompletionEngine {
                 while i < units.count && !(units[i] == 42 && i + 1 < units.count && units[i + 1] == 47) { i += 1 }
                 let closed = i < units.count
                 if closed { i += 2 }
-                hide(start, i, closed: closed)
+                hide(start, i, closed: closed, comment: true)
                 continue
             }
             if c == 34 || c == 39 || (language == "js" && c == 96) || (language == "js" && c == 47 && allowsRegex) {
@@ -148,7 +150,7 @@ enum CodeCompletionEngine {
             }
             i += 1
         }
-        return (String(decoding: masked, as: UTF16.self), positions)
+        return (String(decoding: masked, as: UTF16.self), positions, spans)
     }
 
     private static let commonFunctions = [

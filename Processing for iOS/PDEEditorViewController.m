@@ -17,6 +17,7 @@
 @property(nonatomic,assign) NSRange suggestionRange;
 @property(nonatomic,strong) CodeCompletionController *completionController;
 @property(nonatomic,copy) NSString *lastObservedText;
+@property(nonatomic,strong) CodeHighlighter *highlighter;
 @end
 
 @implementation PDEEditorViewController
@@ -43,12 +44,13 @@
     
     self.editor.text = self.sourceCodeFile.content;
     self.lastObservedText = self.editor.text;
+    self.editor.font = [UIFont fontWithName:@"SourceCodePro-Regular" size:18];
+    self.highlighter = [[CodeHighlighter alloc] initWithTextView:self.editor language:self.sourceCodeFile.fileExtension];
     self.completionController = [[CodeCompletionController alloc] initWithTextView:self.editor file:self.sourceCodeFile projectFiles:self.completionFiles ?: @[]];
     __weak typeof(self) weakSelf = self;
     self.completionController.didComplete = ^{ [weakSelf textViewDidChange:weakSelf.editor]; };
     
     [self highlightCode];
-    [self codeLineIndent];
     
     [self.editor setContentOffset: CGPointMake(0, 0) animated:NO];
 }
@@ -156,100 +158,16 @@
     }];
     
     [self highlightCode];
-    [self codeLineIndent];
     [self saveCode];
 }
 
--(void) codeLineIndent {
-    NSMutableAttributedString * string = [[NSMutableAttributedString alloc] initWithAttributedString:self.editor.attributedText];
-    [string addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"SourceCodePro-Regular" size:18] range:NSMakeRange(0, string.length)];
-    
-    NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-    style.headIndent = 32;
-    NSDictionary *attributes = @{
-        NSParagraphStyleAttributeName: style
-    };
-    
-    [string addAttributes:attributes range:NSMakeRange(0, string.length)];
-    
-    CGPoint contentOffset = self.editor.contentOffset;
-    self.editor.scrollEnabled=NO;
-    NSRange currentCurserPosition = self.editor.selectedRange;
-    
-    [self.editor setAttributedText:string];
-    
-    self.editor.selectedRange = currentCurserPosition;
-    self.editor.scrollEnabled=YES;
-    [[NSOperationQueue mainQueue] addOperationWithBlock: ^{
-        [self.editor setContentOffset: contentOffset animated:NO];
-    }];
-}
-
-
-
--(void) highlightCode {
-    
-    NSString* text = self.editor.text;
-    
-    if (text == nil) {
-        text = self.editor.attributedText.string;
-    }
-    
-    
-    if(text) {
-        NSMutableAttributedString * string = [[NSMutableAttributedString alloc] initWithString: text];
-        [string addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"SourceCodePro-Regular" size:18] range:NSMakeRange(0, string.length)];
-        
-        if (@available(iOS 13.0, *)) {
-            [string addAttribute: NSForegroundColorAttributeName value: UIColor.labelColor range: NSMakeRange(0, string.length)];
-        }
-        
-        
-        for(NSDictionary *syntaxPattern in [FRFileManager syntaxHighlighterDictionaryForSourceFileType:self.sourceCodeFile.fileExtension]) {
-            NSString *patternString = syntaxPattern[@"regex"];
-            
-            NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:patternString options:NSRegularExpressionCaseInsensitive error:NULL];
-            
-            NSArray *matchResults = [regex matchesInString:self.editor.text options:0 range:NSMakeRange(0, self.editor.text.length)];
-            
-            //es kann bei richtigen matches nur ein match geben
-            
-            for(NSTextCheckingResult *match in matchResults) {
-                NSRange matchRange = [match range];
-                
-                CGFloat red = [[syntaxPattern[@"color"] componentsSeparatedByString:@","][0] floatValue]/255;
-                CGFloat green = [[syntaxPattern[@"color"] componentsSeparatedByString:@","][1] floatValue]/255;
-                CGFloat blue = [[syntaxPattern[@"color"] componentsSeparatedByString:@","][2] floatValue]/255;
-                
-                
-                [string addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:red green:green blue:blue alpha:1.f] range:matchRange];
-                
-                if(syntaxPattern[@"bold"]) {
-                    [string addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"SourceCodePro-Semibold" size:18] range:matchRange];
-                } else {
-                    [string addAttribute:NSFontAttributeName value:[UIFont fontWithName:@"SourceCodePro-Regular" size:18] range:matchRange];
-                }
-            }
-        }
-        
-        NSRange errorRange = [self.bugToHighlight rangeInSource:text];
-        if (self.bugToHighlight && errorRange.location != NSNotFound &&
-            errorRange.location <= string.length && errorRange.length <= string.length - errorRange.location) {
-            [string addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleThick) range:errorRange];
-            [string addAttribute:NSForegroundColorAttributeName value:UIColor.systemRedColor range:errorRange];
-        }
-
-        //Cursorposition speichern
-        CGPoint contentOffset = self.editor.contentOffset;
-        
-        self.editor.scrollEnabled=NO;
-        NSRange currentCurserPosition = self.editor.selectedRange;
-        
-        [self.editor setAttributedText:string];
-        
-        self.editor.selectedRange = currentCurserPosition;
-        [self.editor setContentOffset: contentOffset animated:NO];
-        self.editor.scrollEnabled=YES;
+-(void)highlightCode {
+    [self.highlighter highlightNow];
+    NSString *text = self.editor.text ?: @"";
+    NSRange range = [self.bugToHighlight rangeInSource:text];
+    if (self.bugToHighlight && range.location != NSNotFound && NSMaxRange(range) <= text.length) {
+        [self.editor.textStorage addAttributes:@{NSUnderlineStyleAttributeName: @(NSUnderlineStyleThick),
+            NSForegroundColorAttributeName: UIColor.systemRedColor} range:range];
     }
 }
 
@@ -471,8 +389,7 @@
     [self.sourceCodeFile updateContent:self.editor.text];
     self.bugToHighlight = nil;
     self.suggestionSource = nil;
-    [self highlightCode];
-    [self codeLineIndent];
+    [self.highlighter schedule];
     [self.completionController scheduleUpdate];
 }
 

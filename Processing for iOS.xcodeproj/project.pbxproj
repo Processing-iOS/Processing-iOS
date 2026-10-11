@@ -77,6 +77,7 @@
 		867A7523307B6841009C23A0 /* Example_Camera.js in Resources */ = {isa = PBXBuildFile; fileRef = 867A7522307B6841009C23A0 /* Example_Camera.js */; };
 		867A7525307B75B3009C23A0 /* SampleProjectPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */; };
 		867A8787307B7CE3009C23A0 /* SourceHistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */; };
+		867A8789307B7F5B009C23A0 /* CodeHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */; };
 		86CA24621E7ABF0F005FB881 /* processing.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86CA24611E7ABF0F005FB881 /* processing.min.js */; };
 		86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86D0673C1E509C390033A4FF /* PDEEditorViewController.m */; };
 		86D0673F1E509C390033A4FF /* PDEEditorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 86D0673D1E509C390033A4FF /* PDEEditorViewController.xib */; };
@@ -192,6 +193,7 @@
 		867A7522307B6841009C23A0 /* Example_Camera.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Example_Camera.js; sourceTree = "<group>"; };
 		867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleProjectPickerViewController.swift; sourceTree = "<group>"; };
 		867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceHistoryViewController.swift; sourceTree = "<group>"; };
+		867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlighter.swift; sourceTree = "<group>"; };
 		86CA24611E7ABF0F005FB881 /* processing.min.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = processing.min.js; sourceTree = "<group>"; };
 		86D0673B1E509C380033A4FF /* PDEEditorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDEEditorViewController.h; sourceTree = "<group>"; };
 		86D0673C1E509C390033A4FF /* PDEEditorViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDEEditorViewController.m; sourceTree = "<group>"; };
@@ -382,6 +384,7 @@
 				867A597D307AC9E2009C23A0 /* SketchRuntime.js */,
 				867A7524307B75B3009C23A0 /* SampleProjectPickerViewController.swift */,
 				867A8786307B7CE3009C23A0 /* SourceHistoryViewController.swift */,
+				867A8788307B7F5B009C23A0 /* CodeHighlighter.swift */,
 			);
 			path = "Processing for iOS";
 			sourceTree = "<group>";
@@ -635,6 +638,7 @@
 				51FD83B624A3B21A0008AB57 /* CodeErrorDetectionEngine.swift in Sources */,
 				86D0673E1E509C390033A4FF /* PDEEditorViewController.m in Sources */,
 				51CEE44C1B3E9A270031D1BE /* AppDelegate.m in Sources */,
+				867A8789307B7F5B009C23A0 /* CodeHighlighter.swift in Sources */,
 				510F51A420AB64C40082B979 /* ProjectTableViewCell.swift in Sources */,
 				51CC558A251E3613003ACFF5 /* ExternalScreenController.swift in Sources */,
 				517EAA79249265650069EAD1 /* SourceCodeFile.swift in Sources */,

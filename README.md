@@ -34,6 +34,8 @@ Edits are saved automatically after a short pause, and while typing continuously
 
 Start typing a name in the editor to see completions above the keyboard after two characters. Tap a suggestion, or press **Tab** on a hardware keyboard to accept the first one. **Control-Space** requests completions for a shorter prefix; **Escape** dismisses the suggestions. Swipe the strip to see more matches. The keyboard button ends editing and restores the editor toolbar.
 
+Syntax coloring scans comments and literals together so URLs, escaped quotes, and separate block comments cannot recolor neighboring code. Typing schedules coloring off the main thread and applies only attributes to the current text snapshot, preserving the caret, scrolling, marked text, and native undo history.
+
 Completions include common Processing or P5.js functions, constants, keywords, and names used in the project's source files. Function suggestions show a signature and insert parentheses with the caret inside; existing parentheses and arguments are preserved. Normal Undo/Redo works. Suggestions are suppressed in comments, quoted strings, and after member-access dots. This is offline name completion, without type or scope inference.
 
 ## Retina rendering
